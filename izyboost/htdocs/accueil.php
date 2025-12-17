@@ -1,0 +1,1523 @@
+<?php
+session_start();
+
+// Fonction pour vérifier s'il y a des transactions en attente
+function hasPendingTransactions($user_id) {
+    if (!$user_id) return false;
+    
+    try {
+        $pdo = new PDO("mysql:host=sql310.infinityfree.com;dbname=if0_39106178_izyboost;charset=utf8", "if0_39106178", "RTNrS9RYwvPu");
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        
+        $stmt = $pdo->prepare("
+            SELECT COUNT(*) as count 
+            FROM transactions 
+            WHERE user_id = ? 
+            AND credited = 0 
+            AND statut NOT IN ('FAILED', 'CANCELLED', 'EXPIRED', 'SUCCESSFUL')
+            ORDER BY id DESC 
+            LIMIT 10
+        ");
+        $stmt->execute([$user_id]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        return ($result['count'] > 0);
+        
+    } catch (Exception $e) {
+        error_log("Erreur vérification transactions: " . $e->getMessage());
+        return false;
+    }
+}
+
+// Vérifier si l'utilisateur est connecté et a des transactions en attente
+$show_verification_button = false;
+if (isset($_SESSION['user_id'])) {
+    $show_verification_button = hasPendingTransactions($_SESSION['user_id']);
+}
+?>
+
+<?php
+include('tracker.php');
+
+
+?>
+
+<?php
+require 'db.php';
+session_start();
+
+// $_SESSION['user_id']=157;
+
+
+// if (!isset($_SESSION['user_id'])) {
+//     header('Location: auth/login.html'); // ou login.php
+//     exit;
+// }
+
+// echo "Bienvenue " . htmlspecialchars($_SESSION['user_id']);
+
+ // Ton fichier de connexion PDO
+
+$user_id = $_SESSION['user_id'] ?? null;
+
+
+
+// Requête pour récupérer le solde
+$stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
+$stmt->execute([$user_id]);
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if ($user) {
+    // echo "Votre solde : " . $user['solde'] . " FCFA";
+} else {
+    echo "Utilisateur non trouvé.";
+    header('location:auth/login.php');
+}
+?>
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Commande BoostCI</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+   <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+
+<script src="https://richinfo.co/richpartners/in-page/js/richads-ob.js?pubid=985223&siteid=371232" async></script>
+    <script type="module" src="https://richinfo.co/richpartners/push/js/rp-cl-ob.js?pubid=985223&siteid=371220&niche=33" async data-cfasync="false"></script>
+    <style>
+        
+        
+        
+        /* Overlay masquant l'arrière-plan */
+.verification-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(5px);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Container principal de la modale */
+.verification-modal {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow: hidden;
+    animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+}
+
+/* En-tête de la modale */
+.modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    text-align: center;
+    position: relative;
+}
+
+.modal-title {
+    margin: 0;
+    font-size: 1.4em;
+    font-weight: 600;
+}
+
+.modal-close {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5em;
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s;
+}
+
+.modal-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Corps de la modale */
+.modal-body {
+    padding: 0;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+/* Zone des messages */
+.verification-messages {
+    padding: 20px;
+    min-height: 200px;
+}
+
+/* Styles des messages */
+.verification-message {
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    border-left: 4px solid #ccc;
+    animation: messageSlideIn 0.4s ease-out;
+    background: #f8f9fa;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.verification-message.progress {
+    background: #e3f2fd;
+    border-left-color: #2196f3;
+}
+
+.verification-message.success {
+    background: #e8f5e9;
+    border-left-color: #4caf50;
+}
+
+.verification-message.error {
+    background: #ffebee;
+    border-left-color: #f44336;
+}
+
+.verification-message.warning {
+    background: #fff8e1;
+    border-left-color: #ff9800;
+}
+
+.verification-message.info {
+    background: #e8f4f8;
+    border-left-color: #00bcd4;
+}
+
+.verification-message.complete {
+    background: #f3e5f5;
+    border-left-color: #9c27b0;
+    font-weight: 600;
+}
+
+/* Icônes des messages */
+.message-icon {
+    font-size: 1.2em;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.message-content {
+    flex: 1;
+}
+
+.message-text {
+    margin: 0;
+    font-size: 0.95em;
+    line-height: 1.4;
+}
+
+.message-timestamp {
+    font-size: 0.75em;
+    color: #666;
+    margin-top: 4px;
+}
+
+.message-details {
+    font-size: 0.85em;
+    color: #555;
+    margin-top: 8px;
+    background: rgba(255, 255, 255, 0.5);
+    padding: 8px;
+    border-radius: 6px;
+    border-left: 3px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Pied de la modale */
+.modal-footer {
+    padding: 15px 20px;
+    background: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    text-align: center;
+}
+
+/* Indicateur de progression */
+.progress-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 0.9em;
+    color: #666;
+}
+
+.progress-bar {
+    flex: 1;
+    height: 4px;
+    background: #e9ecef;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+/* Loader animé */
+.loader {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+}
+
+/* Animation pour le solde mis à jour */
+.solde-updated {
+    animation: pulse 0.6s ease-in-out;
+}
+
+/* Empêcher le scroll du body */
+body.no-scroll {
+    overflow: hidden;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { 
+        opacity: 0;
+        transform: translateY(50px) scale(0.9);
+    }
+    to { 
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes messageSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .verification-modal {
+        width: 95%;
+        margin: 20px;
+        border-radius: 15px;
+    }
+    
+    .modal-header {
+        padding: 15px;
+    }
+    
+    .modal-title {
+        font-size: 1.2em;
+    }
+    
+    .verification-messages {
+        padding: 15px;
+    }
+    
+    .verification-message {
+        padding: 10px 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .verification-modal {
+        width: 98%;
+        margin: 10px;
+    }
+    
+    .modal-header {
+        padding: 12px;
+    }
+    
+    .verification-messages {
+        padding: 10px;
+    }
+}
+        
+
+        
+        
+        /* Custom CSS for animations and effects */
+        .sidebar {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        .sidebar.active {
+            transform: translateX(0);
+        }
+        .sidebar-overlay {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .pulse-btn {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        .service-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .service-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        .step-item {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        .step-item.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .scroll-container {
+            scrollbar-width: thin;
+            scrollbar-color: #4f46e5 #f1f1f1;
+        }
+        .scroll-container::-webkit-scrollbar {
+            height: 8px;
+        }
+        .scroll-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .scroll-container::-webkit-scrollbar-thumb {
+            background-color: #4f46e5;
+            border-radius: 10px;
+        }
+        .input-field:focus {
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.3);
+        }
+
+    </style>
+    <style>
+@keyframes marquee {
+  0%   { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+.animate-marquee {
+  display: inline-block;
+  animation: marquee 30s linear infinite;
+}
+</style>
+
+  <style>
+    :root {
+      --primary: #4361ee;
+      --primary-light: #4895ef;
+      --secondary: #3f37c9;
+      --dark: #1f2937;
+      --light: #f8f9fa;
+    }
+    
+    /* body {
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+      min-height: 100vh;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    } */
+    .container{
+        display:block;
+        /* height:1vh;
+        overflow:hidden; */
+    }
+    
+    .card {
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+      transition: transform 0.3s ease;
+    }
+    
+    .card:hover {
+      transform: translateY(-5px);
+    }
+    
+    .card-header {
+      background: linear-gradient(to right, var(--primary), var(--secondary));
+      color: white;
+      padding: 1.5rem;
+      border-bottom: none;
+    }
+    
+    .form-control, .form-select {
+      border-radius: 8px;
+      padding: 12px 15px;
+      border: 1px solid #e0e6ed;
+      transition: all 0.3s;
+    }
+    
+    .form-control:focus, .form-select:focus {
+      border-color: var(--primary-light);
+      box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.15);
+    }
+    
+    .btn-primary {
+      background: linear-gradient(to right, var(--primary), var(--secondary));
+      border: none;
+      padding: 12px;
+      border-radius: 8px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      transition: all 0.3s;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
+    }
+    
+    .total-display {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--secondary);
+      background: rgba(67, 97, 238, 0.1);
+      padding: 12px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    
+    .service-info {
+      background: rgba(67, 97, 238, 0.05);
+      padding: 12px;
+      border-radius: 8px;
+      border-left: 4px solid var(--primary);
+    }
+    
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .loader-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    
+    .loader-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+    
+    .loader-content {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+    
+    .loader-spinner {
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid var(--primary);
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+    
+    .input-error {
+      border-color: #ff3860 !important;
+      animation: shake 0.5s;
+    }
+    
+    .error-feedback {
+      color: #ff3860;
+      font-size: 0.85rem;
+      margin-top: 5px;
+      display: none;
+    }
+    
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-5px); }
+      40%, 80% { transform: translateX(5px); }
+    }
+    
+    .animate-feedback {
+      animation: fadeIn 0.3s;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Header -->
+    <header class="bg-indigo-600 text-white shadow-lg animate__animated animate__fadeInDown">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <button id="menu-btn" class="text-white focus:outline-none">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+                <h1 class="text-2xl font-bold">
+                    <span class="text-white">IZY</span><span class="text-yellow-300">BOOST</span>
+                </h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="bg-indigo-500 px-3 py-1 rounded-full" STYLE="displayflex">
+                   <a href="recharge.php"><span class="font-bold" id="solde-utilisateur">loading...</span>FCFA<span></a> 
+                </div>
+
+
+                
+<script>
+function chargerSolde() {
+    fetch('a.php')
+        .then(response => response.json())
+        .then(data => {
+            if (data.solde !== undefined) {
+                let soldes=document.getElementById('solde-utilisateur')
+                soldes.textContent = parseInt(data.solde);
+
+            } else {
+                document.getElementById('solde-utilisateur').textContent = 'Erreur';
+                console.error(data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Erreur AJAX :', error);
+            document.getElementById('solde-utilisateur').textContent = 'Erreur';
+        });
+}
+
+// Charger au démarrage
+chargerSolde();
+
+// (Optionnel) Recharger toutes les 10 secondes
+// setInterval(chargerSolde, 10000);
+
+
+</script>
+                <div class="recharge" style="padding: 5px;border-radius: 10px;background-color: #070089; color: white; cursor: pointer;">
+                   <a href="recharge.php"></a> <?php echo$user['nom'];?>
+                </div>
+                 <div class="recharge" style="padding: 5px;border-radius: 50%;background-color: #070089; color: white; cursor: pointer;">
+                   
+                </div>
+
+            </div>
+        </div>
+
+    </header>
+
+    <!-- Sidebar -->
+    <div id="sidebar-overlay" class="sidebar-overlay fixed inset-0 bg-black bg-opacity-50 z-40"></div>
+    <aside id="sidebar" class="sidebar fixed top-0 left-0 w-64 h-full bg-white shadow-lg z-50">
+        <div class="p-4 border-b border-gray-200">
+            <h2 class="text-xl font-bold text-indigo-600">
+                <span class="text-indigo-600">IZY</span><span class="text-yellow-500">BOOST</span>
+            </h2>
+        </div>
+        <nav class="p-4">
+            <ul class="space-y-2">
+                <li>
+                    <a href="#" class="flex items-center space-x-3 p-2 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition">
+                        <i class="fas fa-home text-indigo-600"></i>
+                        <span>Accueil</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="index.php" class="flex items-center space-x-3 p-2 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition">
+                        <i class="fas fa-rocket text-indigo-600"></i>
+                        <span>Services</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="commandes.html" class="flex items-center space-x-3 p-2 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition">
+                        <i class="fas fa-shopping-cart text-indigo-600"></i>
+                        <span>Commandes</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="nexius.php" class="flex items-center space-x-3 p-2 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition">
+                        <i class="fas fa-chart-line text-indigo-600"></i>
+                        <span>nexius ai</span>
+                    </a>
+                </li>
+                 <li>
+                    <a href="gratuit.php" class="flex items-center space-x-3 p-2 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition">
+                        <i class="fas fa-chart-line text-indigo-600"></i>
+                        <span>canva pro gratuit</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://t.me/astuce237" class="flex items-center space-x-3 p-2 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition">
+                        <i class="fas fa-cog text-indigo-600"></i>
+                        <span>communaute</span>
+                    </a>
+                </li>
+                <li>
+                      <li>
+                    <a href="https://wa.me/237676676120" class="flex items-center space-x-3 p-2 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition">
+                        <i class="fas fa-rocket text-indigo-600"></i>
+                        <span>aide/support</span>
+                    </a>
+                </li>
+                  <li>
+                      <li>
+                    <a href="https://wa.me/237676676120" class="flex items-center space-x-3 p-2 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition">
+                        <i class="fas fa-info text-indigo-600"></i>
+                        <span>API</span>
+                    </a>
+                </li>
+
+                    <a href="deconnexion.php" class="flex items-center space-x-3 p-2 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition">
+                        <i class="fas fa-sign-out-alt text-indigo-600"></i>
+                        <span>Déconnexion</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+
+       <div class="hero" style="height: 50px;width: 100%;border: solid;">
+        <!-- defilement de texte -->
+         <!-- Assure-toi d’avoir Tailwind CSS inclus dans ton projet -->
+
+<div class="overflow-hidden whitespace-nowrap border border-blue-500 rounded-md bg-blue-50 p-3 shadow-md">
+  <div class="animate-marquee inline-block text-blue-700 font-semibold text-lg">
+    🎉 Bienvenue sur IZYBOOST ! Boostez vos réseaux sociaux, <?= htmlspecialchars($user['nom']) ?></span> lancez vos campagnes publicitaires, créez vos comptes monétisés ,formation en achat en chine ,formation en marketing digitale, business oline, creation des sites webet bien plus encore ! 🚀 
+  </div>
+</div>
+
+
+        
+       </div>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-6 mt-16">
+      
+
+        <!-- Boost Button Section -->
+        <section class="text-center mb-16 animate__animated animate__fadeIn">
+            <button id="boost-btn" href="recharge.php" class="pulse-btn bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold py-4 px-8 rounded-full text-xl shadow-lg hover:shadow-xl transition duration-300 transform hover:scale-105">
+                <i class="fas fa-bolt mr-2"></i> recharger mon compte
+            </button>
+        </section>
+
+<!--<script src="verification.js"></script>-->
+
+<!-- Le bouton sera ajouté automatiquement par le JavaScript -->
+     <script>
+  document.querySelector('#boost-btn').addEventListener('click', () => {
+    window.location.href = "recharge.php";
+  });
+</script>
+
+
+        <!-- formulaire -->
+      
+
+
+
+          <h2 class="form-title">Boostez votre visibilité . <a style="color:blue;text-decoration:none"
+                href=" https://youtu.be/ZDGugMpa9b0?si=3W-acHQhEqQ9nmGo">video pour apprendre a booster?</a></h2>
+
+
+
+        
+  <div class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="card animate__animated animate__fadeIn">
+
+          <div class="card-header text-center">
+            <h3 class="mb-0"><i class="fas fa-rocket me-2"></i>Commande IZYBOOST</h3>
+          </div>
+          <div class="card-body p-4">
+            <form id="orderForm" novalidate>
+              <div class="mb-4">
+                <label for="service" class="form-label fw-bold">Service</label>
+                <select id="service" name="service" class="form-select" required>
+                  <option value="" disabled selected>-- Sélectionnez un service --</option>
+                </select>
+                <div id="service-error" class="error-feedback">Veuillez sélectionner un service</div>
+                <div id="serviceDetails" class="service-info mt-2 small"></div>
+              </div>
+              
+              <div class="mb-4">
+                <label for="link" class="form-label fw-bold">Lien à booster</label>
+                <input type="url" class="form-control" id="link" name="link" placeholder="https://example.com" required>
+                <div id="link-error" class="error-feedback">Veuillez entrer une URL valide</div>
+              </div>
+              
+              <div class="mb-4">
+                <label for="quantity" class="form-label fw-bold">Quantité</label>
+                <input type="number" class="form-control" id="quantity" name="quantity" required min="0">
+                <div id="quantity-error" class="error-feedback">Veuillez entrer une quantité valide</div>
+              </div>
+              
+              <div class="mb-4 p-3 total-display animate__animated" id="totalDisplay">
+                <div>Total à payer :</div>
+                <div class="fs-3 fw-bold"  id="rateInfo">0</div>
+               <del style="color:red"> <div class="small text-muted" id="totalAmount" style="color:red;font-size:13px" ></div></del>
+              </div>
+              
+              <button type="submit" class="btn btn-primary w-100 py-3" id="submitBtn">
+                <span id="btnText"><i class="fas fa-paper-plane me-2"></i>Passer la commande</span>
+                <span id="btnLoading" class="d-none"><span class="loading me-2"></span> Traitement...</span>
+              </button>
+            </form>
+            
+            <div id="responseMessage" class="mt-4"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="loader-overlay" id="loaderOverlay">
+    <div class="loader-content animate__animated animate__zoomIn">
+      <div class="loader-spinner"></div>
+      <h5 class="mt-3" id="loaderText">Chargement des services...</h5>
+    </div>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        <!-- Steps Section -->
+        <section class="mb-16">
+            <h2 class="text-2xl font-bold text-center mb-8 text-gray-800">Comment fonctionne le boostage ?</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <!-- Step 1 -->
+                <div class="step-item bg-white p-6 rounded-lg shadow-md text-center">
+                    <div class="bg-indigo-100 w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4">
+                        <i class="fas fa-search text-indigo-600 text-2xl"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2 text-gray-800">1. Sélectionnez un service</h3>
+                    <p class="text-gray-600">Choisissez parmi nos nombreux services de boostage</p>
+                </div>
+                <!-- Step 2 -->
+                <div class="step-item bg-white p-6 rounded-lg shadow-md text-center">
+                    <div class="bg-indigo-100 w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4">
+                        <i class="fas fa-link text-indigo-600 text-2xl"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2 text-gray-800">2. Entrez le lien et la quantite a booster</h3>
+                    <p class="text-gray-600">Fournissez le lien de votre compte/profil à booster et aussi la quantite</p>
+                </div>
+                <!-- Step 3 -->
+                <div class="step-item bg-white p-6 rounded-lg shadow-md text-center">
+                    <div class="bg-indigo-100 w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4">
+                        <i class="fas fa-credit-card text-indigo-600 text-2xl"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2 text-gray-800">3. boostage sécurisé</h3>
+                    <p class="text-gray-600">lancez votre boostage en toute securite .</p>
+                </div>
+                <!-- Step 4 -->
+                <div class="step-item bg-white p-6 rounded-lg shadow-md text-center">
+                    <div class="bg-indigo-100 w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4">
+                        <i class="fas fa-check-circle text-indigo-600 text-2xl"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2 text-gray-800">4. Résultats rapides</h3>
+                    <p class="text-gray-600">Recevez vos résultats ans les 5 prochaines minutes</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Services Section -->
+        <section class="mb-16">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">Nos services complémentaires</h2>
+            <div class="relative">
+                <div class="scroll-container overflow-x-auto pb-4">
+                    <div class="flex space-x-6 w-max">
+                        <!-- Service 1 -->
+                        <div class="service-card w-64 bg-white rounded-lg shadow-md overflow-hidden flex-shrink-0">
+                            <div class="h-32 bg-indigo-100 flex items-center justify-center">
+                                <i class="fas fa-user-plus text-4xl text-indigo-600"></i>
+                            </div>
+                            <div class="p-4">
+                                <h3 class="font-bold text-lg mb-2 text-gray-800">Création de compte monétisé</h3>
+                                <p class="text-gray-600 text-sm mb-3">Comptes YouTube, TikTok, Instagram prêts à être monétisés</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-indigo-600">À partir de 2,000 FCFA</span>
+                                   <a href="https://wa.me/237676676120?text=salut.%20je%20viens%20de%20izyboost%20et%20je%20suis%20interesse%20par%20l%27un%20de%20vos%20services
+" ><button class="bg-indigo-600 text-white px-3 py-1 rounded text-sm hover:bg-indigo-700 transition">Commencer</button></a>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Service 2 -->
+                        <div class="service-card w-64 bg-white rounded-lg shadow-md overflow-hidden flex-shrink-0">
+                            <div class="h-32 bg-indigo-100 flex items-center justify-center">
+                                <i class="fas fa-ad text-4xl text-indigo-600"></i>
+                            </div>
+                            <div class="p-4">
+                                <h3 class="font-bold text-lg mb-2 text-gray-800">Campagnes publicitaires</h3>
+                                <p class="text-gray-600 text-sm mb-3">Boostez votre visibilité avec nos campagnes ciblées</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-indigo-600">À partir de 2,000 FCFA</span>
+                                    <button class="bg-indigo-600 text-white px-3 py-1 rounded text-sm hover:bg-indigo-700 transition">Commencer</button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Service 3 -->
+                        <div class="service-card w-64 bg-white rounded-lg shadow-md overflow-hidden flex-shrink-0">
+                            <div class="h-32 bg-indigo-100 flex items-center justify-center">
+                                <i class="fas fa-shopping-bag text-4xl text-indigo-600"></i>
+                            </div>
+                            <div class="p-4">
+                                <h3 class="font-bold text-lg mb-2 text-gray-800">Achat de produits en Chine</h3>
+                                <p class="text-gray-600 text-sm mb-3">Commandez des produits en Chine à prix réduits</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-indigo-600">À partir de 5,000 FCFA</span>
+                                   <a href="https://wa.me/237676676120?text=salut.%20je%20viens%20de%20izyboost%20et%20je%20suis%20interesse%20par%20l%27un%20de%20vos%20services"> <button class="bg-indigo-600 text-white px-3 py-1 rounded text-sm hover:bg-indigo-700 transition">Commencer</button></a>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Service 4 -->
+                        <div class="service-card w-64 bg-white rounded-lg shadow-md overflow-hidden flex-shrink-0">
+                            <div class="h-32 bg-indigo-100 flex items-center justify-center">
+                                <i class="fas fa-globe text-4xl text-indigo-600"></i>
+                            </div>
+                            <div class="p-4">
+                                <h3 class="font-bold text-lg mb-2 text-gray-800">Hébergement Web Premium</h3>
+                                <p class="text-gray-600 text-sm mb-3">Hébergement haute performance pour vos sites web</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-indigo-600">À partir de 5,500 FCFA</span>
+                                  <a href="https://wa.me/237676676120?text=salut.%20je%20viens%20de%20izyboost%20et%20je%20suis%20interesse%20par%20l%27un%20de%20vos%20services">  <button class="bg-indigo-600 text-white px-3 py-1 rounded text-sm hover:bg-indigo-700 transition">Commencer</button></a>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Service 5 -->
+                        <div class="service-card w-64 bg-white rounded-lg shadow-md overflow-hidden flex-shrink-0">
+                            <div class="h-32 bg-indigo-100 flex items-center justify-center">
+                                <i class="fas fa-paint-brush text-4xl text-indigo-600"></i>
+                            </div>
+                            <div class="p-4">
+                                <h3 class="font-bold text-lg mb-2 text-gray-800">Design Graphique</h3>
+                                <p class="text-gray-600 text-sm mb-3">Logos, bannières et designs professionnels</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-indigo-600">À partir de 1,500 FCFA</span>
+                                 <a href="https://wa.me/237676676120?text=salut.%20je%20viens%20de%20izyboost%20et%20je%20suis%20interesse%20par%20l%27un%20de%20vos%20services">   <button class="bg-indigo-600 text-white px-3 py-1 rounded text-sm hover:bg-indigo-700 transition">Commencer</button></a>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Service 6 -->
+                        <div class="service-card w-64 bg-white rounded-lg shadow-md overflow-hidden flex-shrink-0">
+                            <div class="h-32 bg-indigo-100 flex items-center justify-center">
+                                <i class="fas fa-mobile-alt text-4xl text-indigo-600"></i>
+                            </div>
+                            <div class="p-4">
+                                <h3 class="font-bold text-lg mb-2 text-gray-800">Développement de sites web</h3>
+                                <p class="text-gray-600 text-sm mb-3">Applications mobiles sur mesure pour votre business</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-indigo-600">À partir de 50,000 FCFA</span>
+                                  <a href="https://wa.me/237676676120?text=salut.%20je%20viens%20de%20izyboost%20et%20je%20suis%20interesse%20par%20l%27un%20de%20vos%20services">  <button class="bg-indigo-600 text-white px-3 py-1 rounded text-sm hover:bg-indigo-700 transition">Commencer</button></a>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Service 7 -->
+                        <div class="service-card w-64 bg-white rounded-lg shadow-md overflow-hidden flex-shrink-0">
+                            <div class="h-32 bg-indigo-100 flex items-center justify-center">
+                                <i class="fas fa-video text-4xl text-indigo-600"></i>
+                            </div>
+                            <div class="p-4">
+                                <h3 class="font-bold text-lg mb-2 text-gray-800">Montage Vidéo</h3>
+                                <p class="text-gray-600 text-sm mb-3">Montage professionnel pour vos vidéos YouTube/TikTok</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-indigo-600">À partir de 4,000 FCFA</span>
+                                   <a href="https://wa.me/237676676120?text=salut.%20je%20viens%20de%20izyboost%20et%20je%20suis%20interesse%20par%20l%27un%20de%20vos%20services"> <button class="bg-indigo-600 text-white px-3 py-1 rounded text-sm hover:bg-indigo-700 transition">Commencer</button></a>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Service 8 -->
+                        <div class="service-card w-64 bg-white rounded-lg shadow-md overflow-hidden flex-shrink-0">
+                            <div class="h-32 bg-indigo-100 flex items-center justify-center">
+                                <i class="fas fa-chart-pie text-4xl text-indigo-600"></i>
+                            </div>
+                            <div class="p-4">
+                                <h3 class="font-bold text-lg mb-2 text-gray-800">cartes virtuelles</h3>
+                                <p class="text-gray-600 text-sm mb-3">achetez vos cartes virtuelles pour tout vos achats en ligne en toute securite</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-indigo-600">À partir de 2,000 FCFA</span>
+                                   <a href="https://wa.me/237676676120?text=salut.%20je%20viens%20de%20izyboost%20et%20je%20suis%20interesse%20par%20l%27un%20de%20vos%20services"> <button class="bg-indigo-600 text-white px-3 py-1 rounded text-sm hover:bg-indigo-700 transition">Commencer</button></a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Form Section -->
+        <section class="mb-16">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">Contactez-nous</h2>
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <form id="contact-form">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label for="name" class="block text-gray-700 mb-2">Nom complet</label>
+                            <input type="text" id="name" class="input-field w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-indigo-500 transition" placeholder="Votre nom">
+                        </div>
+                        <div>
+                            <label for="email" class="block text-gray-700 mb-2">Email</label>
+                            <input type="email" id="email" class="input-field w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-indigo-500 transition" placeholder="Votre email">
+                        </div>
+                    </div>
+                    <div class="mb-6">
+                        <label for="subject" class="block text-gray-700 mb-2">Sujet</label>
+                        <input type="text" id="subject" class="input-field w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-indigo-500 transition" placeholder="Sujet de votre message">
+                    </div>
+                    <div class="mb-6">
+                        <label for="message" class="block text-gray-700 mb-2">Message</label>
+                        <textarea id="message" rows="4" class="input-field w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-indigo-500 transition" placeholder="Votre message"></textarea>
+                    </div>
+                    <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-indigo-700 transition transform hover:scale-105">
+                        <i class="fas fa-paper-plane mr-2"></i> Envoyer
+                    </button>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-4">
+                        <span class="text-white">IZY</span><span class="text-yellow-300">BOOST</span>
+                    </h3>
+                    <p class="text-gray-400">La solution ultime pour booster votre présence en ligne et développer votre business.</p>
+                </div>
+                <div>
+
+                    
+                    <h4 class="font-bold mb-4">Liens utiles</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-400 hover:text-white transition">À propos</a></li>
+                        <li><a href="politique.html" class="text-gray-400 hover:text-white transition">Conditions d'utilisation</a></li>
+                        <li><a href="politique.html" class="text-gray-400 hover:text-white transition">Politique de confidentialité</a></li>
+                        <li><a href="https://wa.me/237676676120" class="text-gray-400 hover:text-white transition">FAQ</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-4">Contact</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li class="flex items-center space-x-2">
+                            <i class="fas fa-envelope"></i>
+                            <span>nelsonsiebi237@gmail.com</span>
+                        </li>
+                        <li class="flex items-center space-x-2">
+                            <i class="fas fa-phone-alt"></i>
+                            <span>+237 676 67 61 20</span>
+                        </li>
+                        <li class="flex items-center space-x-2">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>douala, cameroun</span>
+                        </li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-4">Réseaux sociaux</h4>
+                    <div class="flex space-x-4">
+                        <a href="https://www.facebook.com/profile.php?id=61576570928288" class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center hover:bg-indigo-600 transition">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="https://t.me/astuce237" class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center hover:bg-blue-400 transition">
+                            <i class="fab fa-telegram"></i>
+                        </a>
+                        <a href="https://chat.whatsapp.com/DLmW3OvikCt7TFFiUjEVX2" class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center hover:bg-pink-600 transition">
+                            <i class="fab fa-whatsapp"></i>
+                        </a>
+                        <a href="https://www.youtube.com/@nexkhy" class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center hover:bg-red-600 transition">
+                            <i class="fab fa-youtube"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400">
+                <p>&copy; 2025 nexius ai( IZYBOOST ). Tous droits réservés.</p>
+            </div>
+        </div>
+    </footer>
+  
+<script>
+        // Sidebar toggle
+        const menuBtn = document.getElementById('menu-btn');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+        menuBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            sidebarOverlay.classList.toggle('active');
+        });
+
+        sidebarOverlay.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+        });
+
+        // Boost button animation
+        const boostBtn = document.getElementById('boost-btn');
+        boostBtn.addEventListener('mouseenter', () => {
+            boostBtn.classList.add('animate__pulse');
+        });
+        boostBtn.addEventListener('mouseleave', () => {
+            boostBtn.classList.remove('animate__pulse');
+        });
+
+        // Animate steps on scroll
+        const stepItems = document.querySelectorAll('.step-item');
+        
+        const animateSteps = () => {
+            stepItems.forEach((item, index) => {
+                setTimeout(() => {
+                    if (isElementInViewport(item)) {
+                        item.classList.add('visible');
+                    }
+                }, index * 200);
+            });
+        };
+
+        const isElementInViewport = (el) => {
+            const rect = el.getBoundingClientRect();
+            return (
+                rect.top <= (window.innerHeight || document.documentElement.clientHeight) &&
+                rect.bottom >= 0
+            );
+        };
+
+        window.addEventListener('scroll', animateSteps);
+        window.addEventListener('load', animateSteps);
+
+        // Form submission
+        const contactForm = document.getElementById('contact-form');
+        contactForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            alert('Merci pour votre message! Nous vous contacterons bientôt.');
+            contactForm.reset();
+        });
+    </script>
+
+  <script>
+   document.addEventListener('DOMContentLoaded', function() {
+    // Éléments du DOM
+    const serviceSelect = document.getElementById('service');
+    const linkInput = document.getElementById('link');
+    const quantityInput = document.getElementById('quantity');
+    const submitBtn = document.getElementById('submitBtn');
+    const responseMessage = document.getElementById('responseMessage');
+    const serviceDetails = document.getElementById('serviceDetails');
+    const totalDisplay = document.getElementById('totalDisplay');
+    const totalAmount = document.getElementById('totalAmount');
+    const rateInfo = document.getElementById('rateInfo');
+    const loaderOverlay = document.getElementById('loaderOverlay');
+    const orderForm = document.getElementById('orderForm');
+    const btnText = document.getElementById('btnText');
+    const btnLoading = document.getElementById('btnLoading');
+    
+    // Variables
+    let servicesData = [];
+    const USD_TO_FCFA = 600;
+    let retryCount = 0;
+    const MAX_RETRIES = 3;
+    
+    // Initialisation
+    init();
+    
+    async function init() {
+        showLoader("Chargement des services...");
+        try {
+            await loadServices();
+            setupEventListeners();
+        } catch (error) {
+            showError(`Erreur initiale: ${error.message}`);
+            if (retryCount < MAX_RETRIES) {
+                retryCount++;
+                setTimeout(init, 2000 * retryCount);
+            }
+        } finally {
+            hideLoader();
+        }
+    }
+    
+    function setupEventListeners() {
+        serviceSelect.addEventListener('change', handleServiceChange);
+        quantityInput.addEventListener('input', handleQuantityChange);
+        linkInput.addEventListener('input', validateLink);
+        orderForm.addEventListener('submit', handleFormSubmit);
+    }
+    
+    async function loadServices() {
+        try {
+            const response = await fetch('com.php?action=services', {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Erreur HTTP ${response.status}: ${errorText.substring(0, 100)}`);
+            }
+            
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const text = await response.text();
+                throw new Error(`Réponse non-JSON: ${text.substring(0, 100)}`);
+            }
+            
+            const data = await response.json();
+            
+            if (!data.success) {
+                throw new Error(data.error || "Erreur inconnue du serveur");
+            }
+            
+            if (!data.data || !Array.isArray(data.data.services)) {
+                throw new Error("Format de données invalide");
+            }
+            
+            servicesData = data.data.services;
+            populateServiceSelect(servicesData);
+        } catch (error) {
+            console.error("loadServices error:", error);
+            throw error;
+        }
+    }
+    
+    function populateServiceSelect(services) {
+        serviceSelect.innerHTML = '<option value="" disabled selected>-- Sélectionnez un service --</option>';
+       //${service.name} () 
+        services.forEach(service => {
+            const option = document.createElement('option');
+            option.value = service.service;
+            option.textContent = `${service.name}`;
+            option.dataset.min = service.min;
+            option.dataset.max = service.max;
+            option.dataset.rate = service.rate;
+            serviceSelect.appendChild(option);
+        });
+    }
+    
+    function handleServiceChange() {
+        updateServiceInfo();
+        validateService();
+        calculatePrice();
+    }
+    
+    function handleQuantityChange() {
+        validateQuantity();
+        calculatePrice();
+    }
+    
+    function updateServiceInfo() {
+        const selectedOption = serviceSelect.selectedOptions[0];
+        
+        if (!selectedOption || !selectedOption.value) {
+            serviceDetails.textContent = '';
+            return;
+        }
+        
+        serviceDetails.innerHTML = `
+            <div><i class="fas fa-info-circle me-2"></i>
+                <strong>Min:</strong> ${selectedOption.dataset.min} | 
+                <strong>Max:</strong> ${selectedOption.dataset.max}
+            </div>
+            <div class="mt-1"><i class="fas fa-tag me-2"></i>
+                <strong>Tarif:</strong> ${selectedOption.dataset.rate} / 1000 unités
+            </div>
+        `;
+        
+        quantityInput.min = selectedOption.dataset.min;
+        quantityInput.max = selectedOption.dataset.max;
+    }
+    
+    function validateService() {
+        const errorElement = document.getElementById('service-error');
+        
+        if (!serviceSelect.value) {
+            showErrorField(serviceSelect, errorElement, 'Veuillez sélectionner un service');
+            return false;
+        }
+        
+        hideErrorField(serviceSelect, errorElement);
+        return true;
+    }
+    
+    function validateLink() {
+        const errorElement = document.getElementById('link-error');
+        const link = linkInput.value.trim();
+        
+        if (!link) {
+            hideErrorField(linkInput, errorElement);
+            return false;
+        }
+        
+        try {
+            new URL(link);
+            hideErrorField(linkInput, errorElement);
+            return true;
+        } catch {
+            showErrorField(linkInput, errorElement, 'URL invalide (ex: https://example.com)');
+            return false;
+        }
+    }
+    
+    function validateQuantity() {
+        const errorElement = document.getElementById('quantity-error');
+        const quantity = quantityInput.value.trim();
+        const selectedOption = serviceSelect.selectedOptions[0];
+        
+        if (!quantity) {
+            hideErrorField(quantityInput, errorElement);
+            return false;
+        }
+        
+        const qty = parseInt(quantity);
+        
+        if (isNaN(qty) || qty <= 0) {
+            showErrorField(quantityInput, errorElement, 'Quantité doit être > 0');
+            return false;
+        }
+        
+        if (selectedOption) {
+            const min = parseInt(selectedOption.dataset.min);
+            const max = parseInt(selectedOption.dataset.max);
+            
+            if (qty < min || qty > max) {
+                showErrorField(quantityInput, errorElement, `Doit être entre ${min} et ${max}`);
+                return false;
+            }
+        }
+        
+        hideErrorField(quantityInput, errorElement);
+        return true;
+    }
+    
+    function calculatePrice() {
+        const selectedOption = serviceSelect.selectedOptions[0];
+        const quantity = quantityInput.value.trim();
+        
+        if (!selectedOption || !quantity || !validateQuantity()) {
+            rateInfo.textContent = '0 FCFA';
+            totalDisplay.classList.remove('animate__pulse');
+            return;
+        }
+        
+        const rate = parseFloat(selectedOption.dataset.rate);
+        const qty = parseInt(quantity);
+        const  totalUSD = (qty * rate) / 1000;
+        const totalFCFA = Math.round(totalUSD * USD_TO_FCFA);
+         
+        
+        totalAmount.textContent = `${totalFCFA.toLocaleString()} FCFA`;
+        rateInfo.textContent = `(${totalUSD.toFixed(2)} FCFA)`;
+        totalDisplay.classList.add('animate__pulse');
+    }
+    
+    async function handleFormSubmit(e) {
+        e.preventDefault();
+        
+        if (!validateService() || !validateLink() || !validateQuantity()) {
+            return;
+        }
+        
+        const formData = new FormData(orderForm);
+        formData.append('user_id', 1); // À remplacer par l'ID réel de l'utilisateur
+        
+        showLoader("Traitement de votre commande...");
+        toggleSubmitButton(true);
+        
+        try {
+            const response = await fetch('com.php?action=add', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Erreur HTTP ${response.status}: ${errorText.substring(0, 100)}`);
+            }
+            
+            const data = await response.json();
+            
+            if (!data.success) {
+                throw new Error(data.error || "Erreur inconnue");
+            }
+            
+            showSuccess(`
+                <i class="fas fa-check-circle me-2"></i> Commande réussie!<br>
+                <strong>ID:</strong> ${data.data.order_id}<br>
+                <strong>Montant:</strong> ${data.data.total_fcfa.toLocaleString()} FCFA
+            `);
+            
+            orderForm.reset();
+            totalDisplay.classList.remove('animate__pulse');
+            serviceDetails.textContent = '';
+        } catch (error) {
+            console.error("Submit error:", error);
+            showError(`<i class="fas fa-exclamation-circle me-2"></i> ${error.message}`);
+        } finally {
+            hideLoader();
+            toggleSubmitButton(false);
+        }
+    }
+    
+    // Fonctions utilitaires
+    function showErrorField(input, errorElement, message) {
+        input.classList.add('input-error');
+        errorElement.textContent = message;
+        errorElement.style.display = 'block';
+        errorElement.classList.add('animate__animated', 'animate__fadeIn');
+    }
+    
+    function hideErrorField(input, errorElement) {
+        input.classList.remove('input-error');
+        errorElement.style.display = 'none';
+    }
+    
+    function showLoader(text) {
+        document.getElementById('loaderText').textContent = text;
+        loaderOverlay.classList.add('active');
+    }
+    
+    function hideLoader() {
+        loaderOverlay.classList.remove('active');
+    }
+    
+    function toggleSubmitButton(loading) {
+        if (loading) {
+            btnText.classList.add('d-none');
+            btnLoading.classList.remove('d-none');
+            submitBtn.disabled = true;
+        } else {
+            btnText.classList.remove('d-none');
+            btnLoading.classList.add('d-none');
+            submitBtn.disabled = false;
+        }
+    }
+    
+    function showSuccess(message) {
+        responseMessage.innerHTML = `
+            <div class="alert alert-success animate__animated animate__fadeIn">
+                ${message}
+            </div>
+        `;
+        setTimeout(() => {
+            responseMessage.innerHTML = '';
+        }, 5000);
+    }
+    
+    function showError(message) {
+        responseMessage.innerHTML = `
+            <div class="alert alert-danger animate__animated animate__shakeX">
+                ${message}
+            </div>
+        `;
+    }
+});
+  </script>
+    <script src="verification_modal.js"></script>
+</body>
+</html>

@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paiement Mobile Sécurisé</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <style>
+        :root {
+            --primary: #3498db;
+            --success: #2ecc71;
+            --error: #e74c3c;
+            --warning: #f39c12;
+            --info: #1abc9c;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            width: 100%;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+            position: relative;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #34495e;
+            font-size: 15px;
+        }
+        
+        .input-group {
+            display: flex;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #ddd;
+            transition: all 0.3s;
+        }
+        
+        .input-group:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        
+        .country-select {
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            background-color: #f8f9fa;
+            border-right: 1px solid #ddd;
+            cursor: pointer;
+            position: relative;
+            min-width: 100px;
+        }
+        
+        .country-flag {
+            width: 20px;
+            height: 15px;
+            margin-right: 8px;
+            background-image: url('https://flagcdn.com/cm.svg');
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .country-code {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            font-size: 16px;
+            outline: none;
+        }
+        
+        input:focus {
+            outline: none;
+        }
+        
+        #numero {
+            flex: 1;
+            padding-left: 15px;
+        }
+        
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            transition: all 0.3s;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        button:disabled::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.5);
+        }
+        
+        #payment-status {
+            margin-top: 40px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+            min-height: 150px;
+        }
+        
+        .message {
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            animation: fadeInUp 0.5s;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+        }
+        
+        .progress {
+            background-color: #e3f2fd;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .success {
+            background-color: #e8f5e9;
+            border-left: 4px solid var(--success);
+        }
+        
+        .error {
+            background-color: #ffebee;
+            border-left: 4px solid var(--error);
+        }
+        
+        .warning {
+            background-color: #fff8e1;
+            border-left: 4px solid var(--warning);
+        }
+        
+        .info {
+            background-color: #e8f4f8;
+            border-left: 4px solid var(--info);
+        }
+        
+        .timestamp {
+            color: #7f8c8d;
+            font-size: 12px;
+            margin-right: 15px;
+            min-width: 70px;
+        }
+        
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        
+        #redirect-message {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #fff8e1;
+            border-radius: 8px;
+            border-left: 4px solid var(--warning);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(243, 156, 18, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(243, 156, 18, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(243, 156, 18, 0); }
+        }
+        
+        .action-btn {
+            margin-top: 10px;
+            padding: 10px 15px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+        
+        .action-btn:hover {
+            background-color: #f5f5f5;
+            transform: translateY(-1px);
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        #default-message {
+            text-align: center;
+            color: #7f8c8d;
+            padding: 20px;
+        }
+        
+        .success-animation {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+            animation: bounceIn 1s;
+        }
+        
+        .checkmark {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: inline-block;
+            stroke-width: 3;
+            stroke: #fff;
+            stroke-miterlimit: 10;
+            margin: 20px auto;
+            box-shadow: 0 0 0 rgba(46, 204, 113, 0.4);
+            animation: checkmark-scale 0.7s ease-in-out both;
+        }
+        
+        .checkmark__circle {
+            stroke-dasharray: 166;
+            stroke-dashoffset: 166;
+            stroke-width: 3;
+            stroke-miterlimit: 10;
+            stroke: var(--success);
+            fill: none;
+            animation: checkmark-stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) both;
+        }
+        
+        .checkmark__check {
+            transform-origin: 50% 50%;
+            stroke-dasharray: 48;
+            stroke-dashoffset: 48;
+            animation: checkmark-stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s both;
+        }
+        
+        @keyframes checkmark-stroke {
+            100% { stroke-dashoffset: 0; }
+        }
+        
+        @keyframes checkmark-scale {
+            0%, 100% { transform: none; }
+            50% { transform: scale3d(1.1, 1.1, 1); }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 20px;
+            }
+            
+            h1 {
+                font-size: 24px;
+                margin-bottom: 20px;
+            }
+            
+            .input-group {
+                flex-direction: column;
+                border-radius: 8px;
+            }
+            
+            .country-select {
+                border-right: none;
+                border-bottom: 1px solid #ddd;
+                padding: 10px 15px;
+            }
+            
+            #numero {
+                padding: 14px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="animate__animated animate__fadeIn">Paiement Mobile</h1>
+        
+        <form id="payment-form">
+            <div class="form-group">
+                <label for="numero">Numéro de téléphone</label>
+                <div class="input-group">
+                    <div class="country-select" title="Cameroun (+237)">
+                        <span class="country-flag"></span>
+                        <span class="country-code">+237</span>
+                    </div>
+                    <input type="tel" id="numero" name="numero" placeholder="6XXXXXXXX" required 
+                           pattern="[0-9]{9}" title="9 chiffres sans le préfixe 237">
+                </div>
+                <small style="display: block; margin-top: 5px; color: #7f8c8d;">
+                    Format: 6XXXXXXXX (9 chiffres)
+                </small>
+            </div>
+            
+            <div class="form-group">
+                <label for="amount">Montant (FCFA)</label>
+                <input type="number" id="amount" name="amount" min="100" max="1000000" 
+                       value="1000" required step="100">
+            </div>
+            
+            <div class="form-group">
+                <label for="nom">Votre nom (optionnel)</label>
+                <input type="text" id="nom" name="nom" placeholder="Votre nom">
+            </div>
+            
+            <div class="form-group">
+                <button type="submit" id="submit-btn" class="animate__animated animate__pulse">
+                    <span id="btn-text">Effectuer le paiement</span>
+                    <span id="btn-loader" class="loader" style="display: none;"></span>
+                </button>
+            </div>
+        </form>
+        
+        <div id="payment-status">
+            <p id="default-message">
+                Le statut de votre paiement s'affichera ici...
+            </p>
+            <div class="success-animation" id="success-animation">
+                <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                    <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/>
+                    <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                </svg>
+                <h3 style="color: var(--success); margin-bottom: 10px;">Paiement Réussi!</h3>
+                <p>Votre transaction a été effectuée avec succès.</p>
+            </div>
+        </div>
+        
+        <div id="redirect-message">
+            <p>Redirection automatique vers le suivi dans <span id="redirect-countdown">10</span> secondes...</p>
+            <button id="cancel-redirect" class="action-btn">Annuler la redirection</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Éléments du DOM
+            const paymentForm = document.getElementById('payment-form');
+            const submitBtn = document.getElementById('submit-btn');
+            const btnText = document.getElementById('btn-text');
+            const btnLoader = document.getElementById('btn-loader');
+            const paymentStatus = document.getElementById('payment-status');
+            const defaultMessage = document.getElementById('default-message');
+            const redirectMessage = document.getElementById('redirect-message');
+            const countdownElement = document.getElementById('redirect-countdown');
+            const cancelRedirectBtn = document.getElementById('cancel-redirect');
+            const successAnimation = document.getElementById('success-animation');
+            
+            // Variables d'état
+            let paymentInProgress = false;
+            let eventSource = null;
+            let redirectTimer = null;
+            
+            // Soumission du formulaire
+            paymentForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                if (paymentInProgress) return;
+                
+                // Récupération des données
+                const numero = document.getElementById('numero').value.trim();
+                const amount = document.getElementById('amount').value.trim();
+                const nom = document.getElementById('nom').value.trim() || 'utilisateur';
+                
+                // Validation
+                if (!numero || !/^[0-9]{9}$/.test(numero)) {
+                    showMessage('error', 'Numéro de téléphone invalide. 9 chiffres requis (ex: 677889900)');
+                    return;
+                }
+                
+                if (!amount || amount < 100 || amount > 1000000) {
+                    showMessage('error', 'Le montant doit être entre 100 et 1 000 000 FCFA');
+                    return;
+                }
+                
+                // Formatage du numéro avec le code pays
+                const formattedNumber = '237' + numero;
+                
+                // Démarrer le paiement
+                startPaymentProcess(formattedNumber, amount, nom);
+            });
+            
+            // Fonction pour démarrer le processus de paiement
+            function startPaymentProcess(numero, amount, nom) {
+                // Réinitialiser l'affichage
+                defaultMessage.style.display = 'none';
+                paymentStatus.innerHTML = '';
+                successAnimation.style.display = 'none';
+                paymentInProgress = true;
+                
+                // Mettre à jour le bouton
+                submitBtn.disabled = true;
+                btnText.textContent = 'Traitement en cours...';
+                btnLoader.style.display = 'inline-block';
+                submitBtn.classList.remove('animate__pulse');
+                submitBtn.style.transform = 'none';
+                
+                // Créer la connexion EventSource
+                const params = new URLSearchParams({
+                    numero: numero,
+                    amount: amount,
+                    nom: nom,
+                    user_id: 0 // À remplacer par l'ID utilisateur réel si disponible
+                });
+                
+                eventSource = new EventSource(`a.php?${params.toString()}`);
+                
+                // Gestion des messages
+                eventSource.onmessage = function(e) {
+                    const data = JSON.parse(e.data);
+                    handlePaymentEvent(data);
+                };
+                
+                eventSource.addEventListener('redirect', function(e) {
+                    const data = JSON.parse(e.data);
+                    handleRedirectEvent(data);
+                });
+                
+                eventSource.onerror = function() {
+                    showMessage('error', 'Erreur de connexion au serveur');
+                    endPaymentProcess();
+                };
+            }
+            
+            // Fonction pour gérer les événements de paiement
+            function handlePaymentEvent(data) {
+                showMessage(data.status, data.message, data.data);
+                
+                switch(data.status) {
+                    case 'error':
+                    case 'complete':
+                        endPaymentProcess();
+                        break;
+                }
+            }
+            
+            // Fonction pour gérer la redirection
+            function handleRedirectEvent(data) {
+                if (!data.data?.redirect_url) return;
+                
+                // Afficher l'animation de succès
+                successAnimation.style.display = 'block';
+                
+                const redirectUrl = data.data.redirect_url;
+                let countdown = data.data.countdown || 10;
+                
+                // Afficher le message de redirection après un délai
+                setTimeout(() => {
+                    redirectMessage.style.display = 'block';
+                    countdownElement.textContent = countdown;
+                    
+                    // Démarrer le compte à rebours
+                    redirectTimer = setInterval(() => {
+                        countdown--;
+                        countdownElement.textContent = countdown;
+                        
+                        if (countdown <= 0) {
+                            clearInterval(redirectTimer);
+                            window.location.href = redirectUrl;
+                        }
+                    }, 1000);
+                    
+                    // Gestion de l'annulation
+                    cancelRedirectBtn.onclick = function() {
+                        clearInterval(redirectTimer);
+                        redirectMessage.style.display = 'none';
+                        
+                        showMessage('info', 'Redirection annulée. Vous pouvez accéder au suivi manuellement.', {
+                            action: () => { window.location.href = redirectUrl; },
+                            actionText: 'Accéder au suivi maintenant'
+                        });
+                    };
+                }, 1500); // Délai pour laisser voir l'animation
+            }
+            
+            // Fonction pour terminer le processus
+            function endPaymentProcess() {
+                if (eventSource) {
+                    eventSource.close();
+                    eventSource = null;
+                }
+                
+                paymentInProgress = false;
+                submitBtn.disabled = false;
+                btnText.textContent = 'Effectuer le paiement';
+                btnLoader.style.display = 'none';
+                submitBtn.classList.add('animate__pulse');
+            }
+            
+            // Fonction pour afficher les messages
+            function showMessage(status, text, data = null) {
+                const timestamp = new Date().toLocaleTimeString();
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${status} animate__animated animate__fadeInUp`;
+                
+                let html = `
+                    <span class="timestamp">${timestamp}</span>
+                    <span class="text">${text}</span>
+                `;
+                
+                if (data) {
+                    html += `<div class="data-details" style="margin-top: 8px; font-size: 0.9em; color: #555;">`;
+                    for (const [key, value] of Object.entries(data)) {
+                        html += `<div><strong>${key}:</strong> ${JSON.stringify(value)}</div>`;
+                    }
+                    html += `</div>`;
+                }
+                
+                if (data?.action) {
+                    html += `
+                        <button class="action-btn" style="margin-top: 10px;">
+                            ${data.actionText || 'Continuer'}
+                        </button>
+                    `;
+                }
+                
+                messageDiv.innerHTML = html;
+                
+                if (data?.action) {
+                    messageDiv.querySelector('.action-btn').addEventListener('click', data.action);
+                }
+                
+                paymentStatus.appendChild(messageDiv);
+                messageDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+            
+            // Nettoyage quand la page est quittée
+            window.addEventListener('beforeunload', function() {
+                if (eventSource) eventSource.close();
+                if (redirectTimer) clearInterval(redirectTimer);
+            });
+        });
+    </script>
+</body>
+</html>

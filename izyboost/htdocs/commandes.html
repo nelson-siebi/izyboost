@@ -1,0 +1,189 @@
+
+
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IZYBOOST - Mes Commandes</title>
+    <link rel="stylesheet" href="assets/css/commandes.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+      
+    </style>
+    <script type="module" src="https://richinfo.co/richpartners/push/js/rp-cl-ob.js?pubid=985223&amp;siteid=371220&amp;niche=33" async="" data-cfasync="false"></script>
+
+
+    <!-- Header -->
+    <header class="dashboard-header">
+        <div class="logo">
+        
+            <h1><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">IZYBOOST</font></font></h1>
+            <span class="version"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">v1.0</font></font></span>
+        </div>
+        <div class="user-nav">
+         <div class="accuei">
+            <a href="accueil.php" style="color: white;text-decoration: none;font-size: 20px;"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">accueil</font></font></a>
+         </div>
+            <div class="user-profile">
+                <img src="https://ui-avatars.com/api/?name=John+Doe&amp;background=6c63ff&amp;color=fff" alt="Profil">
+                <span><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">Mon compte</font></font></span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-container">
+        <div class="page-header">
+            <h1 class="page-title"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">Mes commandes</font></font></h1>
+            <button id="refreshBtn" class="refresh-btn">
+                <i class="fas fa-sync-alt"></i><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">
+                Actualiser
+            </font></font></button>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loading-indicator">
+            <div class="spinner"></div>
+            <p><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">Chargement des commandes...</font></font></p>
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-message">
+            <div class="empty-icon">
+                <i class="fas fa-box-open"></i>
+            </div>
+            <h3><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">Aucune commande trouvée</font></font></h3>
+            <p><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">Vous n'avez pas encore passé de commande.</font></font></p>
+            <a href="#" class="btn-primary"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">Passer une commande</font></font></a>
+        </div>
+
+        <!-- Commandes Container -->
+        <div id="commandes-container" class="commandes-container">
+            <!-- Les commandes seront insérées ici dynamiquement -->
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="dashboard-footer">
+        <div class="footer-content">
+            <div class="copyright"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">
+                © 2025 nexius ai. Tous droits réservés.
+            </font></font></div>
+            <div class="footer-links">
+                <a href="#"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">Conditions d'utilisation </font></font></a>
+                <a href="#"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">Politique de confidentialité </font></font></a>
+                <a href="#"><font dir="auto" style="vertical-align: inherit;"><font dir="auto" style="vertical-align: inherit;">Support</font></font></a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const commandesContainer = document.getElementById('commandes-container');
+            const loadingIndicator = document.getElementById('loading-indicator');
+            const emptyMessage = document.getElementById('empty-message');
+            const refreshBtn = document.getElementById('refreshBtn');
+
+            // Charger les commandes au démarrage
+            loadCommandes();
+
+            // Actualiser les commandes
+            refreshBtn.addEventListener('click', loadCommandes);
+
+            async function loadCommandes() {
+                try {
+                    showLoading(true);
+                    showEmptyMessage(false);
+                    commandesContainer.innerHTML = '';
+                    
+                    const response = await fetch('commandes.php');
+                    if (!response.ok) throw new Error('Erreur de chargement');
+                    
+                    const data = await response.json();
+                    
+                    if (!data.success) {
+                        throw new Error(data.message || 'Erreur serveur');
+                    }
+
+                    if (data.count === 0) {
+                        showEmptyMessage(true);
+                        return;
+                    }
+
+                    renderCommandes(data.data);
+                    
+                } catch (error) {
+                    console.error('Erreur:', error);
+                    showError(error.message);
+                } finally {
+                    showLoading(false);
+                }
+            }
+
+            function renderCommandes(commandes) {
+                commandesContainer.innerHTML = '';
+                
+                commandes.forEach(commande => {
+                    const commandeElement = document.createElement('div');
+                    commandeElement.className = 'commande-card';
+                    commandeElement.innerHTML = `
+                        <div class="commande-header">
+                            <span class="commande-id">Commande #IZY-${commande.order_id}</span>
+                            <span class="commande-status ${commande.statut}">${getStatusText(commande.statut)}</span>
+                        </div>
+                        <div class="commande-body">
+                            <div class="commande-info">
+                                <span><strong>Service:</strong> ${getServiceName(commande.service)}</span>
+                                <span><strong>URL:</strong> <a href="${commande.url}" target="_blank">${commande.url}</a></span>
+                            </div>
+                            <div class="commande-meta">
+                                <span><strong>Quantité:</strong> ${commande.quantity}</span>
+                                <span><strong>Total:</strong> ${commande.total} usd</span>
+                                <span><strong>Date:</strong> ${commande.formatted_date}</span>
+                                <span><strong>ID API:</strong> ${commande.api_order_id || 'N/A'}</span>
+                            </div>
+                        </div>
+                    `;
+                    commandesContainer.appendChild(commandeElement);
+                });
+            }
+
+            function getServiceName(serviceId) {
+                // Vous pouvez remplacer ceci par une correspondance réelle avec vos services
+                const services = {
+                    '672': 'Abonnés TikTok',
+                    '673': 'Vues TikTok',
+                    '674': 'Likes Instagram',
+                    '675': 'Abonnés YouTube',
+                    // Ajoutez d'autres services au besoin
+                };
+                return services[serviceId] || `Service #${serviceId}`;
+            }
+
+            function getStatusText(status) {
+                const statusTexts = {
+                    'pending': 'En attente',
+                    'completed': 'Terminé',
+                    'processing': 'En cours',
+                    'cancelled': 'Annulé',
+                    'partial': 'Partiel'
+                };
+                return statusTexts[status.toLowerCase()] || status;
+            }
+
+            function showLoading(show) {
+                loadingIndicator.style.display = show ? 'block' : 'none';
+            }
+
+            function showEmptyMessage(show) {
+                emptyMessage.style.display = show ? 'block' : 'none';
+            }
+
+            function showError(message) {
+                const errorElement = document.createElement('div');
+                errorElement.className = 'error-message';
+                errorElement.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
+                commandesContainer.appendChild(errorElement);
+            }
+        });
+    </script>
+

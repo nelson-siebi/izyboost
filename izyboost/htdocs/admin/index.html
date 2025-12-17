@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - User Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #6366f1;
+            --primary-hover: #4f46e5;
+            --sidebar-bg: #1e293b;
+            --sidebar-hover: #334155;
+            --card-bg: #ffffff;
+            --body-bg: #f8fafc;
+            --text-color: #1e293b;
+            --text-light: #64748b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --offline-color: #94a3b8;
+        }
+
+        * {
+            transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
+        }
+
+        body {
+            background-color: var(--body-bg);
+            font-family: 'Inter', sans-serif;
+            color: var(--text-color);
+            overflow-x: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background-color: var(--sidebar-bg);
+            min-height: 100vh;
+            color: white;
+            box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            width: 250px;
+            z-index: 100;
+            transform: translateX(0);
+        }
+
+        .sidebar-collapsed {
+            transform: translateX(-250px);
+        }
+
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            border-radius: 8px;
+            margin: 0 10px;
+            padding: 10px 15px;
+        }
+
+        .sidebar .nav-link:hover {
+            color: white;
+            background-color: var(--sidebar-hover);
+            transform: translateX(5px);
+        }
+
+        .sidebar .nav-link.active {
+            color: white;
+            background-color: var(--primary-color);
+            box-shadow: 0 4px 6px rgba(99, 102, 241, 0.3);
+        }
+
+        .sidebar .nav-link i {
+            width: 24px;
+            text-align: center;
+        }
+
+        .sidebar-brand {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-brand img {
+            height: 40px;
+            margin-right: 10px;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 30px;
+            margin-left: 250px;
+            width: calc(100% - 250px);
+        }
+
+        .content-collapsed {
+            margin-left: 0;
+            width: 100%;
+        }
+
+        /* Cards */
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            background-color: var(--card-bg);
+            margin-bottom: 25px;
+            overflow: hidden;
+            transform: translateY(0);
+        }
+
+        .card:hover {
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            background-color: transparent;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 20px;
+            font-weight: 600;
+        }
+
+        /* Tables */
+        .table-responsive {
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table th {
+            background-color: #f1f5f9;
+            border-top: none;
+            color: var(--text-light);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+            padding: 12px 20px;
+        }
+
+        .table td {
+            padding: 15px 20px;
+            vertical-align: middle;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .table tr:hover td {
+            background-color: #f8fafc;
+        }
+
+        /* Status badges */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-online {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+        }
+
+        .status-offline {
+            background-color: rgba(148, 163, 184, 0.1);
+            color: var(--offline-color);
+        }
+
+        .status-away {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: var(--warning-color);
+        }
+
+        /* Buttons */
+        .btn {
+            border-radius: 8px;
+            font-weight: 500;
+            padding: 8px 16px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-outline-primary:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 0.8rem;
+        }
+
+        /* Loading */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .spinner {
+            width: 3rem;
+            height: 3rem;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease forwards;
+        }
+
+        .slide-in {
+            animation: slideIn 0.3s ease forwards;
+        }
+
+        /* Modal */
+        .modal-content {
+            border: none;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid #f1f5f9;
+            padding: 20px;
+        }
+
+        .modal-title {
+            font-weight: 600;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .modal-footer {
+            border-top: 1px solid #f1f5f9;
+            padding: 15px 20px;
+        }
+
+        /* Form controls */
+        .form-control, .form-select {
+            border-radius: 8px;
+            padding: 10px 15px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        /* Pagination */
+        .page-item .page-link {
+            border-radius: 8px;
+            margin: 0 3px;
+            border: none;
+            color: var(--text-light);
+        }
+
+        .page-item.active .page-link {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .page-item:not(.active) .page-link:hover {
+            background-color: #f1f5f9;
+            color: var(--primary-color);
+        }
+
+        /* Toggle sidebar button */
+        .sidebar-toggle {
+            position: fixed;
+            left: 10px;
+            top: 10px;
+            z-index: 101;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-toggle.visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-250px);
+            }
+            
+            .sidebar.visible {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+            }
+            
+            .sidebar-toggle {
+                opacity: 1;
+                pointer-events: all;
+            }
+        }
+
+        /* Toast notification */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1100;
+        }
+
+        .toast {
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast-success {
+            background-color: rgba(16, 185, 129, 0.9);
+            color: white;
+        }
+
+        .toast-error {
+            background-color: rgba(239, 68, 68, 0.9);
+            color: white;
+        }
+
+        /* Floating action button */
+        .fab {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            z-index: 99;
+            transition: all 0.3s ease;
+        }
+
+        .fab:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        /* ==================== RESPONSIVE STYLES ==================== */
+@media (max-width: 992px) {
+  /* Sidebar mobile */
+  .sidebar {
+    width: 280px;
+    transform: translateX(-280px);
+    transition: transform 0.3s ease;
+    z-index: 1000;
+  }
+  
+  .sidebar.visible {
+    transform: translateX(0);
+  }
+
+  /* Main content adjustment */
+  .main-content {
+    margin-left: 0;
+    width: 100%;
+    padding: 15px;
+  }
+
+  /* Header mobile */
+  .d-flex.justify-content-between.align-items-center.mb-4 {
+    flex-direction: column;
+    align-items: flex-start !important;
+  }
+
+  /* Search and buttons */
+  .d-flex > .input-group,
+  .d-flex > .btn-group,
+  .d-flex > #refreshBtn {
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  /* Table adjustments */
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    width: 100%;
+    display: block;
+  }
+
+  th, td {
+    min-width: 120px;
+    white-space: nowrap;
+  }
+
+  /* Card adjustments */
+  .card {
+    border-radius: 0;
+    margin-bottom: 15px;
+  }
+
+  /* Modal fullscreen on mobile */
+  .modal-dialog {
+    margin: 0;
+    max-width: 100%;
+    height: 100vh;
+  }
+
+  .modal-content {
+    border-radius: 0;
+    height: 100%;
+    overflow-y: auto;
+  }
+
+  /* Form elements */
+  .form-control, .form-select {
+    font-size: 16px; /* Better for mobile keyboards */
+  }
+}
+
+@media (max-width: 768px) {
+  /* Hide less important columns */
+  td:nth-child(4), /* Numéro */
+  th:nth-child(4),
+  td:nth-child(6), /* Date */
+  th:nth-child(6) {
+    display: none;
+  }
+
+  /* Stack buttons */
+  .btn-group {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .btn-group > .btn {
+    margin: 2px 0;
+    border-radius: 8px !important;
+  }
+
+  /* User info compact */
+  td:nth-child(2) { /* Nom */
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+@media (max-width: 576px) {
+  /* Even more compact */
+  .sidebar {
+    width: 10%;
+  }
+
+  /* Hide status text, keep only icon */
+  .status-badge {
+    padding: 4px;
+    width: 30px;
+    overflow: hidden;
+  }
+
+  .status-badge span.text {
+    display: none;
+  }
+
+  /* Action buttons smaller */
+  .edit-btn, .delete-btn {
+    padding: 3px 5px;
+    font-size: 0.8rem;
+  }
+
+  /* Adjust modal padding */
+  .modal-body {
+    padding: 15px;
+  }
+
+  /* Pagination compact */
+  .pagination .page-item:not(.active):not(:first-child):not(:last-child) {
+    display: none;
+  }
+
+  .pagination .page-item.disabled:not(.prev):not(.next) {
+    display: inline-block;
+  }
+}
+
+/* ==================== MOBILE-SPECIFIC ENHANCEMENTS ==================== */
+/* Touch targets */
+.btn, .nav-link, .page-link {
+  min-height: 44px; /* Apple recommended minimum */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Prevent zoom on input focus */
+@media (max-width: 992px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Mobile menu toggle */
+.sidebar-toggle {
+  display: flex !important;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  color: white;
+  z-index: 1050;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  justify-content: center;
+  align-items: center;
+}
+
+/* Floating action button adjustments */
+.fab {
+  bottom: 80px !important;
+  right: 20px !important;
+}
+
+/* Full-width tables on smallest devices */
+@media (max-width: 400px) {
+  .table-responsive {
+    margin-left: -15px;
+    margin-right: -15px;
+    width: calc(100% + 30px);
+  }
+}
+
+/* ==================== UTILITY CLASSES FOR MOBILE ==================== */
+.mobile-show {
+  display: none !important;
+}
+
+@media (max-width: 992px) {
+  .mobile-hide {
+    display: none !important;
+  }
+  
+  .mobile-show {
+    display: block !important;
+  }
+  
+  .mobile-stack {
+    flex-direction: column !important;
+  }
+  
+  .mobile-full {
+    width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+}
+
+/* ==================== TOUCH FRIENDLY INTERACTIONS ==================== */
+/* Ripple effect for buttons */
+.btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn:after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.5);
+  opacity: 0;
+  border-radius: 100%;
+  transform: scale(1, 1) translate(-50%, -50%);
+  transform-origin: 50% 50%;
+}
+
+.btn:focus:not(:active)::after {
+  animation: ripple 0.6s ease-out;
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0, 0);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(20, 20);
+    opacity: 0;
+  }
+}
+
+/* Prevent double-tap zoom */
+button, a {
+  touch-action: manipulation;
+}
+    </style>
+</head>
+<body>
+    <!-- Password Modal -->
+    <div class="modal fade" id="passwordModal" tabindex="-1" aria-labelledby="passwordModalLabel" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content slide-in">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="passwordModalLabel">Accès Administrateur</h5>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="adminPassword" class="form-label">Mot de passe</label>
+                        <input type="password" class="form-control" id="adminPassword" placeholder="Entrez le mot de passe">
+                    </div>
+                    <div id="passwordError" class="alert alert-danger mb-3" style="display: none;">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i> Mot de passe incorrect
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="submitPassword">
+                        <span class="spinner-border spinner-border-sm me-2" id="passwordSpinner" style="display: none;"></span>
+                        Se connecter
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay">
+        <div class="spinner-border text-light spinner" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container"></div>
+
+    <!-- Floating Action Button -->
+    <div class="fab" id="refreshFab" title="Actualiser">
+        <i class="bi bi-arrow-clockwise" style="font-size: 1.5rem;"></i>
+    </div>
+
+    <!-- Sidebar Toggle Button -->
+    <button class="sidebar-toggle" id="sidebarToggle">
+        <i class="bi bi-list"></i>
+    </button>
+
+    <div class="container-fluid" id="mainContent" style="display: none;">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2 sidebar p-0">
+                <div class="sidebar-brand">
+                    <i class="bi bi-shield-lock-fill" style="font-size: 1.5rem;"></i>
+                    <h4 class="m-0">Admin Panel</h4>
+                </div>
+                <ul class="nav flex-column mt-3">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#">
+                            <i class="bi bi-people-fill me-2"></i> Utilisateurs
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <i class="bi bi-graph-up me-2"></i> Statistiques
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <i class="bi bi-gear-fill me-2"></i> Paramètres
+                        </a>
+                    </li>
+                    <li class="nav-item mt-4">
+                        <a class="nav-link" href="#">
+                            <i class="bi bi-box-arrow-left me-2"></i> Déconnexion
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-10 main-content">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h2 class="mb-1">Gestion des Utilisateurs</h2>
+                        <p class="text-muted m-0" id="userCount">Chargement des utilisateurs...</p>
+                    </div>
+                    <div class="d-flex">
+                        <div class="input-group me-3" style="width: 300px;">
+                            <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                            <input type="text" class="form-control border-start-0" id="searchInput" placeholder="Rechercher...">
+                        </div>
+                        <button class="btn btn-primary" id="refreshBtn">
+                            <i class="bi bi-arrow-clockwise"></i> Actualiser
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card slide-in" style="animation-delay: 0.1s;">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nom</th>
+                                        <th>Email</th>
+                                        <th>Numéro</th>
+                                        <th>Solde</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersTableBody">
+                                    <!-- Users will be loaded here -->
+                                    <tr>
+                                        <td colspan="8" class="text-center py-5">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <nav aria-label="Page navigation" class="px-4 pb-3">
+                            <ul class="pagination justify-content-center m-0" id="pagination">
+                                <!-- Pagination will be loaded here -->
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content slide-in">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editUserModalLabel">Modifier Utilisateur</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editUserForm">
+                        <input type="hidden" id="editUserId">
+                        <div class="mb-3">
+                            <label for="editNom" class="form-label">Nom</label>
+                            <input type="text" class="form-control" id="editNom" disabled>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="editEmail">
+                        </div>
+                        <div class="mb-3">
+                            <label for="editNumero" class="form-label">Numéro</label>
+                            <input type="text" class="form-control" id="editNumero" disabled>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editSolde" class="form-label">Solde</label>
+                            <input type="number" step="0.01" class="form-control" id="editSolde">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-primary" id="saveChangesBtn">
+                        <span class="spinner-border spinner-border-sm me-2" id="saveSpinner" style="display: none;"></span>
+                        Enregistrer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+  $(document).ready(function() {
+    // Configuration
+    const API_URL = 'admin_api.php';
+    const TOKEN = 'your-secure-token'; // À changer en production
+    const REFRESH_INTERVAL = 30000; // 30 secondes
+
+    // Variables globales
+    let currentPage = 1;
+    const usersPerPage = 10;
+    let allUsers = [];
+    let filteredUsers = [];
+    let refreshInterval;
+
+    // Initialisation
+    init();
+
+    function init() {
+        setupPasswordProtection();
+        setupEventListeners();
+        setupEmailModal();
+        
+        if ($('#mainContent').is(':visible')) {
+            loadUsers();
+        }
+    }
+
+    function setupPasswordProtection() {
+        const passwordModal = new bootstrap.Modal('#passwordModal', { backdrop: 'static' });
+        passwordModal.show();
+
+        $('#submitPassword').click(validatePassword);
+        $('#adminPassword').keypress(function(e) {
+            if (e.which === 13) validatePassword();
+        });
+    }
+
+    function validatePassword() {
+        const password = $('#adminPassword').val();
+        if (password === 'nexky237') { // À changer en production
+            $('#passwordModal').modal('hide');
+            $('#mainContent').fadeIn();
+            loadUsers();
+        } else {
+            $('#passwordError').fadeIn().delay(2000).fadeOut();
+            $('#adminPassword').val('').focus();
+        }
+    }
+
+    function setupEventListeners() {
+        $('#searchInput').on('input', debounce(searchUsers, 300));
+        $('#filterAll').click(() => filterUsers('all'));
+        $('#filterOnline').click(() => filterUsers('online'));
+        $('#filterOffline').click(() => filterUsers('offline'));
+        $('#refreshBtn, #refreshFab').click(refreshData);
+        $('#saveChangesBtn').click(saveUserChanges);
+        $('#sidebarToggle').click(() => $('.sidebar').toggleClass('visible'));
+    }
+
+    function loadUsers() {
+        showLoading();
+        
+        $.ajax({
+            url: API_URL,
+            type: 'GET',
+            data: { 
+                action: 'get_users',
+                token: TOKEN
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    processUserData(response.users);
+                    setupAutoRefresh();
+                } else {
+                    showToast('Erreur: ' + response.message, 'error');
+                }
+                hideLoading();
+            },
+            error: function(xhr) {
+                showToast('Erreur de connexion', 'error');
+                hideLoading();
+                setTimeout(loadUsers, 5000);
+            }
+        });
+    }
+
+    function processUserData(users) {
+        allUsers = users.map(user => ({
+            ...user,
+            date: new Date(user.date),
+            status: calculateUserStatus(user.last_activity)
+        }));
+        
+        filteredUsers = [...allUsers];
+        updateUserCount();
+        displayUsers(currentPage);
+        setupPagination();
+    }
+
+    function calculateUserStatus(lastActivity) {
+        if (!lastActivity) return 'offline';
+        
+        const now = new Date();
+        const lastActive = new Date(lastActivity);
+        const minutes = (now - lastActive) / (1000 * 60);
+        
+        if (minutes < 5) return 'online';
+        if (minutes < 15) return 'away';
+        return 'offline';
+    }
+
+    function setupAutoRefresh() {
+        clearInterval(refreshInterval);
+        refreshInterval = setInterval(loadUsers, REFRESH_INTERVAL);
+    }
+
+    function displayUsers(page) {
+        const startIndex = (page - 1) * usersPerPage;
+        const endIndex = startIndex + usersPerPage;
+        const usersToDisplay = filteredUsers.slice(startIndex, endIndex);
+
+        const tableBody = $('#usersTableBody');
+        tableBody.empty();
+
+        if (usersToDisplay.length === 0) {
+            tableBody.append('<tr><td colspan="8" class="text-center py-5">Aucun utilisateur trouvé</td></tr>');
+            return;
+        }
+
+        usersToDisplay.forEach((user, index) => {
+            const statusClass = `status-${user.status}`;
+            const statusText = user.status === 'online' ? 'En ligne' : 
+                             user.status === 'away' ? 'Absent' : 'Hors ligne';
+
+            const row = `
+                <tr class="fade-in" style="animation-delay: ${index * 0.05}s">
+                    <td>${user.id}</td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="me-2 user-avatar">
+                                <i class="bi bi-person-fill"></i>
+                            </div>
+                            ${user.nom}
+                        </div>
+                    </td>
+                    <td>${user.email}</td>
+                    <td class="mobile-hide">${user.numero}</td>
+                    <td class="fw-bold">${user.solde.toFixed(2)} FCFA</td>
+                    <td class="mobile-hide">${user.date.toLocaleDateString('fr-FR')}</td>
+                    <td>
+                        <span class="status-badge ${statusClass}">
+                            <i class="bi ${getStatusIcon(user.status)}"></i>
+                            <span class="status-text">${statusText}</span>
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary edit-btn me-1" data-id="${user.id}">
+                            <i class="bi bi-pencil-fill"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-info email-btn" data-id="${user.id}" title="Envoyer un email">
+                            <i class="bi bi-envelope-fill"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            tableBody.append(row);
+        });
+
+        $('.edit-btn').click(function() {
+            editUser($(this).data('id'));
+        });
+
+        $('.email-btn').click(function() {
+            const userId = $(this).data('id');
+            const user = allUsers.find(u => u.id == userId);
+            $('#emailUserId').val(user.id);
+            $('#emailRecipient').text(`${user.nom} (${user.email})`);
+            $('#emailSubject').val('Notification importante - izyboost');
+            $('#emailMessage').val('');
+            $('#emailModal').modal('show');
+        });
+    }
+
+    function getStatusIcon(status) {
+        return {
+            'online': 'bi-circle-fill',
+            'away': 'bi-clock-history',
+            'offline': 'bi-circle'
+        }[status] || 'bi-circle';
+    }
+
+    function setupPagination() {
+        const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+        const pagination = $('#pagination');
+        pagination.empty();
+
+        if (totalPages <= 1) return;
+
+        // Previous
+        pagination.append(`
+            <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="#" id="prevPage">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </li>
+        `);
+
+        // Pages
+        const startPage = Math.max(1, currentPage - 2);
+        const endPage = Math.min(totalPages, currentPage + 2);
+
+        if (startPage > 1) {
+            pagination.append('<li class="page-item"><a class="page-link" href="#" data-page="1">1</a></li>');
+            if (startPage > 2) pagination.append('<li class="page-item disabled"><span class="page-link">...</span></li>');
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            pagination.append(`
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link page-number" href="#" data-page="${i}">${i}</a>
+                </li>
+            `);
+        }
+
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) pagination.append('<li class="page-item disabled"><span class="page-link">...</span></li>');
+            pagination.append(`<li class="page-item"><a class="page-link" href="#" data-page="${totalPages}">${totalPages}</a></li>`);
+        }
+
+        // Next
+        pagination.append(`
+            <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                <a class="page-link" href="#" id="nextPage">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+        `);
+
+        // Events
+        $('.page-number').click(function(e) {
+            e.preventDefault();
+            currentPage = parseInt($(this).data('page'));
+            displayUsers(currentPage);
+            scrollToTop();
+        });
+
+        $('#prevPage').click(function(e) {
+            e.preventDefault();
+            if (currentPage > 1) {
+                currentPage--;
+                displayUsers(currentPage);
+                scrollToTop();
+            }
+        });
+
+        $('#nextPage').click(function(e) {
+            e.preventDefault();
+            if (currentPage < totalPages) {
+                currentPage++;
+                displayUsers(currentPage);
+                scrollToTop();
+            }
+        });
+    }
+
+    function scrollToTop() {
+        $('html, body').animate({ scrollTop: 0 }, 'fast');
+    }
+
+    function searchUsers() {
+        const term = $('#searchInput').val().toLowerCase();
+        
+        filteredUsers = term ? allUsers.filter(user => 
+            user.nom.toLowerCase().includes(term) ||
+            user.email.toLowerCase().includes(term) ||
+            user.numero.toString().includes(term)
+        ) : [...allUsers];
+        
+        currentPage = 1;
+        updateUserCount();
+        displayUsers(currentPage);
+        setupPagination();
+    }
+
+    function filterUsers(type) {
+        $(`#filter${type.charAt(0).toUpperCase() + type.slice(1)}`).addClass('active')
+            .siblings().removeClass('active');
+            
+        filteredUsers = type === 'all' ? [...allUsers] : 
+                      allUsers.filter(user => user.status === type);
+        
+        currentPage = 1;
+        updateUserCount();
+        displayUsers(currentPage);
+        setupPagination();
+    }
+
+    function updateUserCount() {
+        const count = filteredUsers.length;
+        $('#userCount').text(`${count} utilisateur${count !== 1 ? 's' : ''}`);
+    }
+
+    function editUser(userId) {
+        const user = allUsers.find(u => u.id == userId);
+        if (!user) return;
+
+        $('#editUserId').val(user.id);
+        $('#editNom').val(user.nom);
+        $('#editEmail').val(user.email);
+        $('#editNumero').val(user.numero);
+        $('#editSolde').val(user.solde);
+
+        new bootstrap.Modal('#editUserModal').show();
+    }
+
+    function saveUserChanges() {
+        const userId = $('#editUserId').val();
+        const email = $('#editEmail').val();
+        const solde = parseFloat($('#editSolde').val());
+
+        if (isNaN(solde)) {
+            showToast('Le solde doit être un nombre valide', 'error');
+            return;
+        }
+
+        showLoading();
+        $('#saveSpinner').show();
+        $('#saveChangesBtn').prop('disabled', true);
+        
+        $.ajax({
+            url: API_URL,
+            type: 'POST',
+            data: { 
+                action: 'update_user',
+                id: userId,
+                email: email,
+                solde: solde,
+                token: TOKEN
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    updateLocalUser(userId, email, solde);
+                    showToast('Utilisateur mis à jour', 'success');
+                    $('#editUserModal').modal('hide');
+                } else {
+                    showToast('Erreur: ' + response.message, 'error');
+                }
+                $('#saveSpinner').hide();
+                $('#saveChangesBtn').prop('disabled', false);
+                hideLoading();
+            },
+            error: function() {
+                showToast('Erreur réseau', 'error');
+                $('#saveSpinner').hide();
+                $('#saveChangesBtn').prop('disabled', false);
+                hideLoading();
+            }
+        });
+    }
+
+    function updateLocalUser(id, email, solde) {
+        const userIndex = allUsers.findIndex(u => u.id == id);
+        if (userIndex !== -1) {
+            allUsers[userIndex].email = email;
+            allUsers[userIndex].solde = solde;
+        }
+        
+        const filteredIndex = filteredUsers.findIndex(u => u.id == id);
+        if (filteredIndex !== -1) {
+            filteredUsers[filteredIndex].email = email;
+            filteredUsers[filteredIndex].solde = solde;
+        }
+        
+        displayUsers(currentPage);
+    }
+
+    function setupEmailModal() {
+        const emailModalHTML = `
+        <div class="modal fade" id="emailModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">Envoyer un email</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="emailForm">
+                            <input type="hidden" id="emailUserId">
+                            <div class="mb-3">
+                                <label class="form-label">Destinataire</label>
+                                <p id="emailRecipient" class="form-control-static fw-bold"></p>
+                            </div>
+                            <div class="mb-3">
+                                <label for="emailSubject" class="form-label">Sujet</label>
+                                <input type="text" class="form-control" id="emailSubject" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="emailMessage" class="form-label">Message</label>
+                                <textarea class="form-control" id="emailMessage" rows="8" required></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="button" class="btn btn-primary" id="sendEmailBtn">
+                            <span class="spinner-border spinner-border-sm me-2" id="emailSpinner" style="display:none;"></span>
+                            Envoyer l'email
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        `;
+        
+        $('body').append(emailModalHTML);
+        
+        $('#sendEmailBtn').click(function() {
+            const userId = $('#emailUserId').val();
+            const subject = $('#emailSubject').val();
+            const message = $('#emailMessage').val();
+            
+            if (!subject || !message) {
+                showToast('Veuillez remplir tous les champs', 'error');
+                return;
+            }
+            
+            sendEmailToUser(userId, subject, message);
+        });
+    }
+
+    function sendEmailToUser(userId, subject, message) {
+        $('#emailSpinner').show();
+        $('#sendEmailBtn').prop('disabled', true);
+        
+        $.ajax({
+            url: API_URL,
+            type: 'POST',
+            data: { 
+                action: 'send_email',
+                user_id: userId,
+                subject: subject,
+                message: message,
+                token: TOKEN
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    showToast('Email envoyé avec succès', 'success');
+                    $('#emailModal').modal('hide');
+                } else {
+                    showToast('Erreur: ' + response.message, 'error');
+                }
+                $('#emailSpinner').hide();
+                $('#sendEmailBtn').prop('disabled', false);
+            },
+            error: function() {
+                showToast('Erreur réseau', 'error');
+                $('#emailSpinner').hide();
+                $('#sendEmailBtn').prop('disabled', false);
+            }
+        });
+    }
+
+    function refreshData() {
+        $(this).find('i').addClass('spin-animation');
+        loadUsers();
+        setTimeout(() => $(this).find('i').removeClass('spin-animation'), 1000);
+    }
+
+    function debounce(func, wait) {
+        let timeout;
+        return function() {
+            const context = this, args = arguments;
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(context, args), wait);
+        };
+    }
+
+    function showToast(message, type) {
+        const toast = $(`
+            <div class="toast toast-${type} align-items-center" role="alert">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="bi ${type === 'success' ? 'bi-check-circle' : 'bi-exclamation-triangle'} me-2"></i>
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `);
+        
+        $('.toast-container').append(toast);
+        const bsToast = new bootstrap.Toast(toast[0]);
+        toast.addClass('show');
+        
+        setTimeout(() => {
+            bsToast.hide();
+            setTimeout(() => toast.remove(), 150);
+        }, 3000);
+    }
+
+    function showLoading() {
+        $('.loading-overlay').addClass('active');
+    }
+
+    function hideLoading() {
+        $('.loading-overlay').removeClass('active');
+    }
+
+    function checkResponsive() {
+        if ($(window).width() <= 992) {
+            $('.sidebar').removeClass('visible');
+            $('#sidebarToggle').addClass('visible');
+        } else {
+            $('.sidebar').addClass('visible');
+            $('#sidebarToggle').removeClass('visible');
+        }
+    }
+
+    // Initial check
+    checkResponsive();
+    $(window).resize(checkResponsive);
+});
+    </script>
+</body>
+</html>

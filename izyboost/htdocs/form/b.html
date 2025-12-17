@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suivi de Paiement</title>
+    <style>
+        :root {
+            --primary: #3498db;
+            --success: #2ecc71;
+            --error: #e74c3c;
+            --warning: #f39c12;
+            --info: #1abc9c;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 500px;
+            padding: 30px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .status-container {
+            margin: 30px 0;
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .status-message {
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            border-left: 4px solid var(--primary);
+            background-color: #f8f9fa;
+            animation: fadeIn 0.3s;
+        }
+        
+        .status-message.success {
+            border-left-color: var(--success);
+            background-color: #e8f5e9;
+        }
+        
+        .status-message.error {
+            border-left-color: var(--error);
+            background-color: #ffebee;
+        }
+        
+        .status-message.warning {
+            border-left-color: var(--warning);
+            background-color: #fff8e1;
+        }
+        
+        .timestamp {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .loader {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        .action-btn {
+            margin-top: 10px;
+            padding: 8px 15px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .action-btn:hover {
+            background-color: #f5f5f5;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>finalisation de Transaction</h1>
+        <div class="loader" id="loader"></div>
+        
+        <div class="status-container" id="statusContainer">
+            <div class="status-message info">
+                <span class="timestamp" id="initialTimestamp"></span>
+                <span>connexion en cour...</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Afficher l'heure actuelle
+        document.getElementById('initialTimestamp').textContent = new Date().toLocaleTimeString();
+        
+        // Récupérer l'ID de transaction depuis l'URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const transactionId = urlParams.get('transaction_id');
+        
+        if (!transactionId) {
+            showMessage('error', 'ID de transaction manquant dans l\'URL');
+            document.getElementById('loader').style.display = 'none';
+        } else {
+            startPaymentTracking(transactionId);
+        }
+        
+        function startPaymentTracking(transactionId) {
+            const eventSource = new EventSource(`b.php?transaction_id=${transactionId}`);
+            const statusContainer = document.getElementById('statusContainer');
+            const loader = document.getElementById('loader');
+            
+            eventSource.onmessage = function(e) {
+                const data = JSON.parse(e.data);
+                
+                // Créer le message
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `status-message ${data.status}`;
+                
+                let html = `
+                    <span class="timestamp">${new Date(data.timestamp * 1000).toLocaleTimeString()}</span>
+                    <p>${data.message}</p>
+                `;
+                
+                // Ajouter les données si elles existent
+                if (data.data) {
+                    html += `<div style="margin-top: 10px; font-size: 0.9em;">`;
+                    
+                    if (data.data.status) {
+                        html += `<p><strong>Statut:</strong> ${data.data.status}</p>`;
+                    }
+                    
+                    if (data.data.details) {
+                        html += `<pre style="overflow-x: auto; background: rgba(0,0,0,0.05); padding: 10px; border-radius: 3px; font-size: 0.8em;">${JSON.stringify(data.data.details, null, 2)}</pre>`;
+                    }
+                    
+                    html += `</div>`;
+                }
+                
+                // Bouton d'action pour les succès
+                if (data.status === 'success') {
+                    html += `
+                        <button class="action-btn" onclick="window.location.href='../accueil.php?transaction_id=${transactionId}'">
+                            Voir la confirmation
+                        </button>
+                    `;
+                }
+                
+                messageDiv.innerHTML = html;
+                statusContainer.appendChild(messageDiv);
+                messageDiv.scrollIntoView({ behavior: 'smooth' });
+                
+                // Masquer le loader quand le processus est terminé
+                if (['success', 'error', 'complete', 'timeout'].includes(data.status)) {
+                    loader.style.display = 'none';
+                    
+                    // Fermer la connexion SSE
+                    if (data.status !== 'progress') {
+                        eventSource.close();
+                    }
+                }
+            };
+            
+            eventSource.onerror = function() {
+                showMessage('error', 'Connexion au serveur interrompue');
+                loader.style.display = 'none';
+                eventSource.close();
+            };
+        }
+        
+        function showMessage(type, message) {
+            const container = document.getElementById('statusContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `status-message ${type}`;
+            messageDiv.innerHTML = `
+                <span class="timestamp">${new Date().toLocaleTimeString()}</span>
+                <p>${message}</p>
+            `;
+            container.appendChild(messageDiv);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+@keyframes tourner {
+    0%{
+        transform: rotate(0deg);
+    }
+    100%{
+        transform: rotate(360deg);
+    }
+}
+
+.anim{
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border-bottom: solid;
+    border-color: rgb(255, 255, 255);
+    border-bottom-color: blue;
+    animation: tourner 1s linear infinite;
+}
+
+
+form
+{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    border: solid;
+}
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 30vh;
+}
+.option{
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+}
+.option input{
+    outline: none;
+    width: 200px;
+    height: 30px;
+   
+    border: solid;
+    border-color: rgb(255, 255, 255);
+    border-bottom-color: blue;
+    background-color: transparent;
+}
+.option input:focus{
+    border-color: blue;
+    transition: all 0.3s ease-in-out;
+    border-radius: 5px;
+}
+.option button{
+    font-size: 15px;
+    padding: 20px;
+    width: 250px;
+    /* height: 30px; */
+    border: solid;
+    border-color: blue;
+    color: white;
+    border-radius: 10px;
+   color: blue;
+    cursor: pointer;
+}
+.option button:hover{
+    background-color: blue;
+    color: white;
+    transition: all 0.3s ease-in-out;
+}
+.option button:active{
+    background-color: white;
+    color: blue;
+    transition: all 0.3s ease-in-out;
+}

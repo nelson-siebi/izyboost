@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recharge via Fapshi</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        button {
+            background-color: #6e45e2;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #4a2dbf;
+        }
+        
+        #paymentStatus {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        #processingPayment {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Recharge de compte</h1>
+    
+    <form id="rechargeForm">
+        <div class="form-group">
+            <label for="name">Nom complet</label>
+            <input type="text" id="name" required placeholder="Votre nom complet">
+        </div>
+        
+        <div class="form-group">
+            <label for="phone">Numéro de téléphone</label>
+            <input type="tel" id="phone" required placeholder="Votre numéro Orange Money">
+        </div>
+        
+        <div class="form-group">
+            <label for="amount">Montant (FCFA)</label>
+            <input type="number" id="amount" required placeholder="Montant à recharger" min="100">
+        </div>
+        
+        <div class="form-group">
+            <label for="operator">Opérateur</label>
+            <select id="operator" required>
+                <option value="">Sélectionnez un opérateur</option>
+                <option value="orange">Orange Money</option>
+                <option value="mtn">MTN Mobile Money</option>
+                <option value="moov">Moov Money</option>
+            </select>
+        </div>
+        
+        <button type="submit">Valider la recharge</button>
+    </form>
+    
+    <div id="processingPayment">
+        <p>Traitement du paiement en cours...</p>
+        <div class="spinner"></div>
+    </div>
+    
+    <div id="paymentStatus"></div>
+    
+    <script >
+   document.getElementById('rechargeForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    // Récupération des données du formulaire
+    const formData = {
+        name: document.getElementById('name').value.trim(),
+        phone: document.getElementById('phone').value.trim(),
+        amount: document.getElementById('amount').value,
+        operator: document.getElementById('operator').value
+    };
+
+    // Validation côté client
+    if (!validateForm(formData)) {
+        return;
+    }
+
+    try {
+        // Désactiver le bouton pendant le traitement
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Redirection vers le paiement...';
+
+        // Préparation des données pour l'API
+        const paymentData = {
+            amount: parseInt(formData.amount),
+            redirectUrl: window.location.origin + '/payment-callback.php',
+            message: `Recharge ${formData.operator} pour ${formData.name} (${formData.phone})`
+        };
+
+        // Appel à notre API backend
+        const response = await fetch('/api/initiate-payment.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(paymentData)
+        });
+
+        const result = await response.json();
+
+        if (result.success && result.paymentUrl) {
+            // Redirection vers le lien de paiement Fashi
+            window.location.href = result.paymentUrl;
+        } else {
+            alert(result.error || 'Erreur lors de la création du paiement');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Valider la recharge';
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        alert('Une erreur est survenue lors de la communication avec le serveur');
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Valider la recharge';
+    }
+});
+
+function validateForm(formData) {
+    if (!formData.name || formData.name.length < 3) {
+        alert('Veuillez entrer un nom valide');
+        return false;
+    }
+
+    if (!formData.phone || !/^[0-9]{9,15}$/.test(formData.phone)) {
+        alert('Veuillez entrer un numéro de téléphone valide');
+        return false;
+    }
+
+    if (!formData.amount || formData.amount < 100) {
+        alert('Le montant minimum est de 100 FCFA');
+        return false;
+    }
+
+    if (!formData.operator) {
+        alert('Veuillez sélectionner un opérateur');
+        return false;
+    }
+
+    return true;
+}
+    </script>
+</body>
+</html>

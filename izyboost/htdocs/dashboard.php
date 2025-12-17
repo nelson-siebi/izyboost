@@ -1,0 +1,476 @@
+
+<?php include 'tracker.php'; ?>
+
+<?php
+
+session_start();
+require 'db.php';
+ // contient la connexion PDO : $pdo
+
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit;
+}
+
+$user_id = $_SESSION['user_id'];
+// echo$_SESSION['user_id'];
+// Requête pour récupérer les infos de l'utilisateur (dont le solde)
+$stmt = $pdo->prepare("SELECT nom, email, solde FROM users WHERE id = ?");
+$stmt->execute([$user_id]);
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$user) {
+    echo "Utilisateur non trouvé.";
+    exit;
+}
+    $page = $_SERVER['REQUEST_URI'];
+$today = date('Y-m-d');
+   $user_Id = $_SESSION['user_id'];
+    $now = date('Y-m-d H:i:s');
+    
+    $stmt = $pdo->prepare("INSERT INTO visites_utilisateurs (page, utilisateur_id, date_visite) VALUES (?, ?, ?)");
+    $stmt->execute([$page, $user_Id, $now]);
+
+?>
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IZYBOOST - Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+   <link rel="stylesheet" href="assets/css/accueil.css"><script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(async function(OneSignal) {
+    await OneSignal.init({
+      appId: "01825c9d-e61b-4867-b778-ad8a36c80157",
+    });
+  });
+</script>
+</head>
+<body>
+    <!-- Effet de particules -->
+    <div class="particles" id="particles"></div>
+
+    <!-- Menu Hamburger -->
+    <div class="menu-toggle">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+          <h2 style="font-size: 20px;">IZYBOOST</h2>
+            <p>Boostez votre visibilité</p>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <ul>
+                <li class="active">
+                    <a href="#">
+                        <i class="fas fa-home"></i>
+                        <span>Tableau de bord</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="index.php">
+                        <i class="fas fa-rocket"></i>
+                        <span>Autres Services</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="commandes.html">
+                        <i class="fas fa-history"></i>
+                        <span>Historique</span>
+                    </a>
+                </li>
+                 <li>
+                    <a href="nexius.php">
+                        <i class="fas fa-question-circle"></i>
+                        <span>NEXIUS AI</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://wa.me/237676676120">
+                        <i class="fas fa-question-circle"></i>
+                        <span>Aide & Support</span>
+                    </a>
+                </li>
+                 <li>
+                    <a href="https://t.me/astuce237">
+                        <i class="fas fa-telegram"></i>
+                        <span>communaute telegram</span>
+                    </a>
+                </li>
+                      <li>
+                    <a href="https://www.youtube.com/@nexkhy">
+                        <i class="fas fa-youtube"></i>
+                        <span>page youtube</span>
+                    </a>
+                </li>
+                 <li>
+                    <a href="https://chat.whatsapp.com/DLmW3OvikCt7TFFiUjEVX2">
+                        <i class="fas fa-whatsapp"></i>
+                        <span>groupe whatsapp</span>
+                    </a>
+                </li>
+                 <li>
+                    <a href="https://www.facebook.com/profile.php?id=61576570928288">
+                        <i class="fas fa-facebook"></i>
+                        <span>page facebook</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <a href="deconnexion.php" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Déconnexion</span>
+            </a>
+        </div>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <!-- Top Navigation -->
+        <header class="top-nav">
+         
+            <div class="search-bar" style="margin-left: 55PX;">
+                   <div class="site">
+                <b>IZYBOOST</b>
+            </div>
+                <i class="fas fa-search"></i>
+                <input type="text" class="search" placeholder="Rechercher...">
+            </div>
+            
+            <div class="user-profile">
+
+                <div class="theme-toggle">
+        <i class="fas fa-moon"></i> <!-- Icône lune par défaut (mode sombre actif) -->
+    </div>
+
+    
+
+                <div class="notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-count">0</span>
+                </div>
+                <div class="user-info" id="prof">
+                   <i class="fas fa-user-circle"></i>
+                    <span>Profil</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+        </header>
+   
+        
+        <!-- Dashboard Content -->
+        <div class="content-wrapper">
+            <div class="welcome-banner">
+                <div class="welcome-text">
+                    <h1>Bienvenue, <span><?= htmlspecialchars($user['nom']) ?></span> !</h1>
+                    <p>Boostez votre visibilité sur les réseaux sociaux en quelques clics</p>
+                </div>
+                <div class="balance-card">
+                    <div class="balance-info">
+                        <span>Solde disponible</span>
+                        <h2><?= htmlspecialchars($user['solde']) ?><small>FCFA</small></h2>
+                    </div>
+                    <a href="recharge.html">
+                    <button class="btn-recharge" >Recharger</button></a>
+                </div>
+            </div>
+            
+            <div class="boost-form-container">
+                <h2 class="form-title">Boostez votre visibilité</h2>
+                
+                <form id="boostForm" class="boost-form">
+                    <div class="form-group">
+                        <label for="service">Service</label>
+                        <select id="serviceList" name="service" class="form-control" required>
+                            <option value="">Chargement des services...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quantity">Quantité</label>
+                        <div class="quantity-info">
+                            <span class="min">Min: <span id="minQty">0</span></span>
+                            <span class="max">Max: <span id="maxQty">0</span></span>
+                            <span class="price">Prix unitaire: <span id="unitPrice">0</span> FCFA</span>
+                        </div>
+                        <input type="number" id="quantity" name="quantity" class="form-control" min="0" required disabled>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="url">Lien du compte/vidéo</label>
+                        <input type="url" id="url" name="url" class="form-control" placeholder="https://..." required disabled>
+                    </div>
+
+                    <div class="total-section">
+                        <div class="total-label">Total à payer:</div>
+                        <div class="total-amount" id="totalPrice">0.00</div>
+                        <div class="total-amount">XAF</div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-boost" id="btn-boost">
+                            <i class="fas fa-rocket"></i>LANCER LE BOOST
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="recent-orders">
+                <div class="section-header">
+                    <h2 class="section-title">Commandes récentes</h2>
+                    <a href="commandes.html" class="view-all">Voir tout <i class="fas fa-arrow-right"></i></a>
+                </div>
+                
+                <div class="orders-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID Commande</th>
+                                <th>Service</th>
+                                <th>Quantité</th>
+                                <th>Prix</th>
+                                <th>Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Les commandes seront ajoutées dynamiquement -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>À propos de nous</h3>
+                <p>IZYBOOST est votre partenaire pour booster votre visibilité sur les réseaux sociaux.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Liens utiles</h3>
+                <ul>
+                    <li><a href="politique.html">Politique de confidentialité</a></li>
+                    <li><a href="politique.html">Conditions d'utilisation</a></li>
+                    <li><a href="https://wa.me/237676676120">Aide & Support</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Contactez-nous</h3>
+                <p>Email: <a href="mailto:nelsonsiebi237@gmail.com">nelsonsiebi237@gmail.com</a></p>
+                <p>Téléphone: <a href="tel:+237676676120">+237 676 676 120</a></p>
+            </div>
+            <div class="footer-section">
+                <h3>Suivez-nous</h3>
+                <div class="social-icons">
+                    <a href="https://www.facebook.com/profile.php?id=61576570928288"><i class="fab fa-facebook-f"></i></a>
+                    <a href="https://www.youtube.com/@nexkhy"><i class="fab fa-youtube"></i></a>
+                    <a href="https://t.me/astuce237"><i class="fab fa-telegram"></i></a>
+                    <a href="https://chat.whatsapp.com/DLmW3OvikCt7TFFiUjEVX2"><i class="fab fa-whatsapp"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 IZYBOOST. Tous droits réservés.</p>
+            <p>Développé par <a href="nexius.php">NEXIUS AI</a></p>
+        </div>
+    </footer>
+
+    <!-- Popups -->
+    <div class="notification-popup">
+        <div class="popup-content">
+            <i class="fas fa-info-circle"></i>
+            <span id="notificationMessage">Notification message</span>
+            <button class="close-popup"><i class="fas fa-times"></i></button>
+        </div>
+    </div>
+    <div class="error-popup">
+        <div class="popup-content">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span id="errorMessage">Une erreur s'est produite</span>
+            <button class="close-popup"><i class="fas fa-times"></i></button>
+        </div>
+    </div>
+    <div class="success-popup">
+        <div class="popup-content">
+            <i class="fas fa-check-circle"></i>
+            <span id="successMessage">Succès !</span>
+            <button class="close-popup"><i class="fas fa-times"></i></button>
+        </div>
+    </div>
+    <div class="loading-spinner">
+        <div class="spinner"></div>
+    </div>
+    <div class="overlay"></div>
+ <script src="assets/js/accueil.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Effet de particules
+            const particlesContainer = document.getElementById('particles');
+            const particleCount = 30;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                
+                // Position aléatoire
+                const posX = Math.random() * 100;
+                const posY = Math.random() * 100;
+                particle.style.left = `${posX}%`;
+                particle.style.top = `${posY}%`;
+                
+                // Taille aléatoire
+                const size = Math.random() * 5 + 1;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                
+                // Opacité aléatoire
+                const opacity = Math.random() * 0.5 + 0.1;
+                particle.style.opacity = opacity;
+                
+                // Durée d'animation aléatoire
+                const duration = Math.random() * 20 + 10;
+                particle.style.animationDuration = `${duration}s`;
+                
+                // Délai aléatoire
+                const delay = Math.random() * -20;
+                particle.style.animationDelay = `${delay}s`;
+                
+                particlesContainer.appendChild(particle);
+            }
+            
+            // Menu Hamburger
+            const menuToggle = document.querySelector('.menu-toggle');
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.getElementById('mainContent');
+            const overlay = document.querySelector('.overlay');
+            
+            menuToggle.addEventListener('click', function() {
+                this.classList.toggle('active');
+                sidebar.classList.toggle('active');
+                overlay.classList.toggle('active');
+                mainContent.classList.toggle('shifted');
+            });
+            
+            overlay.addEventListener('click', function() {
+                menuToggle.classList.remove('active');
+                sidebar.classList.remove('active');
+                this.classList.remove('active');
+                mainContent.classList.remove('shifted');
+            });
+            
+            // Fonctions de notification
+            window.showNotification = function(message, type = 'success') {
+                let popup;
+                if (type === 'error') {
+                    popup = document.querySelector('.error-popup');
+                    document.getElementById('errorMessage').textContent = message;
+                } else if (type === 'notification') {
+                    popup = document.querySelector('.notification-popup');
+                    document.getElementById('notificationMessage').textContent = message;
+                } else {
+                    popup = document.querySelector('.success-popup');
+                    document.getElementById('successMessage').textContent = message;
+                }
+                
+                popup.classList.add('active');
+                setTimeout(() => {
+                    popup.classList.remove('active');
+                }, 5000);
+            };
+            
+            // Fermeture des popups
+            document.querySelectorAll('.close-popup').forEach(button => {
+                button.addEventListener('click', function() {
+                    this.closest('.notification-popup, .error-popup, .success-popup').classList.remove('active');
+                });
+            });
+            
+            // Simulation de chargement
+            window.showLoading = function(show) {
+                const spinner = document.querySelector('.loading-spinner');
+                if (show) {
+                    spinner.classList.add('active');
+                } else {
+                    spinner.classList.remove('active');
+                }
+            };
+            
+            // Exemple d'interactions
+            document.querySelectorAll('.btn-boost, .btn-recharge').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    if (this.getAttribute('type') !== 'submit') {
+                        e.preventDefault();
+                    }
+                    
+                    // Effet de vague
+                    const ripple = document.createElement('span');
+                    ripple.classList.add('ripple');
+                    this.appendChild(ripple);
+                    
+                    const rect = this.getBoundingClientRect();
+                    const size = Math.max(rect.width, rect.height);
+                    const x = e.clientX - rect.left - size / 2;
+                    const y = e.clientY - rect.top - size / 2;
+                    
+                    ripple.style.width = ripple.style.height = `${size}px`;
+                    ripple.style.left = `${x}px`;
+                    ripple.style.top = `${y}px`;
+                    
+                    setTimeout(() => {
+                        ripple.remove();
+                    }, 1000);
+                });
+            });
+            
+            // Animation au scroll
+            const animateOnScroll = function() {
+                const elements = document.querySelectorAll('.welcome-banner, .boost-form-container, .recent-orders');
+                
+                elements.forEach(element => {
+                    const elementPosition = element.getBoundingClientRect().top;
+                    const screenPosition = window.innerHeight / 1.2;
+                    
+                    if (elementPosition < screenPosition) {
+                        element.style.opacity = '1';
+                        element.style.transform = 'translateY(0)';
+                    }
+                });
+            };
+            
+            // Initialisation des animations
+            document.querySelectorAll('.welcome-banner, .boost-form-container, .recent-orders').forEach(el => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(30px)';
+                el.style.transition = 'all 0.6s cubic-bezier(0.165, 0.84, 0.44, 1)';
+            });
+            
+            window.addEventListener('scroll', animateOnScroll);
+            animateOnScroll(); // Pour les éléments déjà visibles au chargement
+        });
+    </script>
+      
+      <script>
+        document.querySelector('.btn-recharge').addEventListener('click', function() {
+            window.location.href = 'recharge.php';
+        });
+      </script>
+      
+
+</body>
+</html>

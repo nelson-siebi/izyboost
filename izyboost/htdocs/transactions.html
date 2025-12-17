@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IZYBOOST - Historique des Transactions</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/transactions.css">
+ 
+</head>
+<body>
+    <!-- Header -->
+    <header class="cyber-header">
+        <div class="header-container">
+            <a href="#" class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-rocket"></i>
+                </div>
+                <div class="logo-text">IZY<span>BOOST</span></div>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-container">
+        <div class="page-header">
+            <h1 class="page-title">Historique des Transactions</h1>
+            <div class="page-actions">
+                <button class="action-btn primary-btn">
+                    <i class="fas fa-download"></i> Exporter
+                </button>
+                <button class="action-btn secondary-btn">
+                    <i class="fas fa-filter"></i> Filtrer
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card stat-income">
+                <div class="stat-header">
+                    <span class="stat-title">Revenus Totaux</span>
+                    <div class="stat-icon">
+                        <i class="fas fa-arrow-up"></i>
+                    </div>
+                </div>
+                <div class="stat-value">1,245,000 FCFA</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i> 12.5% ce mois
+                </div>
+            </div>
+
+            <div class="stat-card stat-expense">
+                <div class="stat-header">
+                    <span class="stat-title">Dépenses Totales</span>
+                    <div class="stat-icon">
+                        <i class="fas fa-arrow-down"></i>
+                    </div>
+                </div>
+                <div class="stat-value">325,500 FCFA</div>
+                <div class="stat-change negative">
+                    <i class="fas fa-arrow-down"></i> 3.2% ce mois
+                </div>
+            </div>
+
+            <div class="stat-card stat-balance">
+                <div class="stat-header">
+                    <span class="stat-title">Solde Actuel</span>
+                    <div class="stat-icon">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                </div>
+                <div class="stat-value">919,500 FCFA</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i> 9.3% ce mois
+                </div>
+            </div>
+
+            <div class="stat-card stat-pending">
+                <div class="stat-header">
+                    <span class="stat-title">Transactions en Attente</span>
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                </div>
+                <div class="stat-value">3</div>
+                <div class="stat-change">
+                    <i class="fas fa-equals"></i> Stable
+                </div>
+            </div>
+        </div>
+
+        <!-- Transactions Table -->
+        <div class="table-responsive">
+            <table class="transactions-table">
+                <thead>
+                    <tr>
+                        <th>ID Transaction</th>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Montant</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="transaction-id">TXN-78945-2023</td>
+                        <td>15 Nov 2023, 14:30</td>
+                        <td>Abonnés TikTok Premium</td>
+                        <td class="transaction-amount transaction-income">+25,000 FCFA</td>
+                        <td><span class="transaction-status status-completed">Complétée</span></td>
+                        <td>
+                            <div class="transaction-actions">
+                                <div class="action-icon view-icon">
+                                    <i class="fas fa-eye"></i>
+                                </div>
+                                <div class="action-icon download-icon">
+                                    <i class="fas fa-download"></i>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="transaction-id">TXN-78944-2023</td>
+                        <td>14 Nov 2023, 09:15</td>
+                        <td>Publicité Instagram</td>
+                        <td class="transaction-amount transaction-expense">-15,000 FCFA</td>
+                        <td><span class="transaction-status status-completed">Complétée</span></td>
+                        <td>
+                            <div class="transaction-actions">
+                                <div class="action-icon view-icon">
+                                    <i class="fas fa-eye"></i>
+                                </div>
+                                <div class="action-icon download-icon">
+                                    <i class="fas fa-download"></i>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="transaction-id">TXN-78943-2023</td>
+                        <td>13 Nov 2023, 16:45</td>
+                        <td>Ventes de cartes virtuelles</td>
+                        <td class="transaction-amount transaction-income">+45,000 FCFA</td>
+                        <td><span class="transaction-status status-completed">Complétée</span></td>
+                        <td>
+                            <div class="transaction-actions">
+                                <div class="action-icon view-icon">
+                                    <i class="fas fa-eye"></i>
+                                </div>
+                                <div class="action-icon download-icon">
+                                    <i class="fas fa-download"></i>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="transaction-id">TXN-78942-2023</td>
+                        <td>12 Nov 2023, 11:20</td>
+                        <td>Abonnés YouTube</td>
+                        <td class="transaction-amount transaction-income">+32,000 FCFA</td>
+                        <td><span class="transaction-status status-pending">En attente</span></td>
+                        <td>
+                            <div class="transaction-actions">
+                                <div class="action-icon view-icon">
+                                    <i class="fas fa-eye"></i>
+                                </div>
+                                <div class="action-icon download-icon">
+                                    <i class="fas fa-download"></i>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="transaction-id">TXN-78941-2023</td>
+                        <td>10 Nov 2023, 18:30</td>
+                        <td>Service de monétisation</td>
+                        <td class="transaction-amount transaction-income">+60,000 FCFA</td>
+                        <td><span class="transaction-status status-completed">Complétée</span></td>
+                        <td>
+                            <div class="transaction-actions">
+                                <div class="action-icon view-icon">
+                                    <i class="fas fa-eye"></i>
+                                </div>
+                                <div class="action-icon download-icon">
+                                    <i class="fas fa-download"></i>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="transaction-id">TXN-78940-2023</td>
+                        <td>08 Nov 2023, 14:15</td>
+                        <td>Abonnés Telegram</td>
+                        <td class="transaction-amount transaction-income">+12,500 FCFA</td>
+                        <td><span class="transaction-status status-failed">Échouée</span></td>
+                        <td>
+                            <div class="transaction-actions">
+                                <div class="action-icon view-icon">
+                                    <i class="fas fa-eye"></i>
+                                </div>
+                                <div class="action-icon download-icon">
+                                    <i class="fas fa-download"></i>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination">
+            <div class="page-item"><i class="fas fa-chevron-left"></i></div>
+            <div class="page-item active">1</div>
+            <div class="page-item">2</div>
+            <div class="page-item">3</div>
+            <div class="page-item">4</div>
+            <div class="page-item"><i class="fas fa-chevron-right"></i></div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animation for stats cards
+            const statCards = document.querySelectorAll('.stat-card');
+            statCards.forEach((card, index) => {
+                card.style.animation = `fadeIn 0.5s ease forwards ${index * 0.1}s`;
+                card.style.opacity = '0';
+            });
+
+            // Transaction row click event
+            const transactionRows = document.querySelectorAll('.transactions-table tbody tr');
+            transactionRows.forEach(row => {
+                row.addEventListener('click', function(e) {
+                    if (!e.target.closest('.transaction-actions')) {
+                        const transactionId = this.querySelector('.transaction-id').textContent;
+                        alert(`Voir les détails de la transaction: ${transactionId}`);
+                    }
+                });
+            });
+
+            // Action buttons
+            const viewButtons = document.querySelectorAll('.view-icon');
+            viewButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const row = this.closest('tr');
+                    const transactionId = row.querySelector('.transaction-id').textContent;
+                    alert(`Ouverture des détails pour: ${transactionId}`);
+                });
+            });
+
+            const downloadButtons = document.querySelectorAll('.download-icon');
+            downloadButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const row = this.closest('tr');
+                    const transactionId = row.querySelector('.transaction-id').textContent;
+                    alert(`Téléchargement du reçu pour: ${transactionId}`);
+                });
+            });
+
+            // Export button
+            const exportBtn = document.querySelector('.primary-btn');
+            exportBtn.addEventListener('click', function() {
+                alert('Exportation des données de transaction en cours...');
+            });
+
+            // Filter button
+            const filterBtn = document.querySelector('.secondary-btn');
+            filterBtn.addEventListener('click', function() {
+                alert('Ouverture du panneau de filtrage');
+            });
+
+            // Pagination
+            const pageItems = document.querySelectorAll('.page-item:not(:first-child):not(:last-child)');
+            pageItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    document.querySelector('.page-item.active').classList.remove('active');
+                    this.classList.add('active');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

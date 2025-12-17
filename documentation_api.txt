@@ -1,0 +1,370 @@
+Documentation Système - IzyBoost Platform
+📋 Table des Matières
+Vue d'ensemble
+Architecture
+Modules Implémentés
+Base de Données
+API Endpoints
+Authentification & Sécurité
+Configuration
+Déploiement
+Vue d'ensemble
+IzyBoost est une plateforme SaaS complète de services SMM (Social Media Marketing) avec système White Label et API pour développeurs.
+
+Technologies
+Backend : PHP 8.2+, Laravel 11
+Base de données : MySQL 8.0+
+Authentification : Laravel Sanctum
+API : RESTful JSON
+Email : Laravel Mail
+Statistiques
+32 tables de base de données
+100+ endpoints API
+8 modules fonctionnels
+3 niveaux de parrainage
+85% de couverture des fonctionnalités
+Architecture
+Structure MVC
+app/
+├── Console/Commands/
+│   └── SyncServices.php          # Synchronisation services
+├── Http/
+│   ├── Controllers/
+│   │   └── Api/
+│   │       ├── AuthController.php
+│   │       ├── ServiceController.php
+│   │       ├── OrderController.php
+│   │       ├── WalletController.php
+│   │       ├── ReferralController.php
+│   │       ├── TicketController.php
+│   │       ├── NotificationController.php
+│   │       ├── ApiKeyController.php
+│   │       ├── SiteController.php
+│   │       ├── WhiteLabelController.php
+│   │       ├── V1/                # API Développeurs
+│   │       │   ├── DeveloperServiceController.php
+│   │       │   ├── DeveloperOrderController.php
+│   │       │   └── DeveloperBalanceController.php
+│   │       └── Admin/             # Panel Admin
+│   │           ├── DashboardController.php
+│   │           ├── UserManagementController.php
+│   │           ├── OrderManagementController.php
+│   │           ├── FinancialController.php
+│   │           ├── ServiceManagementController.php
+│   │           ├── WhiteLabelController.php
+│   │           ├── SupportController.php
+│   │           └── SettingsController.php
+│   └── Middleware/
+│       ├── AuthenticateApiKey.php
+│       └── AdminMiddleware.php
+├── Mail/
+│   ├── WelcomeEmail.php
+│   ├── OrderConfirmation.php
+│   └── TicketReply.php
+├── Models/
+│   ├── User.php
+│   ├── Service.php
+│   ├── Category.php
+│   ├── Order.php
+│   ├── Transaction.php
+│   ├── PaymentMethod.php
+│   ├── ApiKey.php
+│   ├── ApiLog.php
+│   ├── ReferralRelationship.php
+│   ├── ReferralCommission.php
+│   ├── WhiteLabelSite.php
+│   ├── WhiteLabelPlan.php
+│   ├── WhiteLabelTemplate.php
+│   ├── Subscription.php
+│   ├── SiteOrder.php
+│   ├── Ticket.php
+│   ├── TicketMessage.php
+│   ├── Notification.php
+│   └── PlatformSetting.php
+└── Services/
+    └── ReferralService.php
+Modules Implémentés
+✅ Module 1 : Authentification
+Inscription avec code parrain
+Connexion (email/username)
+Génération token Sanctum
+Tracking last login
+✅ Module 2 : Service Management
+Synchronisation depuis API externe
+Gestion catégories
+Calcul automatique des prix avec marge
+Conversion de devises
+Commande : php artisan smm:sync-services
+
+✅ Module 3 : Order Processing
+Validation quantité
+Vérification solde
+Envoi au fournisseur externe
+Logs API détaillés
+Attribution commissions parrainage
+✅ Module 4 : Wallet & Finance
+Consultation solde
+Historique transactions
+Initiation dépôts
+Gestion moyens de paiement
+✅ Module 5 : White Label / Reseller
+Achat de sites personnalisés
+Configuration branding (logo, couleurs)
+Gestion marges
+Abonnements mensuels/annuels
+✅ Module 6 : Support & Notifications
+Système de tickets
+Notifications in-app
+Emails automatiques
+✅ Module 7 : API pour Développeurs
+Gestion clés API
+Permissions granulaires
+Rate limiting
+IP whitelisting
+Logs d'utilisation
+✅ Module 8 : Système de Parrainage
+3 niveaux (10%, 5%, 2%)
+Attribution automatique
+Notifications
+✅ Module 9 : Panel d'Administration
+Dashboard statistiques
+Gestion utilisateurs (ban, solde)
+Gestion commandes (remboursement)
+Gestion financière
+Gestion services
+Gestion White Label
+Gestion support
+Base de Données
+Tables Principales (32 au total)
+Utilisateurs & Parrainage
+users - Utilisateurs
+referral_relationships - Relations parrainage
+referral_commissions - Commissions
+Configuration
+platform_settings - Paramètres globaux
+fee_structures - Structure frais
+Services
+api_providers - Fournisseurs API
+categories
+ - Catégories
+services - Services SMM
+service_prices_override - Prix personnalisés
+Commandes
+orders
+ - Commandes
+provider_logs - Logs fournisseurs
+Finance
+payment_methods - Moyens paiement
+transactions
+ - Transactions
+invoices - Factures
+White Label
+white_label_templates - Templates
+white_label_plans - Plans
+white_label_sites - Sites créés
+site_orders - Commandes sites
+subscriptions
+ - Abonnements
+API
+api_keys - Clés API
+api_logs - Logs API
+Support
+tickets
+ - Tickets
+ticket_messages - Messages
+notifications
+ - Notifications
+Statistiques
+user_statistics - Stats utilisateur
+platform_statistics - Stats globales
+audit_logs - Logs audit
+Promotions
+bonuses - Bonus/Promos
+user_bonuses - Attribution bonus
+API Endpoints
+Authentification
+POST /api/register
+POST /api/login
+POST /api/logout
+GET  /api/me
+Services
+GET /api/services
+Commandes
+POST /api/user/orders
+GET  /api/user/orders
+GET  /api/user/orders/{uuid}
+Wallet
+GET  /api/wallet
+GET  /api/wallet/transactions
+GET  /api/wallet/deposit-methods
+POST /api/wallet/deposit
+White Label
+GET  /api/white-label/plans
+GET  /api/white-label/templates
+POST /api/white-label/purchase
+GET  /api/white-label/sites
+GET  /api/white-label/sites/{uuid}
+PUT  /api/white-label/sites/{uuid}/branding
+PUT  /api/white-label/sites/{uuid}/pricing
+Support
+POST /api/tickets
+GET  /api/tickets
+GET  /api/tickets/{uuid}
+POST /api/tickets/{uuid}/reply
+POST /api/tickets/{uuid}/close
+Notifications
+GET  /api/notifications
+GET  /api/notifications/unread-count
+POST /api/notifications/{id}/read
+POST /api/notifications/read-all
+DELETE /api/notifications/{id}
+Parrainage
+GET /api/referrals/stats
+GET /api/referrals/list
+GET /api/referrals/commissions
+GET /api/referrals/link
+API Développeurs (Gestion Clés)
+POST   /api/user/api-keys
+GET    /api/user/api-keys
+GET    /api/user/api-keys/{id}
+DELETE /api/user/api-keys/{id}
+GET    /api/user/api-keys/{id}/logs
+API Publique v1 (Pour Développeurs)
+GET  /api/v1/services
+POST /api/v1/orders
+GET  /api/v1/orders
+GET  /api/v1/orders/{id}
+GET  /api/v1/balance
+Admin
+# Dashboard
+GET /api/admin/dashboard
+GET /api/admin/dashboard/revenue-chart
+# Users
+GET    /api/admin/users
+GET    /api/admin/users/{id}
+PUT    /api/admin/users/{id}
+POST   /api/admin/users/{id}/toggle-ban
+POST   /api/admin/users/{id}/adjust-balance
+DELETE /api/admin/users/{id}
+# Orders
+GET  /api/admin/orders
+GET  /api/admin/orders/{id}
+PUT  /api/admin/orders/{id}/status
+POST /api/admin/orders/{id}/refund
+# Finance
+GET  /api/admin/finance/stats
+GET  /api/admin/finance/transactions
+POST /api/admin/finance/transactions/{id}/verify
+GET  /api/admin/finance/payment-methods
+PUT  /api/admin/finance/payment-methods/{id}
+# Services
+GET  /api/admin/services
+PUT  /api/admin/services/{id}
+GET  /api/admin/services/categories
+PUT  /api/admin/services/categories/{id}
+GET  /api/admin/services/providers
+POST /api/admin/services/sync
+# White Label
+GET  /api/admin/white-label/sites
+GET  /api/admin/white-label/sites/{id}
+POST /api/admin/white-label/sites/{id}/toggle-status
+GET  /api/admin/white-label/plans
+PUT  /api/admin/white-label/plans/{id}
+GET  /api/admin/white-label/templates
+GET  /api/admin/white-label/subscriptions
+# Support
+GET  /api/admin/support/tickets
+GET  /api/admin/support/tickets/{uuid}
+POST /api/admin/support/tickets/{uuid}/assign
+POST /api/admin/support/tickets/{uuid}/reply
+POST /api/admin/support/tickets/{uuid}/close
+# Settings
+GET /api/admin/settings
+PUT /api/admin/settings/{key}
+GET /api/admin/settings/platform-stats
+Authentification & Sécurité
+Sanctum (Utilisateurs)
+Authorization: Bearer {token}
+API Key (Développeurs)
+X-API-Key: sk_abc123...
+Middleware
+auth:sanctum - Authentification utilisateur
+admin - Vérification rôle admin
+api.key - Authentification API key
+Permissions API
+services.read
+orders.create
+orders.read
+balance.read
+Rate Limiting
+Utilisateurs : 60 requêtes/minute
+API Keys : Configurable par clé
+Configuration
+Variables .env
+# Application
+APP_NAME=IzyBoost
+APP_URL=http://localhost:8000
+# Database
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=izyboost
+DB_USERNAME=root
+DB_PASSWORD=
+# External API
+SMM_API_URL=https://boostci.com/api/v2
+SMM_API_KEY=your_api_key_here
+# Mail
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=your@email.com
+MAIL_PASSWORD=your_password
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=noreply@izyboost.com
+MAIL_FROM_NAME="IzyBoost"
+Seeders
+php artisan db:seed --class=PlatformSettingsSeeder
+php artisan db:seed --class=CategoriesSeeder
+php artisan db:seed --class=PaymentMethodsSeeder
+php artisan db:seed --class=WhiteLabelPlansSeeder
+php artisan db:seed --class=WhiteLabelTemplatesSeeder
+Déploiement
+Installation
+# Clone
+git clone <repository>
+cd izyboost
+# Install dependencies
+composer install
+# Environment
+cp .env.example .env
+php artisan key:generate
+# Database
+php artisan migrate
+php artisan db:seed
+# Sync services
+php artisan smm:sync-services
+# Serve
+php artisan serve
+Production
+# Optimize
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+# Queue (si utilisé)
+php artisan queue:work
+# Scheduler (cron)
+* * * * * cd /path-to-project && php artisan schedule:run >> /dev/null 2>&1
+Maintenance
+Commandes Utiles
+# Sync services
+php artisan smm:sync-services
+# Clear cache
+php artisan cache:clear
+php artisan config:clear
+php artisan route:clear
+# Database
+php artisan migrate:fresh --seed
+php artisan db:seed --class=ClassName
+Support
+Pour toute question technique, contactez l'équipe de développement.
