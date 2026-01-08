@@ -25,7 +25,9 @@ import EditProfileScreen from '../screens/profile/EditProfileScreen';
 import DeveloperScreen from '../screens/profile/DeveloperScreen';
 import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 import WhiteLabelScreen from '../screens/whitelabel/WhiteLabelScreen';
+import WhiteLabelIntroScreen from '../screens/whitelabel/WhiteLabelIntroScreen';
 import CreateSiteScreen from '../screens/whitelabel/CreateSiteScreen';
+import ApiDocumentationScreen from '../screens/profile/ApiDocumentationScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -108,8 +110,18 @@ const AppNavigator = () => {
                             options={{ headerShown: false }}
                         />
                         <Stack.Screen
+                            name="WhiteLabelIntro"
+                            component={WhiteLabelIntroScreen}
+                            options={{ headerShown: false }}
+                        />
+                        <Stack.Screen
                             name="CreateSite"
                             component={CreateSiteScreen}
+                            options={{ headerShown: false }}
+                        />
+                        <Stack.Screen
+                            name="ApiDocumentation"
+                            component={ApiDocumentationScreen}
                             options={{ headerShown: false }}
                         />
                     </>

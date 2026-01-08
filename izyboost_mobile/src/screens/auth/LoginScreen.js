@@ -135,7 +135,7 @@ const LoginScreen = ({ navigation }) => {
                         <Animated.View style={[styles.headerContainer, { opacity: fadeAnim, transform: [{ scale: logoAnim }] }]}>
                             <View style={styles.logoContainer}>
                                 <Image
-                                    source={require('../../assets/icon.png')}
+                                    source={require('../../../assets/icon.png')}
                                     style={styles.logo}
                                     resizeMode="contain"
                                 />

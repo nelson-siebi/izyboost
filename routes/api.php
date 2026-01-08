@@ -21,6 +21,9 @@ Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
 });
 
+// Webhooks (Public)
+Route::post('/webhooks/nelsius', [\App\Http\Controllers\Api\WebhookController::class, 'nelsius']);
+
 Route::get('/services', [\App\Http\Controllers\Api\ServiceController::class, 'index']);
 
 // Protected Routes
@@ -28,8 +31,12 @@ Route::middleware('auth:sanctum')->group(function () {
     // User
     Route::prefix('user')->group(function () {
         Route::get('/me', [AuthController::class, 'me']);
+        Route::put('/profile', [AuthController::class, 'updateProfile']);
+        Route::put('/password', [AuthController::class, 'updatePassword']);
+        Route::put('/settings', [AuthController::class, 'updateSettings']);
+        Route::post('/toggle-2fa', [AuthController::class, 'toggle2FA']);
         Route::post('/logout', [AuthController::class, 'logout']);
-        
+
         // Orders
         Route::post('/orders', [\App\Http\Controllers\Api\OrderController::class, 'store']);
         Route::get('/orders', [\App\Http\Controllers\Api\OrderController::class, 'index']);
@@ -40,13 +47,14 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/transactions', [\App\Http\Controllers\Api\WalletController::class, 'transactions']);
             Route::get('/deposit-methods', [\App\Http\Controllers\Api\WalletController::class, 'depositMethods']);
             Route::post('/deposit', [\App\Http\Controllers\Api\WalletController::class, 'deposit']);
+            Route::get('/transactions/{reference}/status', [\App\Http\Controllers\Api\WalletController::class, 'checkStatus']);
         });
 
         // White Label
         Route::prefix('white-label')->group(function () {
             Route::get('/plans', [\App\Http\Controllers\Api\WhiteLabelController::class, 'plans']);
             Route::get('/templates', [\App\Http\Controllers\Api\WhiteLabelController::class, 'templates']);
-            
+
             // Site management
             Route::post('/purchase', [\App\Http\Controllers\Api\SiteController::class, 'purchase']);
             Route::get('/sites', [\App\Http\Controllers\Api\SiteController::class, 'index']);

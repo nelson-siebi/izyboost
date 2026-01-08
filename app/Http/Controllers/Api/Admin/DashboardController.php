@@ -34,7 +34,7 @@ class DashboardController extends Controller
         $totalRevenue = Transaction::where('status', 'completed')
             ->where('type', 'deposit')
             ->sum('net_amount');
-        
+
         $revenueToday = Transaction::where('status', 'completed')
             ->where('type', 'deposit')
             ->whereDate('created_at', today())
@@ -65,6 +65,11 @@ class DashboardController extends Controller
             ->limit(10)
             ->get(['id', 'username', 'email', 'created_at', 'balance']);
 
+        $recentTickets = Ticket::with('user:id,username')
+            ->latest()
+            ->limit(5)
+            ->get();
+
         return response()->json([
             'users' => [
                 'total' => $totalUsers,
@@ -94,6 +99,7 @@ class DashboardController extends Controller
             ],
             'recent_orders' => $recentOrders,
             'recent_users' => $recentUsers,
+            'recent_tickets' => $recentTickets,
         ]);
     }
 

@@ -44,11 +44,13 @@ class ApiKeyController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:100',
-            'permissions' => 'required|array',
+            'permissions' => 'sometimes|array',
             'permissions.*' => 'in:services.read,orders.create,orders.read,balance.read',
             'rate_limit' => 'nullable|integer|min:10|max:1000',
             'expires_at' => 'nullable|date|after:now',
         ]);
+
+        $permissions = $request->permissions ?? ['services.read', 'orders.read', 'balance.read'];
 
         // Generate unique API key
         do {
@@ -63,7 +65,7 @@ class ApiKeyController extends Controller
             'key' => $key,
             'secret' => Hash::make($secret),
             'type' => 'secret',
-            'permissions' => $request->permissions,
+            'permissions' => $permissions,
             'rate_limit' => $request->rate_limit ?? 100,
             'expires_at' => $request->expires_at,
             'is_active' => true,

@@ -34,10 +34,10 @@ class OrderController extends Controller
         // 2. Calculate Prices
         // DB stores Price Per Unit (e.g. 0.05 FCFA)
         // Total = Unit Price * Quantity
-        
+
         $costPrice = $service->cost_per_unit * $request->quantity;
         $sellPrice = $service->base_price_per_unit * $request->quantity;
-        
+
         // 3. Check Balance
         if ($user->balance < $sellPrice) {
             return response()->json(['message' => 'Solde insuffisant.'], 402);
@@ -45,10 +45,10 @@ class OrderController extends Controller
 
         // 4. Transaction (DB)
         return DB::transaction(function () use ($user, $service, $request, $costPrice, $sellPrice) {
-            
+
             // Deduct Balance
             $user->decrement('balance', $sellPrice);
-            
+
             // Calculate Margin
             $margin = $sellPrice - $costPrice;
 
@@ -60,7 +60,7 @@ class OrderController extends Controller
                     'type' => 'ewallet', // Matches enum ['card', 'crypto', 'bank_transfer', 'ewallet', 'mobile_money']
                     'is_active' => true,
                     'min_amount' => 0,
-                    'max_amount' => 10000000, 
+                    'max_amount' => 10000000,
                     'currencies' => ['XAF', 'EUR', 'USD'],
                     'config' => [],
                 ]
@@ -98,7 +98,7 @@ class OrderController extends Controller
 
             // 5. Send to External API
             $provider = ApiProvider::find($service->api_provider_id);
-            
+
             if ($provider) {
                 $startTime = microtime(true);
                 $endpoint = $provider->base_url;
@@ -147,7 +147,7 @@ class OrderController extends Controller
                 } catch (\Exception $e) {
                     $duration = round((microtime(true) - $startTime) * 1000);
                     Log::error("Order Exception: " . $e->getMessage());
-                    
+
                     // Mask API Key for Log
                     $logBody = $requestBody;
                     $logBody['key'] = '***';
@@ -169,6 +169,9 @@ class OrderController extends Controller
                 }
             }
 
+            // 5. Award Referral Commission
+            app(\App\Services\ReferralService::class)->awardOrderCommission($user, $order);
+
             return response()->json([
                 'message' => 'Commande créée avec succès',
                 'order_id' => $order->id,
@@ -186,7 +189,7 @@ class OrderController extends Controller
             ->with(['service:id,name'])
             ->latest()
             ->paginate(20);
-            
+
         return response()->json($orders);
     }
 }

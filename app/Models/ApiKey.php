@@ -12,8 +12,11 @@ class ApiKey extends Model
     protected $fillable = [
         'user_id',
         'key',
+        'secret',
         'name',
+        'type',
         'permissions',
+        'rate_limit',
         'last_used_at',
         'last_used_ip',
         'expires_at',

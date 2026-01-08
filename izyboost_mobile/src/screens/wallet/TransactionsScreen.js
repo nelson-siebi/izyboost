@@ -21,7 +21,7 @@ const TransactionsScreen = () => {
     const fetchTransactions = async () => {
         try {
             // Docs say GET /api/wallet/transactions
-            const response = await client.get('/wallet/transactions');
+            const response = await client.get('/user/wallet/transactions');
             const data = response.data.data ? response.data.data : response.data;
             setTransactions(Array.isArray(data) ? data : []);
         } catch (error) {
@@ -72,9 +72,30 @@ const TransactionsScreen = () => {
         }
     };
 
+    const getStatusInfo = (status) => {
+        switch (status?.toLowerCase()) {
+            case 'completed':
+            case 'success':
+            case 'terminé':
+            case 'succès':
+                return { label: 'Complété', color: COLORS.success };
+            case 'pending':
+            case 'en attente':
+                return { label: 'En attente', color: COLORS.accent };
+            case 'failed':
+            case 'échoué':
+            case 'cancelled':
+            case 'annulé':
+                return { label: 'Échoué', color: COLORS.error };
+            default:
+                return { label: status || 'Inconnu', color: COLORS.textLight };
+        }
+    };
+
     const renderItem = ({ item }) => {
         const isPositive = ['deposit', 'refund', 'dépôt', 'remboursement'].includes(item.type?.toLowerCase());
         const color = getTransactionColor(item.type);
+        const statusInfo = getStatusInfo(item.status);
 
         return (
             <View style={styles.card}>
@@ -82,7 +103,12 @@ const TransactionsScreen = () => {
                     <Ionicons name={getTransactionIcon(item.type)} size={24} color={color} />
                 </View>
                 <View style={styles.details}>
-                    <Text style={styles.type}>{item.type || 'Transaction'}</Text>
+                    <View style={styles.row}>
+                        <Text style={styles.type}>{item.type || 'Transaction'}</Text>
+                        <View style={[styles.statusBadge, { backgroundColor: statusInfo.color + '15' }]}>
+                            <Text style={[styles.statusText, { color: statusInfo.color }]}>{statusInfo.label}</Text>
+                        </View>
+                    </View>
                     <Text style={styles.date}>{new Date(item.created_at).toLocaleString()}</Text>
                     {item.description && <Text style={styles.description}>{item.description}</Text>}
                 </View>
@@ -153,11 +179,27 @@ const styles = StyleSheet.create({
     details: {
         flex: 1,
     },
+    row: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginRight: 10,
+    },
     type: {
         fontSize: 16,
         ...FONTS.bold,
         color: COLORS.text,
         textTransform: 'capitalize',
+    },
+    statusBadge: {
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 4,
+    },
+    statusText: {
+        fontSize: 10,
+        ...FONTS.bold,
+        textTransform: 'uppercase',
     },
     date: {
         fontSize: 12,

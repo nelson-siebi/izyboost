@@ -75,6 +75,12 @@ const ProfileScreen = ({ navigation }) => {
                     />
 
                     <MenuItem
+                        icon="list-outline"
+                        title="Historique des transactions"
+                        onPress={() => navigation.navigate('Transactions')}
+                    />
+
+                    <MenuItem
                         icon="person-outline"
                         title="Modifier mon profil"
                         onPress={() => navigation.navigate('EditProfile')}

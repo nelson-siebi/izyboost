@@ -7,6 +7,7 @@ use App\Models\Transaction;
 use App\Models\PaymentMethod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class WalletController extends Controller
@@ -64,12 +65,19 @@ class WalletController extends Controller
     public function deposit(Request $request)
     {
         $request->validate([
-            'amount' => 'required|numeric|min:100', // adjust min amount as needed
+            'amount' => 'required|numeric|min:100',
             'payment_method_id' => 'required|exists:payment_methods,id',
+            'phone' => 'nullable|string',
         ]);
 
         $user = $request->user();
         $method = PaymentMethod::find($request->payment_method_id);
+
+        if ($method->type === 'mobile_money' && !$request->phone) {
+            throw ValidationException::withMessages([
+                'phone' => ['Le numéro de téléphone est requis pour ce moyen de paiement.'],
+            ]);
+        }
 
         if (!$method->is_active) {
             throw ValidationException::withMessages([
@@ -78,43 +86,162 @@ class WalletController extends Controller
         }
 
         // Check Min/Max limits
-        if ($request->amount < $method->min_amount) {
+        if ($request->amount < (float) $method->min_amount) {
             throw ValidationException::withMessages([
-                'amount' => ["Le montant minimum est de {$method->min_amount}."],
+                'amount' => ["Le montant minimum est de " . number_format((float) $method->min_amount, 0, ',', ' ') . " FCFA."],
             ]);
         }
 
-        if ($method->max_amount && $request->amount > $method->max_amount) {
+        if ($method->max_amount && $request->amount > (float) $method->max_amount) {
             throw ValidationException::withMessages([
-                'amount' => ["Le montant maximum est de {$method->max_amount}."],
+                'amount' => ["Le montant maximum est de " . number_format((float) $method->max_amount, 0, ',', ' ') . " FCFA."],
             ]);
         }
 
-        /* 
-           Simple logic for now: Create Pending Transaction.
-           In a real scenario, this would contact Stripe/Coinbase/etc 
-           and return a checkout URL.
-        */
+        // Initiate payment
+        $checkoutUrl = null;
+        $gatewayTransactionId = null;
+        $gatewayResponse = null;
 
-        $transaction = DB::transaction(function () use ($user, $method, $request) {
+        $nelsiusService = new \App\Services\Payment\NelsiusPayService();
+        $payload = [
+            'amount' => $request->amount,
+            'currency' => 'XAF',
+            'description' => $user->username . " Deposit",
+        ];
+
+        // Determine operator and specific fields based on method type
+        if ($method->type === 'mobile_money') {
+            $payload['operator'] = $method->code; // orange_money or mtn_money
+            $payload['phone'] = $request->phone;
+        } elseif ($method->type === 'card' || $method->type === 'ewallet' || $method->type === 'global') {
+            $payload['operator'] = 'global';
+            $payload['email'] = $user->email;
+            $payload['success_url'] = config('app.url') . '/wallet?status=success';
+            $payload['cancel_url'] = config('app.url') . '/wallet?status=cancel';
+        } else {
+            // Default fallback or other types
+            $payload['operator'] = $method->code;
+        }
+
+        $result = $nelsiusService->initiatePayment($payload);
+
+        if (isset($result['success']) && $result['success'] === false) {
+            throw ValidationException::withMessages([
+                'payment' => [$result['message']],
+            ]);
+        }
+
+        $gatewayResponse = $result;
+
+        // Extract data based on response structure
+        $data = $result['data'] ?? [];
+        $gatewayTransactionId = $data['reference'] ?? ($data['transaction']['reference'] ?? null);
+
+        if (isset($data['is_redirect']) && $data['is_redirect'] && isset($data['payment_url'])) {
+            $checkoutUrl = $data['payment_url'];
+        }
+
+        $transaction = DB::transaction(function () use ($user, $method, $request, $gatewayTransactionId, $gatewayResponse) {
             return Transaction::create([
                 'user_id' => $user->id,
                 'payment_method_id' => $method->id,
                 'type' => 'deposit',
                 'amount' => $request->amount,
-                'fees' => 0, // Calculate based on method fees logic if needed
-                'net_amount' => $request->amount, // - fees
-                'currency' => 'XAF', // Default
+                'fees' => 0,
+                'net_amount' => $request->amount,
+                'currency' => 'XAF',
                 'status' => 'pending',
+                'gateway' => 'nelsius',
+                'gateway_transaction_id' => $gatewayTransactionId,
+                'gateway_response' => $gatewayResponse,
                 'description' => "Dépôt via {$method->name}",
                 'ip_address' => $request->ip(),
+                'metadata' => [
+                    'phone' => $request->phone,
+                ]
             ]);
         });
 
         return response()->json([
-            'message' => 'Transaction initiée',
+            'message' => $checkoutUrl ? 'Redirection vers le paiement...' : 'Transaction initiée. Veuillez valider sur votre téléphone.',
             'transaction' => $transaction,
-            'checkout_url' => null, // Would be here for Stripe/Gateway
+            'checkout_url' => $checkoutUrl,
+            'payment_url' => $checkoutUrl, // Frontend might look for this too
+            'reference' => $gatewayTransactionId,
         ], 201);
+    }
+
+    /**
+     * Check transaction status (Polling)
+     */
+    public function checkStatus($reference)
+    {
+        $transaction = Transaction::where('gateway_transaction_id', $reference)
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
+
+        if ($transaction->status !== 'pending') {
+            return response()->json([
+                'status' => $transaction->status,
+                'message' => "Transaction déjà " . ($transaction->status === 'completed' ? 'réussie' : 'échouée'),
+                'is_completed' => $transaction->status === 'completed'
+            ]);
+        }
+
+        // Call Nelsius to get latest status
+        $nelsiusService = new \App\Services\Payment\NelsiusPayService();
+        $statusData = $nelsiusService->checkStatus($reference);
+
+        $remoteStatus = $statusData['data']['status'] ?? ($statusData['status'] ?? null);
+        $isCompleted = $statusData['data']['is_completed'] ?? ($statusData['success'] ?? false);
+
+        if ($remoteStatus === 'completed' || $isCompleted) {
+            DB::transaction(function () use ($transaction, $statusData, $reference) {
+                // Double check status in case of concurrent updates
+                $transaction->refresh();
+                if ($transaction->status === 'pending') {
+                    $transaction->update([
+                        'status' => 'completed',
+                        'completed_at' => now(),
+                        'gateway_response' => array_merge($transaction->gateway_response ?? [], (array) $statusData),
+                    ]);
+
+                    $user = $transaction->user;
+                    $user->increment('balance', (float) $transaction->net_amount);
+
+                    // 5. Award Referral Commission (Deposit)
+                    app(\App\Services\ReferralService::class)->awardDepositCommission($user, $transaction);
+
+                    // Notify user
+                    \App\Models\Notification::create([
+                        'user_id' => $user->id,
+                        'type' => 'success',
+                        'title' => 'Recharge réussie ✅',
+                        'message' => "Votre compte a été crédité de " . number_format((float) $transaction->net_amount, 0, ',', ' ') . " FCFA via {$transaction->paymentMethod->name}.",
+                        'icon' => 'wallet',
+                        'data' => [
+                            'transaction_id' => $transaction->id,
+                            'reference' => $transaction->gateway_transaction_id,
+                            'amount' => $transaction->net_amount
+                        ]
+                    ]);
+
+                    Log::info("Polling Success: User {$user->username} credited via polling. Ref: {$reference}");
+                }
+            });
+
+            return response()->json([
+                'status' => 'completed',
+                'message' => 'Transaction réussie',
+                'is_completed' => true
+            ]);
+        }
+
+        return response()->json([
+            'status' => $remoteStatus ?? 'pending',
+            'message' => 'Transaction toujours en attente',
+            'is_completed' => false
+        ]);
     }
 }

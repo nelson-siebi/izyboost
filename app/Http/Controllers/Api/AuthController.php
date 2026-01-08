@@ -14,7 +14,7 @@ class AuthController extends Controller
     /**
      * Register a new user.
      */
-    public function register(Request $request)
+    public function register(Request $request, \App\Services\ReferralService $referralService)
     {
         $request->validate([
             'username' => 'required|string|max:50|unique:users',
@@ -38,8 +38,17 @@ class AuthController extends Controller
             'is_active' => true,
         ]);
 
+        // Create Referral Chain if sponsor code provided
+        if ($request->sponsor_code) {
+            $referralService->createReferralChain($user, $request->sponsor_code);
+        }
+
         // Send welcome email
-        \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\WelcomeEmail($user));
+        try {
+            \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\WelcomeEmail($user));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Failed to send welcome email to {$user->email}: " . $e->getMessage());
+        }
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -65,7 +74,7 @@ class AuthController extends Controller
 
         $user = User::where($loginType, $request->email_or_username)->first();
 
-        if (! $user || ! Hash::check($request->password, $user->password)) {
+        if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
                 'email_or_username' => ['Les identifiants sont incorrects.'],
             ]);
@@ -107,5 +116,84 @@ class AuthController extends Controller
     public function me(Request $request)
     {
         return response()->json($request->user());
+    }
+
+    /**
+     * Update user profile.
+     */
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+
+        $request->validate([
+            'username' => 'sometimes|string|max:50|unique:users,username,' . $user->id,
+            'email' => 'sometimes|string|email|max:255|unique:users,email,' . $user->id,
+        ]);
+
+        $user->update($request->only(['username', 'email']));
+
+        return response()->json([
+            'message' => 'Profile mis à jour avec succès',
+            'user' => $user
+        ]);
+    }
+
+    /**
+     * Update user password.
+     */
+    public function updatePassword(Request $request)
+    {
+        $request->validate([
+            'current_password' => 'required',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $user = $request->user();
+
+        if (!Hash::check($request->current_password, $user->password)) {
+            throw ValidationException::withMessages([
+                'current_password' => ['Le mot de passe actuel est incorrect.'],
+            ]);
+        }
+
+        $user->update([
+            'password' => Hash::make($request->password)
+        ]);
+
+        return response()->json([
+            'message' => 'Mot de passe mis à jour avec succès'
+        ]);
+    }
+
+    /**
+     * Update user settings.
+     */
+    public function updateSettings(Request $request)
+    {
+        $user = $request->user();
+        $user->update([
+            'settings' => array_merge($user->settings ?? [], $request->all())
+        ]);
+
+        return response()->json([
+            'message' => 'Paramètres mis à jour',
+            'user' => $user
+        ]);
+    }
+
+    /**
+     * Toggle Two-Factor Authentication.
+     */
+    public function toggle2FA(Request $request)
+    {
+        $user = $request->user();
+        $user->update([
+            'two_factor_enabled' => !$user->two_factor_enabled
+        ]);
+
+        return response()->json([
+            'message' => $user->two_factor_enabled ? '2FA activé' : '2FA désactivé',
+            'user' => $user
+        ]);
     }
 }

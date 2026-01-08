@@ -21,7 +21,7 @@ Route::prefix('v1')->middleware('api.key')->group(function () {
     // Orders
     Route::post('/orders', [\App\Http\Controllers\Api\V1\DeveloperOrderController::class, 'store']);
     Route::get('/orders', [\App\Http\Controllers\Api\V1\DeveloperOrderController::class, 'index']);
-    Route::get('/orders/{id}/status', [\App\Http\Controllers\Api\V1\DeveloperOrderController::class, 'status']);
+    Route::get('/orders/{id}', [\App\Http\Controllers\Api\V1\DeveloperOrderController::class, 'status']);
     
     // Balance
     Route::get('/balance', [\App\Http\Controllers\Api\V1\DeveloperBalanceController::class, 'index']);

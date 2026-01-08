@@ -24,28 +24,35 @@ class SiteController extends Controller
     {
         $request->validate([
             'template_id' => 'required|exists:white_label_templates,id',
-            'plan_id' => 'required|exists:white_label_plans,id',
-            'deployment_type' => 'required|in:self_hosted,hosted_by_us,cloud_hosted',
             'site_name' => 'required|string|max:200',
             'subdomain' => 'required|string|max:100|unique:white_label_sites,subdomain',
             'interval' => 'required|in:monthly,yearly',
+            'custom_domain' => 'boolean',
+            'domain_name' => 'nullable|required_if:custom_domain,true|string|max:200',
         ]);
 
         $user = $request->user();
         $template = WhiteLabelTemplate::findOrFail($request->template_id);
-        $plan = WhiteLabelPlan::findOrFail($request->plan_id);
+        
+        // Pricing Logic (Hardcoded as per new requirements)
+        $monthlyPrice = 3000;
+        $yearlyPrice = 15000;
+        $customDomainFee = 8000;
 
-        // Calculate total cost
-        $planPrice = $request->interval === 'yearly' ? $plan->yearly_price : $plan->monthly_price;
-        $setupFee = $plan->setup_fee;
+        $planPrice = $request->interval === 'yearly' ? $yearlyPrice : $monthlyPrice;
+        $setupFee = $request->custom_domain ? $customDomainFee : 0;
+        
         $totalAmount = $planPrice + $setupFee;
 
         // Check user balance
         if ($user->balance < $totalAmount) {
             throw ValidationException::withMessages([
-                'balance' => ['Solde insuffisant. Veuillez recharger votre compte.'],
+                'balance' => ['Solde insuffisant. Il vous faut ' . number_format($totalAmount, 0, ',', ' ') . ' FCFA.'],
             ]);
         }
+        
+        // Use a default plan ID for database consistency (assuming ID 1 exists, otherwise we should fetch first)
+        $plan = WhiteLabelPlan::first(); 
 
         return DB::transaction(function () use ($user, $template, $plan, $request, $planPrice, $setupFee, $totalAmount) {
             
@@ -99,7 +106,10 @@ class SiteController extends Controller
 
             // Create the white label site
             $subdomain = Str::slug($request->subdomain);
-            $siteUrl = "https://{$subdomain}.izyboost.com";
+            // If custom domain is purchased, we might set it as site_url or keep subdomain as primary for now
+            // For this implementation, we'll store request->domain_name if custom_domain is true
+            $finalDomain = $request->custom_domain ? $request->domain_name : "{$subdomain}.izyboost.com";
+            $siteUrl = "https://{$finalDomain}";
 
             $site = WhiteLabelSite::create([
                 'owner_id' => $user->id,
@@ -108,8 +118,9 @@ class SiteController extends Controller
                 'site_name' => $request->site_name,
                 'site_url' => $siteUrl,
                 'subdomain' => $subdomain,
-                'status' => 'active',
-                'deployment_type' => $request->deployment_type,
+                'custom_domain' => $request->custom_domain ? $request->domain_name : null,
+                'status' => 'pending', // Set to pending for admin review of domain/setup
+                'deployment_type' => 'hosted_by_us',
                 'branding' => [
                     'logo' => null,
                     'colors' => [

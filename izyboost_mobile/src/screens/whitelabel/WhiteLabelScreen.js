@@ -78,7 +78,7 @@ const WhiteLabelScreen = ({ navigation }) => {
                     <Ionicons name="arrow-back" size={24} color={COLORS.text} />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Mes Sites White Label</Text>
-                <TouchableOpacity onPress={() => navigation.navigate('CreateSite')}>
+                <TouchableOpacity onPress={() => navigation.navigate('WhiteLabelIntro')}>
                     <Ionicons name="add-circle" size={28} color={COLORS.primary} />
                 </TouchableOpacity>
             </View>
@@ -101,7 +101,7 @@ const WhiteLabelScreen = ({ navigation }) => {
                             <Text style={styles.emptyText}>Aucun site configuré.</Text>
                             <TouchableOpacity
                                 style={styles.ctaButton}
-                                onPress={() => navigation.navigate('CreateSite')}
+                                onPress={() => navigation.navigate('WhiteLabelIntro')}
                             >
                                 <Text style={styles.ctaText}>Créer mon site</Text>
                             </TouchableOpacity>

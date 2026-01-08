@@ -16,15 +16,15 @@ class SupportController extends Controller
     {
         $query = Ticket::with(['user:id,username']);
 
-        if ($request->has('status')) {
+        if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        if ($request->has('department')) {
+        if ($request->filled('department')) {
             $query->where('department', $request->department);
         }
 
-        if ($request->has('priority')) {
+        if ($request->filled('priority')) {
             $query->where('priority', $request->priority);
         }
 
@@ -54,7 +54,7 @@ class SupportController extends Controller
         ]);
 
         $ticket = Ticket::where('uuid', $uuid)->firstOrFail();
-        
+
         $ticket->update([
             'assigned_to' => $request->admin_id,
             'status' => 'in_progress',
@@ -91,8 +91,12 @@ class SupportController extends Controller
 
         // Send email notification to user
         if (!$request->is_internal) {
-            \Illuminate\Support\Facades\Mail::to($ticket->user->email)
-                ->send(new \App\Mail\TicketReply($ticket, $request->message));
+            try {
+                \Illuminate\Support\Facades\Mail::to($ticket->user->email)
+                    ->send(new \App\Mail\TicketReply($ticket, $request->message));
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Mail support failed: " . $e->getMessage());
+            }
         }
 
         return response()->json([

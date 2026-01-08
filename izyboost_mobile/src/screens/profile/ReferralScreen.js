@@ -28,7 +28,7 @@ const ReferralScreen = () => {
                 client.get('/user/referrals/link')
             ]);
             setStats(statsRes.data);
-            setReferralLink(linkRes.data.link || linkRes.data);
+            setReferralLink(linkRes.data.referral_link || linkRes.data.link || (typeof linkRes.data === 'string' ? linkRes.data : ''));
         } catch (error) {
             console.log('Referral fetch error:', error);
             // Fallback for demo if API not ready

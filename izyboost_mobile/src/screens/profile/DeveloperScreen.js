@@ -30,16 +30,22 @@ const DeveloperScreen = ({ navigation }) => {
         try {
             // GET /api/user/api-keys
             const response = await client.get('/user/api-keys');
-            // Assuming response data structure. If list, take first one.
+            // Backend returns a direct array of keys
             const data = response.data.data ? response.data.data : response.data;
 
+            // Handle both array (all keys) and object (single key) formats
             if (Array.isArray(data) && data.length > 0) {
-                setApiKey(data[0].key || data[0].token); // Adjust based on actual API Key object
-            } else if (data.key) {
+                // Determine the active key (if we ever support multiple, for now just take the most recent)
+                const activeKey = data.find(k => k.is_active) || data[0];
+                setApiKey(activeKey.key);
+            } else if (data && data.key) {
                 setApiKey(data.key);
+            } else {
+                setApiKey(null);
             }
         } catch (error) {
             console.log('Fetch API Key error:', error);
+            // Don't show alert here to avoid spamming if just empty
         } finally {
             setLoading(false);
         }
@@ -48,19 +54,42 @@ const DeveloperScreen = ({ navigation }) => {
     const handleGenerateKey = async () => {
         setGenerating(true);
         try {
-            const response = await client.post('/user/api-keys', { name: "Mobile App Generated" });
+            const payload = {
+                name: "Mobile App Generated",
+                // Backend requires permissions array
+                permissions: [
+                    'services.read',
+                    'orders.create',
+                    'orders.read',
+                    'balance.read'
+                ]
+            };
+
+            const response = await client.post('/user/api-keys', payload);
             const data = response.data.data ? response.data.data : response.data;
-            if (data.key || data.token) {
-                setApiKey(data.key || data.token);
-                Alert.alert("Succès", "Nouvelle clé API générée.");
+
+            // Check for the newly created key in nested structure (often api_key or just the object)
+            const newKey = data.api_key || data.key || data;
+
+            if (newKey && newKey.key) {
+                setApiKey(newKey.key);
+                Alert.alert("Succès", "Nouvelle clé API générée. Copiez-la maintenant, elle ne sera plus affichée en entier plus tard !");
+                setShowKey(true); // Auto-show the new key
             } else {
-                // Refresh list if return format is different
+                // Fallback: Refresh list
                 fetchApiKey();
+                Alert.alert("Succès", "Nouvelle clé générée.");
             }
         } catch (error) {
             console.log('Generate API Key error:', error);
             const msg = error.response?.data?.message || "Erreur lors de la génération.";
-            Alert.alert("Erreur", msg);
+            // If validation error, show details
+            if (error.response?.data?.errors) {
+                const errors = Object.values(error.response.data.errors).flat().join('\n');
+                Alert.alert("Erreur de validation", errors);
+            } else {
+                Alert.alert("Erreur", msg);
+            }
         } finally {
             setGenerating(false);
         }
@@ -89,8 +118,15 @@ const DeveloperScreen = ({ navigation }) => {
                     <Text style={styles.infoTitle}>Intégrez IzyBoost</Text>
                     <Text style={styles.infoText}>
                         Utilisez notre API RESTful pour automatiser vos commandes et synchroniser vos services.
-                        Consultez la documentation complète sur notre site web.
                     </Text>
+
+                    <TouchableOpacity
+                        style={styles.docButton}
+                        onPress={() => navigation.navigate('ApiDocumentation')}
+                    >
+                        <Text style={styles.docButtonText}>Voir la documentation</Text>
+                        <Ionicons name="arrow-forward" size={16} color={COLORS.primary} />
+                    </TouchableOpacity>
                 </View>
 
                 <View style={styles.keySection}>
@@ -270,6 +306,21 @@ const styles = StyleSheet.create({
         color: COLORS.error,
         fontSize: 14,
         textDecorationLine: 'underline',
+    },
+    docButton: {
+        marginTop: SPACING.m,
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        backgroundColor: COLORS.primary + '20', // 20% opacity
+        borderRadius: 20,
+    },
+    docButtonText: {
+        color: COLORS.primary,
+        ...FONTS.bold,
+        fontSize: 14,
+        marginRight: 4,
     }
 });
 

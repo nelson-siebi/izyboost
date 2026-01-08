@@ -16,7 +16,7 @@ class DeveloperOrderController extends Controller
     public function store(Request $request)
     {
         $apiKey = $request->get('api_key');
-        
+
         if (!in_array('orders.create', $apiKey->permissions)) {
             return response()->json([
                 'error' => 'Permission refusée',
@@ -55,7 +55,7 @@ class DeveloperOrderController extends Controller
         }
 
         return DB::transaction(function () use ($user, $service, $request, $costPrice, $sellPrice, $apiKey) {
-            
+
             $user->decrement('balance', $sellPrice);
             $margin = $sellPrice - $costPrice;
 
@@ -106,7 +106,7 @@ class DeveloperOrderController extends Controller
 
             // Send to external provider (same logic as OrderController)
             $provider = \App\Models\ApiProvider::find($service->api_provider_id);
-            
+
             if ($provider) {
                 $startTime = microtime(true);
                 $endpoint = $provider->base_url;
@@ -157,7 +157,7 @@ class DeveloperOrderController extends Controller
     public function index(Request $request)
     {
         $apiKey = $request->get('api_key');
-        
+
         if (!in_array('orders.read', $apiKey->permissions)) {
             return response()->json([
                 'error' => 'Permission refusée'
@@ -177,15 +177,36 @@ class DeveloperOrderController extends Controller
 
     /**
      * Get order status.
+     * Supports single ID or multiple IDs separated by comma.
      */
     public function status(Request $request, $id)
     {
         $apiKey = $request->get('api_key');
-        
+
         if (!in_array('orders.read', $apiKey->permissions)) {
             return response()->json([
                 'error' => 'Permission refusée'
             ], 403);
+        }
+
+        $ids = explode(',', $id);
+
+        if (count($ids) > 1) {
+            $orders = $apiKey->user->orders()->whereIn('id', $ids)->get();
+            $data = $orders->map(function ($order) {
+                return [
+                    'order_id' => $order->id,
+                    'status' => $order->status,
+                    'start_count' => $order->start_count,
+                    'remains' => $order->remains,
+                    'progress_percentage' => $order->progress_percentage,
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $data
+            ]);
         }
 
         $order = $apiKey->user->orders()->findOrFail($id);
