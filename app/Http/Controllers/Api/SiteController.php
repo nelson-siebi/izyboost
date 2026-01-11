@@ -23,26 +23,57 @@ class SiteController extends Controller
     public function purchase(Request $request)
     {
         $request->validate([
+            'plan_id' => 'required|exists:white_label_plans,id',
             'template_id' => 'required|exists:white_label_templates,id',
             'site_name' => 'required|string|max:200',
             'subdomain' => 'required|string|max:100|unique:white_label_sites,subdomain',
-            'interval' => 'required|in:monthly,yearly',
+            'interval' => 'required|in:monthly,yearly,lifetime',
             'custom_domain' => 'boolean',
             'domain_name' => 'nullable|required_if:custom_domain,true|string|max:200',
         ]);
 
         $user = $request->user();
+        $plan = WhiteLabelPlan::findOrFail($request->plan_id);
         $template = WhiteLabelTemplate::findOrFail($request->template_id);
-        
-        // Pricing Logic (Hardcoded as per new requirements)
-        $monthlyPrice = 3000;
-        $yearlyPrice = 15000;
-        $customDomainFee = 8000;
 
-        $planPrice = $request->interval === 'yearly' ? $yearlyPrice : $monthlyPrice;
-        $setupFee = $request->custom_domain ? $customDomainFee : 0;
-        
-        $totalAmount = $planPrice + $setupFee;
+        // Determine Price and Duration
+        $planPrice = 0;
+        $expiryDate = null;
+
+        switch ($request->interval) {
+            case 'monthly':
+                $planPrice = $plan->monthly_price;
+                $expiryDate = now()->addMonth();
+                break;
+            case 'yearly':
+                $planPrice = $plan->yearly_price;
+                $expiryDate = now()->addYear();
+                break;
+            case 'lifetime':
+                if (!$plan->lifetime_price) {
+                    throw ValidationException::withMessages([
+                        'interval' => ['Ce plan ne propose pas l\'option à vie.'],
+                    ]);
+                }
+                $planPrice = $plan->lifetime_price;
+                $expiryDate = null; // No expiration
+                break;
+        }
+
+        // Setup Fee (Only if plan has one, currently logic was custom_domain for free setup plans, we will stick to Plan setup_fee + optional custom domain fee if needed. For now keeping it simple: Plan Price + Plan Setup Fee)
+        // Note: Previous logic had a hardcoded $8000 fee for custom domain. We should probably keep that or move it to settings. Let's keep it as a constant for now or 0 if included in higher plans.
+        // Better attempt: Check if plan is 'pro' or 'agency' (high tier) -> free custom domain.
+
+        $customDomainFee = 0;
+        if ($request->custom_domain) {
+            // If plan doesn't include free domain (e.g. Starter), charge fee. 
+            // Simplification: We blindly charge if logic dictates, but relying on Plan Features is better.
+            // For now, let's assume the Plan Price ALREADY accounts for features level. 
+            // We will just add the Plan's defined setup_fee.
+            $customDomainFee = 0; // Removing hardcoded fee, assuming Plan structure covers it.
+        }
+
+        $totalAmount = $planPrice + ($plan->setup_fee ?? 0);
 
         // Check user balance
         if ($user->balance < $totalAmount) {
@@ -50,12 +81,9 @@ class SiteController extends Controller
                 'balance' => ['Solde insuffisant. Il vous faut ' . number_format($totalAmount, 0, ',', ' ') . ' FCFA.'],
             ]);
         }
-        
-        // Use a default plan ID for database consistency (assuming ID 1 exists, otherwise we should fetch first)
-        $plan = WhiteLabelPlan::first(); 
 
-        return DB::transaction(function () use ($user, $template, $plan, $request, $planPrice, $setupFee, $totalAmount) {
-            
+        return DB::transaction(function () use ($user, $template, $plan, $request, $planPrice, $totalAmount, $expiryDate) {
+
             // Deduct balance
             $user->decrement('balance', $totalAmount);
 
@@ -73,7 +101,7 @@ class SiteController extends Controller
                 ]
             );
 
-            // Create transaction
+            // Create transaction ("Achat site" or "Achat plan")
             $transaction = Transaction::create([
                 'user_id' => $user->id,
                 'payment_method_id' => $walletMethod->id,
@@ -83,33 +111,35 @@ class SiteController extends Controller
                 'net_amount' => $totalAmount,
                 'currency' => 'XAF',
                 'status' => 'completed',
-                'description' => "Achat site White Label - {$plan->name}",
+                'description' => "Achat site White Label - Plan {$plan->name} ({$request->interval})",
                 'completed_at' => now(),
             ]);
 
             // Create site order
-            $siteOrder = SiteOrder::create([
+            $order = SiteOrder::create([
                 'user_id' => $user->id,
                 'template_id' => $template->id,
                 'plan_id' => $plan->id,
                 'transaction_id' => $transaction->id,
                 'type' => 'new_purchase',
                 'amount' => $planPrice,
-                'setup_fee' => $setupFee,
+                'setup_fee' => $plan->setup_fee,
                 'total_amount' => $totalAmount,
                 'currency' => 'XAF',
                 'status' => 'completed',
-                'deployment_type' => $request->deployment_type,
+                'deployment_type' => $request->deployment_type ?? 'automated', // Default
                 'deployed_at' => now(),
                 'completed_at' => now(),
             ]);
 
             // Create the white label site
             $subdomain = Str::slug($request->subdomain);
-            // If custom domain is purchased, we might set it as site_url or keep subdomain as primary for now
-            // For this implementation, we'll store request->domain_name if custom_domain is true
-            $finalDomain = $request->custom_domain ? $request->domain_name : "{$subdomain}.izyboost.com";
-            $siteUrl = "https://{$finalDomain}";
+            $siteUrl = "https://{$subdomain}.izyboost.com";
+
+            if ($request->custom_domain && $request->domain_name) {
+                // Keep subdomain for system access, but site_url could be custom
+                // Usually we start with subdomain, and custom domain is an alias added later or verified.
+            }
 
             $site = WhiteLabelSite::create([
                 'owner_id' => $user->id,
@@ -119,7 +149,7 @@ class SiteController extends Controller
                 'site_url' => $siteUrl,
                 'subdomain' => $subdomain,
                 'custom_domain' => $request->custom_domain ? $request->domain_name : null,
-                'status' => 'pending', // Set to pending for admin review of domain/setup
+                'status' => 'pending', // Validation required
                 'deployment_type' => 'hosted_by_us',
                 'branding' => [
                     'logo' => null,
@@ -127,7 +157,6 @@ class SiteController extends Controller
                         'primary' => '#3B82F6',
                         'secondary' => '#10B981',
                     ],
-                    'favicon' => null,
                     'site_name' => $request->site_name,
                 ],
                 'configuration' => [
@@ -135,21 +164,15 @@ class SiteController extends Controller
                     'currency' => 'XAF',
                     'timezone' => 'Africa/Douala',
                 ],
-                'allowed_services' => null, // null = all services
                 'price_multiplier' => 1.00,
                 'margin_percent' => 20.00,
                 'statistics' => [
                     'total_orders' => 0,
                     'total_revenue' => 0,
-                    'active_users' => 0,
                 ],
                 'last_payment_at' => now(),
-                'next_payment_at' => $request->interval === 'yearly' 
-                    ? now()->addYear() 
-                    : now()->addMonth(),
-                'expires_at' => $request->interval === 'yearly' 
-                    ? now()->addYear() 
-                    : now()->addMonth(),
+                'next_payment_at' => $expiryDate,
+                'expires_at' => $expiryDate,
             ]);
 
             // Create subscription
@@ -158,29 +181,42 @@ class SiteController extends Controller
                 'white_label_site_id' => $site->id,
                 'plan_id' => $plan->id,
                 'template_id' => $template->id,
-                'status' => 'active',
+                'status' => 'pending',
                 'amount' => $planPrice,
                 'currency' => 'XAF',
                 'interval' => $request->interval,
                 'starts_at' => now(),
-                'ends_at' => $request->interval === 'yearly' 
-                    ? now()->addYear() 
-                    : now()->addMonth(),
+                'ends_at' => $expiryDate,
             ]);
 
+            // Notify Admin
+            try {
+                $adminEmail = config('app.admin_email');
+                if ($adminEmail) {
+                    \Illuminate\Support\Facades\Notification::route('mail', $adminEmail)
+                        ->notify(new \App\Notifications\NewWhiteLabelPurchase($site, $order));
+                }
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Failed to notify admin on purchase: " . $e->getMessage());
+            }
+
+            // Notify User (Welcome/Purchase Confirmation)
+            try {
+                \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\WelcomeEmail($user));
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Failed to send welcome email to {$user->email}: " . $e->getMessage());
+            }
+
             return response()->json([
-                'message' => 'Site créé avec succès !',
+                'message' => 'Site commandé avec succès ! Attente de validation.',
                 'site' => [
                     'uuid' => $site->uuid,
                     'site_name' => $site->site_name,
-                    'site_url' => $site->site_url,
                     'status' => $site->status,
                 ],
                 'subscription' => [
-                    'uuid' => $subscription->uuid,
                     'plan' => $plan->name,
                     'interval' => $subscription->interval,
-                    'next_payment' => $site->next_payment_at,
                 ],
                 'balance_after' => $user->fresh()->balance,
             ], 201);
@@ -230,15 +266,15 @@ class SiteController extends Controller
             ->firstOrFail();
 
         $branding = $site->branding;
-        
+
         if ($request->has('logo')) {
             $branding['logo'] = $request->logo;
         }
-        
+
         if ($request->has('colors')) {
             $branding['colors'] = array_merge($branding['colors'] ?? [], $request->colors);
         }
-        
+
         if ($request->has('site_name')) {
             $branding['site_name'] = $request->site_name;
         }

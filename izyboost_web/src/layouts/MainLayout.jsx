@@ -28,6 +28,8 @@ import NotificationDropdown from '../features/notifications/NotificationDropdown
 import { motion, AnimatePresence } from 'framer-motion';
 import Footer from '../components/Footer';
 import WhatsAppButton from '../components/WhatsAppButton';
+import { adminApi } from '../features/admin/adminApi';
+import apiClient from '../api/client';
 
 export default function MainLayout() {
     const { logout, user } = useAuthStore();
@@ -36,21 +38,22 @@ export default function MainLayout() {
     const [isSearchFocused, setIsSearchFocused] = useState(false);
     const [isPlusOpen, setIsPlusOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [siteLogo, setSiteLogo] = useState(null);
     const dropdownRef = useRef(null);
 
     const primaryItems = [
-        { label: 'Tableau de bord', icon: LayoutDashboard, path: '/' },
-        { label: 'Nouveau Boost', icon: ShoppingCart, path: '/services' },
-        { label: 'Historique', icon: History, path: '/orders' },
-        { label: 'Portefeuille', icon: Wallet, path: '/wallet' },
+        { label: 'Tableau de bord', icon: LayoutDashboard, path: '/dashboard' },
+        { label: 'Nouveau Boost', icon: ShoppingCart, path: '/dashboard/services' },
+        { label: 'Historique', icon: History, path: '/dashboard/orders' },
+        { label: 'Portefeuille', icon: Wallet, path: '/dashboard/wallet' },
     ];
 
     const secondaryItems = [
-        { label: 'Marque Blanche', icon: Globe, path: '/white-label' },
-        { label: 'Affiliation', icon: Share2, path: '/referrals' },
-        { label: 'API Développeurs', icon: Key, path: '/api-keys' },
-        { label: 'Support Client', icon: LifeBuoy, path: '/support' },
-        { label: 'Paramètres', icon: Settings, path: '/settings' },
+        { label: 'Marque Blanche', icon: Globe, path: '/dashboard/white-label' },
+        { label: 'Affiliation', icon: Share2, path: '/dashboard/referrals' },
+        { label: 'API Développeurs', icon: Key, path: '/dashboard/api-keys' },
+        { label: 'Support Client', icon: LifeBuoy, path: '/dashboard/support' },
+        { label: 'Paramètres', icon: Settings, path: '/dashboard/settings' },
     ];
 
     const handleLogout = () => {
@@ -69,36 +72,67 @@ export default function MainLayout() {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // Close mobile menu on route change
+    // Close mobile menu and scroll to top on route change
     useEffect(() => {
         setIsMobileMenuOpen(false);
+        window.scrollTo(0, 0);
     }, [location.pathname]);
+
+    const resolveImgUrl = (url) => {
+        if (!url) return null;
+        if (url.startsWith('http')) return url;
+        const baseUrl = apiClient.defaults.baseURL.replace('/api', '');
+        return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+    };
+
+    // Fetch site logo
+    useEffect(() => {
+        const fetchLogo = async () => {
+            try {
+                const data = await adminApi.getSettings();
+                const logoSetting = data.find(s => s.key === 'site_logo');
+                if (logoSetting?.value) setSiteLogo(logoSetting.value);
+            } catch (err) {
+                console.error("Failed to fetch logo", err);
+            }
+        };
+        fetchLogo();
+    }, []);
 
     return (
         <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans text-slate-900 overflow-x-hidden">
-            {/* Modern Top Header - Fixed & Full Width */}
-            <header className="h-20 lg:h-24 px-6 lg:px-16 flex items-center justify-between sticky top-0 bg-[#F8FAFC]/95 backdrop-blur-2xl z-[100] border-b border-slate-200/50 shadow-sm transition-all duration-300">
-                <div className="flex items-center space-x-6 lg:space-x-10">
-                    {/* Mobile Hamburger */}
-                    <button
-                        onClick={() => setIsMobileMenuOpen(true)}
-                        className="lg:hidden p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
-                    >
-                        <Menu size={24} />
-                    </button>
+            {/* Premium Fixed Header - Clean & White */}
+            <header className="h-20 lg:h-24 fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-xl z-[100] border-b border-slate-200/50 shadow-sm transition-all duration-300">
+                <div className="max-w-[1400px] mx-auto h-full px-6 flex items-center justify-between relative">
+                    {/* Section Gauche : Logo */}
+                    <div className="flex items-center gap-4 lg:gap-6 z-10">
+                        {/* Mobile Hamburger Button */}
+                        <button
+                            onClick={() => setIsMobileMenuOpen(true)}
+                            className="lg:hidden p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+                        >
+                            <Menu size={20} />
+                        </button>
 
-                    {/* Logo Section */}
-                    <Link to="/" className="flex items-center group">
-                        <div className="h-9 w-9 lg:h-10 lg:w-10 bg-brand-primary rounded-xl flex items-center justify-center text-white font-black shadow-lg shadow-brand-primary/20 group-hover:scale-110 transition-transform">
-                            IZ
-                        </div>
-                        <span className="ml-3 font-black text-xl lg:text-2xl tracking-tighter text-slate-900 hidden sm:block">
-                            IZY<span className="text-brand-primary">BOOST</span>
-                        </span>
-                    </Link>
+                        <Link to="/" className="flex items-center group">
+                            {siteLogo ? (
+                                <img
+                                    src={resolveImgUrl(siteLogo)}
+                                    alt="Logo"
+                                    className="h-8 lg:h-9 w-auto max-w-[120px] object-contain group-hover:scale-105 transition-transform"
+                                />
+                            ) : (
+                                <img
+                                    src="/logo1.png"
+                                    alt="IzyBoost"
+                                    className="h-8 lg:h-9 w-auto max-w-[120px] object-contain group-hover:scale-105 transition-transform"
+                                />
+                            )}
+                        </Link>
+                    </div>
 
-                    {/* Desktop Navigation */}
-                    <nav className="hidden xl:flex items-center space-x-1">
+                    {/* Section Centre : Navigation Desktop */}
+                    <nav className="hidden lg:flex items-center gap-6 absolute left-1/2 -translate-x-1/2">
                         {primaryItems.map((item) => {
                             const isActive = location.pathname === item.path;
                             return (
@@ -106,25 +140,30 @@ export default function MainLayout() {
                                     key={item.path}
                                     to={item.path}
                                     className={cn(
-                                        "px-4 py-2.5 rounded-2xl flex items-center transition-all duration-300 gap-2.5 font-bold text-[13px] tracking-tight",
-                                        isActive
-                                            ? "bg-brand-primary text-white shadow-lg shadow-brand-primary/20"
-                                            : "text-slate-500 hover:bg-white hover:text-brand-primary"
+                                        "px-4 py-2 rounded-2xl flex items-center transition-all duration-300 gap-2 font-black text-[11px] uppercase tracking-widest relative group/nav",
+                                        isActive ? "text-brand-primary" : "text-slate-400 hover:text-slate-900"
                                     )}
                                 >
-                                    <item.icon size={16} />
+                                    <item.icon size={16} className={cn("transition-transform group-hover/nav:scale-110", isActive ? "stroke-[3px]" : "stroke-[2px]")} />
                                     <span>{item.label}</span>
+                                    {isActive && (
+                                        <motion.div
+                                            layoutId="headerNavActive"
+                                            className="absolute -bottom-1 left-1/2 -translate-x-1/2 h-1 w-4 bg-brand-primary rounded-full shadow-[0_0_10px_rgba(var(--brand-primary-rgb),0.5)]"
+                                            transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                        />
+                                    )}
                                 </Link>
                             );
                         })}
 
-                        {/* Plus Dropdown */}
+                        {/* Plus Dropdown - Compact */}
                         <div className="relative" ref={dropdownRef}>
                             <button
                                 onClick={() => setIsPlusOpen(!isPlusOpen)}
                                 className={cn(
-                                    "px-4 py-2.5 rounded-2xl flex items-center transition-all duration-300 gap-2.5 font-bold text-[13px] tracking-tight",
-                                    isPlusOpen ? "bg-slate-900 text-white" : "text-slate-500 hover:bg-white hover:text-brand-primary"
+                                    "px-4 py-2 rounded-2xl flex items-center transition-all duration-300 gap-2 font-black text-[11px] uppercase tracking-widest group/nav",
+                                    isPlusOpen ? "text-slate-900" : "text-slate-400 hover:text-slate-900"
                                 )}
                             >
                                 <MoreHorizontal size={16} />
@@ -137,7 +176,7 @@ export default function MainLayout() {
                                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                                         animate={{ opacity: 1, y: 0, scale: 1 }}
                                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                        className="absolute top-full left-0 mt-3 w-64 bg-white rounded-3xl shadow-2xl shadow-slate-200/50 border border-slate-100 p-3 z-50 overflow-hidden"
+                                        className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 bg-white rounded-3xl shadow-2xl shadow-slate-200/50 border border-slate-100 p-2 z-50 overflow-hidden"
                                     >
                                         <div className="grid grid-cols-1 gap-1">
                                             {secondaryItems.map((item) => (
@@ -145,12 +184,12 @@ export default function MainLayout() {
                                                     key={item.path}
                                                     to={item.path}
                                                     onClick={() => setIsPlusOpen(false)}
-                                                    className="flex items-center gap-3 p-3 rounded-2xl hover:bg-slate-50 transition-colors group"
+                                                    className="flex items-center gap-3 p-2.5 rounded-2xl hover:bg-slate-50 transition-colors group"
                                                 >
-                                                    <div className="h-9 w-9 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 group-hover:bg-brand-primary group-hover:text-white transition-colors">
-                                                        <item.icon size={16} />
+                                                    <div className="h-8 w-8 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 group-hover:bg-brand-primary group-hover:text-white transition-colors">
+                                                        <item.icon size={14} />
                                                     </div>
-                                                    <span className="font-bold text-sm text-slate-700 group-hover:text-slate-900">{item.label}</span>
+                                                    <span className="font-bold text-xs text-slate-700 group-hover:text-slate-900">{item.label}</span>
                                                 </Link>
                                             ))}
                                         </div>
@@ -159,75 +198,61 @@ export default function MainLayout() {
                             </AnimatePresence>
                         </div>
                     </nav>
-                </div>
 
-                <div className="flex items-center space-x-3 lg:space-x-6">
-                    {/* Search Bar Refined */}
-                    <div className={cn(
-                        "hidden md:flex items-center px-5 py-2.5 rounded-2xl transition-all duration-300 w-64 lg:w-72 border-2",
-                        isSearchFocused
-                            ? "bg-white border-brand-primary/20 shadow-xl shadow-brand-primary/5 translate-y-[-1px]"
-                            : "bg-slate-200/50 border-transparent"
-                    )}>
-                        <Search size={18} className={cn("transition-colors", isSearchFocused ? "text-brand-primary" : "text-slate-400")} />
-                        <input
-                            type="text"
-                            placeholder="Rechercher..."
-                            onFocus={() => setIsSearchFocused(true)}
-                            onBlur={() => setIsSearchFocused(false)}
-                            onKeyDown={(e) => e.key === 'Enter' && navigate(`/services?search=${e.target.value}`)}
-                            className="bg-transparent border-none outline-none ml-3 text-sm font-bold w-full placeholder:text-slate-400"
-                        />
-                    </div>
-
-                    <div className="flex items-center gap-2 lg:gap-4">
+                    {/* Section Droite : Actions Utilisateur */}
+                    <div className="flex items-center gap-3 z-10">
                         {/* Notifications */}
                         <NotificationDropdown />
 
-                        <div className="hidden sm:flex items-center bg-brand-primary/[0.03] border border-brand-primary/10 rounded-2xl p-1.5 pr-4 pl-1.5 shadow-sm group cursor-pointer hover:border-brand-primary/20 transition-all ml-2"
-                            onClick={() => navigate('/wallet')}>
-                            <div className="h-8 w-8 rounded-xl bg-brand-primary flex items-center justify-center text-white font-black group-hover:scale-95 transition-transform">
-                                <Plus size={16} />
+                        {/* Balance Card - Compact */}
+                        <div className="hidden md:flex items-center bg-white border border-slate-200 rounded-2xl p-1 pr-3 shadow-sm group cursor-pointer hover:border-brand-primary/30 transition-all"
+                            onClick={() => navigate('/dashboard/wallet')}>
+                            <div className="h-8 w-8 rounded-xl bg-slate-900 flex items-center justify-center text-white">
+                                <Wallet size={14} strokeWidth={2.5} />
                             </div>
-                            <div className="ml-3 text-right">
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Solde</p>
-                                <p className="text-sm font-black text-slate-900 mt-0.5">{user?.balance || 0} <span className="text-[10px] text-brand-primary">FCFA</span></p>
-                            </div>
-                        </div>
-
-                        <div className="hidden sm:flex items-center bg-white border border-slate-200 rounded-2xl p-1.5 pr-4 pl-1.5 shadow-sm group cursor-pointer hover:border-brand-primary/20 transition-all">
-                            <div className="h-10 w-10 rounded-xl bg-slate-900 flex items-center justify-center text-white font-black group-hover:scale-95 transition-transform overflow-hidden capitalize">
-                                {user?.username?.charAt(0) || <User size={18} />}
-                            </div>
-                            <div className="ml-3 hidden md:block">
-                                <p className="text-sm font-black text-slate-900 truncate max-w-[100px]">{user?.username || 'Client'}</p>
+                            <div className="ml-2.5 text-right">
+                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none">Solde</p>
+                                <p className="text-xs font-black text-slate-900 mt-0.5">{Number(user?.balance || 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} <span className="text-[10px] text-brand-primary">F</span></p>
                             </div>
                         </div>
 
-                        {user?.role === 'admin' && (
-                            <button
-                                onClick={() => navigate('/admin/dashboard')}
-                                className="p-3 bg-amber-50 border border-amber-100 rounded-2xl text-amber-600 hover:bg-amber-100 hover:text-amber-700 transition-all active:scale-90 shadow-sm shadow-amber-900/5 group"
-                                title="Administration"
-                            >
-                                <ShieldCheck size={20} strokeWidth={2.5} className="group-hover:scale-110 transition-transform" />
-                            </button>
-                        )}
+                        {/* Profile - Slim */}
+                        <div className="hidden lg:flex items-center bg-white border border-slate-200 rounded-2xl p-1 pr-3 shadow-sm group hover:border-brand-primary/30 transition-all cursor-pointer" onClick={() => navigate('/dashboard/settings')}>
+                            <div className="h-8 w-8 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden">
+                                {user?.avatar ? (
+                                    <img src={user.avatar} alt="Avatar" className="h-full w-full object-cover" />
+                                ) : (
+                                    <span className="font-black text-slate-400 text-[10px] uppercase">{user?.username?.charAt(0)}</span>
+                                )}
+                            </div>
+                            <div className="ml-2 hidden xl:block">
+                                <p className="text-xs font-black text-slate-900 leading-none">{user?.username || 'Client'}</p>
+                            </div>
+                        </div>
 
+                        {/* Logout - Subtle */}
                         <button
                             onClick={handleLogout}
-                            className="hidden lg:flex p-3 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-red-500 hover:border-red-100 transition-all active:scale-90"
+                            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all"
+                            title="Déconnexion"
                         >
-                            <LogOut size={20} />
+                            <LogOut size={18} strokeWidth={2.5} />
                         </button>
                     </div>
                 </div>
             </header>
 
+
+
+
+
             {/* Mobile Sidebar (Drawer) */}
-            <AnimatePresence>
+            < AnimatePresence mode="wait" >
                 {isMobileMenuOpen && (
-                    <div key="mobile-menu-portal" className="fixed inset-0 z-[150] lg:hidden">
+                    <motion.div
+                        key="mobile-menu-container"
+                        className="fixed inset-0 z-[150] lg:hidden"
+                    >
                         <motion.div
                             key="mobile-menu-overlay"
                             initial={{ opacity: 0 }}
@@ -311,16 +336,17 @@ export default function MainLayout() {
                                 </button>
                             </div>
                         </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
+                    </motion.div>
+                )
+                }
+            </AnimatePresence >
 
             {/* Content Container */}
-            <main className="flex-1 min-w-0 bg-pattern">
-                <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-8 lg:py-12 min-h-[60vh]">
+            < main className="flex-1 min-w-0 bg-pattern" >
+                <div className="max-w-[1400px] mx-auto px-4 lg:px-6 py-8 lg:py-12 min-h-[60vh]">
                     <Outlet />
                 </div>
-            </main>
+            </main >
 
             <Footer />
             <WhatsAppButton />
@@ -355,18 +381,18 @@ export default function MainLayout() {
                         );
                     })}
                     <Link
-                        to="/settings"
+                        to="/dashboard/settings"
                         className="relative flex flex-col items-center justify-center w-full h-full group"
                     >
                         <div className={cn(
                             "p-2.5 rounded-2xl transition-all duration-300 text-slate-400 group-hover:text-white",
-                            location.pathname === '/settings' && "bg-slate-800 text-white"
+                            location.pathname === '/dashboard/settings' && "bg-slate-800 text-white"
                         )}>
                             <Settings size={20} />
                         </div>
                     </Link>
                 </nav>
             </div>
-        </div>
+        </div >
     );
 }

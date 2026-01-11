@@ -73,6 +73,33 @@ export default function AdminFinancePage() {
         }
     };
 
+    const handleVerify = async (txId) => {
+        if (!confirm('Approuver ce dépôt et créditer le client ?')) return;
+        try {
+            setLoading(true);
+            await adminApi.verifyTransaction(txId);
+            loadData();
+        } catch (error) {
+            alert('Erreur lors de la validation');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleReject = async (txId) => {
+        const reason = prompt('Raison du rejet (optionnel) :');
+        if (reason === null) return;
+        try {
+            setLoading(true);
+            await adminApi.rejectTransaction(txId, { reason });
+            await loadData();
+        } catch (error) {
+            alert('Erreur lors du rejet');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const StatCard = ({ title, value, icon: Icon, color, trend }) => (
         <motion.div
             variants={item}
@@ -220,6 +247,7 @@ export default function AdminFinancePage() {
                                     <th className="px-6 py-4 text-left text-xs font-black text-slate-400 uppercase tracking-wider">Montant</th>
                                     <th className="px-6 py-4 text-left text-xs font-black text-slate-400 uppercase tracking-wider">Statut</th>
                                     <th className="px-6 py-4 text-left text-xs font-black text-slate-400 uppercase tracking-wider">Date</th>
+                                    <th className="px-6 py-4 text-right text-xs font-black text-slate-400 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -247,6 +275,26 @@ export default function AdminFinancePage() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-sm text-slate-400 font-medium">{new Date(tx.created_at).toLocaleDateString()}</td>
+                                        <td className="px-6 py-4">
+                                            {tx.status === 'pending' && (
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <button
+                                                        onClick={() => handleVerify(tx.id)}
+                                                        className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors"
+                                                        title="Approuver le dépôt"
+                                                    >
+                                                        <Check className="h-4 w-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleReject(tx.id)}
+                                                        className="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                                                        title="Rejeter le dépôt"
+                                                    >
+                                                        <X className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </td>
                                     </tr>
                                 )) : (
                                     <tr>

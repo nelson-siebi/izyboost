@@ -1,7 +1,32 @@
 import { motion } from 'framer-motion';
 import { ShieldCheck, Zap, Globe } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { adminApi } from '../features/admin/adminApi';
+import apiClient from '../api/client';
 
 export default function AuthLayout({ children, title, subtitle }) {
+    const [siteLogo, setSiteLogo] = useState(null);
+
+    useEffect(() => {
+        const fetchLogo = async () => {
+            try {
+                const data = await adminApi.getPublicSettings();
+                const logo = data.find(s => s.key === 'site_logo')?.value;
+                if (logo) setSiteLogo(logo);
+            } catch (err) {
+                console.error("AuthLayout: Failed to fetch logo", err);
+            }
+        };
+        fetchLogo();
+    }, []);
+
+    const resolveImgUrl = (url) => {
+        if (!url) return null;
+        if (url.startsWith('http')) return url;
+        const baseUrl = apiClient.defaults.baseURL.replace('/api', '');
+        return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+    };
+
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row overflow-hidden font-sans">
             {/* Left Side: Branding and Visuals (Visible on desktop) */}
@@ -26,9 +51,13 @@ export default function AuthLayout({ children, title, subtitle }) {
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.2 }}
                     >
-                        <h1 className="text-6xl font-black tracking-tight text-white mb-6">
-                            Izy<span className="text-brand-primary">Boost</span>
-                        </h1>
+                        {siteLogo ? (
+                            <img src={resolveImgUrl(siteLogo)} alt="Logo" className="h-12 w-auto mb-10 object-contain drop-shadow-2xl" />
+                        ) : (
+                            <h1 className="text-6xl font-black tracking-tight text-white mb-6">
+                                Izy<span className="text-brand-primary">Boost</span>
+                            </h1>
+                        )}
                         <p className="text-xl text-slate-400 mb-12 font-medium leading-relaxed">
                             La plateforme SMM la plus rapide et sécurisée pour propulser votre présence digitale au sommet.
                         </p>
@@ -58,11 +87,15 @@ export default function AuthLayout({ children, title, subtitle }) {
             </div>
 
             {/* Right Side: Auth Forms */}
-            <div className="w-full md:w-1/2 flex items-center justify-center p-6 bg-white relative">
+            <div className="w-full md:w-1/2 flex items-center justify-center p-6 bg-white relative pt-24 md:pt-6">
                 <div className="absolute top-8 left-8 md:hidden">
-                    <span className="text-2xl font-black text-slate-900 tracking-tighter">
-                        IZY<span className="text-brand-primary">BOOST</span>
-                    </span>
+                    {siteLogo ? (
+                        <img src={resolveImgUrl(siteLogo)} alt="Logo" className="h-8 w-auto object-contain" />
+                    ) : (
+                        <span className="text-2xl font-black text-slate-900 tracking-tighter">
+                            IZY<span className="text-brand-primary">BOOST</span>
+                        </span>
+                    )}
                 </div>
 
                 <div className="w-full max-w-md">

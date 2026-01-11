@@ -5,6 +5,7 @@ import { authApi } from './authApi';
 import { LogIn, User, Lock, Loader2, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import AuthLayout from '../../layouts/AuthLayout';
+import SEO from '../../components/SEO';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -23,7 +24,7 @@ export default function LoginPage() {
         try {
             const data = await authApi.login({ email, password });
             setAuth(data.user, data.access_token);
-            navigate('/');
+            navigate('/dashboard');
         } catch (err) {
             setError(err.response?.data?.message || 'Identifiants invalides');
         } finally {
@@ -36,6 +37,10 @@ export default function LoginPage() {
             title="Content de vous revoir !"
             subtitle="Connectez-vous pour gérer vos commandes et services."
         >
+            <SEO
+                title="Connexion"
+                description="Connectez-vous à votre compte IzyBoost pour gérer vos boosts et suivre vos commandes."
+            />
             <form onSubmit={handleSubmit} className="space-y-6">
                 {error && (
                     <motion.div
@@ -70,7 +75,7 @@ export default function LoginPage() {
                         <label className="text-xs font-black uppercase tracking-widest text-slate-400">
                             Mot de passe
                         </label>
-                        <button type="button" className="text-xs font-bold text-brand-primary hover:text-brand-secondary transition-colors">Perdu ?</button>
+                        <Link to="/auth/forgot-password" title="Mot de passe oublié" className="text-xs font-bold text-brand-primary hover:text-brand-secondary transition-colors">Perdu ?</Link>
                     </div>
                     <div className="relative group">
                         <Lock size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-brand-primary transition-colors" />

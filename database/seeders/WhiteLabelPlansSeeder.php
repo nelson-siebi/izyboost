@@ -9,19 +9,20 @@ class WhiteLabelPlansSeeder extends Seeder
 {
     public function run(): void
     {
-        WhiteLabelPlan::firstOrCreate(
+        WhiteLabelPlan::updateOrCreate(
             ['slug' => 'starter'],
             [
                 'name' => 'Starter',
-                'description' => 'Plan de démarrage pour les petits revendeurs',
-                'monthly_price' => 19.99,
-                'yearly_price' => 199.99,
-                'setup_fee' => 29.99,
+                'description' => 'Idéal pour débuter votre activité de revendeur.',
+                'monthly_price' => 3000.00,
+                'yearly_price' => 15000.00,
+                'lifetime_price' => 50000.00,
+                'setup_fee' => 0.00,
                 'transaction_fee_percent' => 5.00,
                 'features' => [
                     ['name' => 'Site complet', 'enabled' => true],
-                    ['name' => 'Dashboard admin', 'enabled' => true],
-                    ['name' => 'Support email', 'enabled' => true],
+                    ['name' => 'Sous-domaine izyboost', 'enabled' => true],
+                    ['name' => 'Support standard', 'enabled' => true],
                     ['name' => 'API accès', 'enabled' => false],
                 ],
                 'limits' => [
@@ -35,24 +36,24 @@ class WhiteLabelPlansSeeder extends Seeder
             ]
         );
 
-        WhiteLabelPlan::firstOrCreate(
+        WhiteLabelPlan::updateOrCreate(
             ['slug' => 'pro'],
             [
                 'name' => 'Pro',
-                'description' => 'Plan professionnel pour revendeurs sérieux',
-                'monthly_price' => 49.99,
-                'yearly_price' => 499.99,
-                'setup_fee' => 49.99,
-                'transaction_fee_percent' => 3.00,
+                'description' => 'Pour les revendeurs en croissance avec domaine personnalisé.',
+                'monthly_price' => 5000.00,
+                'yearly_price' => 50000.00,
+                'lifetime_price' => 150000.00,
+                'setup_fee' => 0.00,
+                'transaction_fee_percent' => 2.00,
                 'features' => [
                     ['name' => 'Site complet', 'enabled' => true],
-                    ['name' => 'Dashboard admin', 'enabled' => true],
-                    ['name' => 'Support prioritaire', 'enabled' => true],
-                    ['name' => 'API accès', 'enabled' => true],
                     ['name' => 'Domaine personnalisé', 'enabled' => true],
+                    ['name' => 'Support prioritaire', 'enabled' => true],
+                    ['name' => 'Accès API complet', 'enabled' => true],
                 ],
                 'limits' => [
-                    'max_users' => 500,
+                    'max_users' => 1000,
                     'max_orders_per_day' => 5000,
                     'max_sites' => 3,
                 ],
@@ -62,23 +63,22 @@ class WhiteLabelPlansSeeder extends Seeder
             ]
         );
 
-        WhiteLabelPlan::firstOrCreate(
-            ['slug' => 'enterprise'],
+        WhiteLabelPlan::updateOrCreate(
+            ['slug' => 'agency'],
             [
-                'name' => 'Enterprise',
-                'description' => 'Plan entreprise sans limites',
-                'monthly_price' => 99.99,
-                'yearly_price' => 999.99,
+                'name' => 'Agency',
+                'description' => 'La solution ultime sans restrictions.',
+                'monthly_price' => 15000.00,
+                'yearly_price' => 150000.00,
+                'lifetime_price' => 450000.00,
                 'setup_fee' => 0.00,
-                'transaction_fee_percent' => 1.00,
+                'transaction_fee_percent' => 0.00,
                 'features' => [
-                    ['name' => 'Site complet', 'enabled' => true],
-                    ['name' => 'Dashboard admin', 'enabled' => true],
-                    ['name' => 'Support 24/7', 'enabled' => true],
-                    ['name' => 'API complète', 'enabled' => true],
+                    ['name' => 'Marque blanche totale', 'enabled' => true],
                     ['name' => 'Domaine personnalisé', 'enabled' => true],
-                    ['name' => 'Branding complet', 'enabled' => true],
-                    ['name' => 'Déploiement personnalisé', 'enabled' => true],
+                    ['name' => 'Support VIP 24/7', 'enabled' => true],
+                    ['name' => 'API Illimitée', 'enabled' => true],
+                    ['name' => 'Multi-devises', 'enabled' => true],
                 ],
                 'limits' => [
                     'max_users' => 'unlimited',

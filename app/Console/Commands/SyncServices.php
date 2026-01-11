@@ -18,7 +18,7 @@ class SyncServices extends Command
     {
         // 1. Get Provider (Use ID or Default)
         $providerId = $this->argument('provider_id');
-        
+
         if ($providerId) {
             $provider = ApiProvider::find($providerId);
         } else {
@@ -30,7 +30,7 @@ class SyncServices extends Command
             // Create default provider if none exists (Bootstrap)
             $apiKey = env('SMM_API_KEY');
             $apiUrl = env('SMM_API_URL');
-            
+
             if (!$apiKey || !$apiUrl) {
                 $this->error('No API Key/URL found in .env and no provider in DB.');
                 return;
@@ -62,9 +62,13 @@ class SyncServices extends Command
         $services = $response->json();
         $this->info("Found " . count($services) . " services.");
 
-            // 3. Settings (Currency & Margin)
-            $rateUsdXaf = \App\Models\PlatformSetting::where('key', 'currency_rate_usd_xaf')->value('value') ?? 650;
-            $marginPercent = 30; // 30% default margin
+        // 2.1 DEACTIVATE ALL OLD SERVICES FOR THIS PROVIDER (to handle removals)
+        Service::where('api_provider_id', $provider->id)->update(['is_active' => false]);
+        $this->info("Deactivated existing services for cleanup...");
+
+        // 3. Settings (Currency & Margin)
+        $rateUsdXaf = \App\Models\PlatformSetting::where('key', 'currency_rate_usd_xaf')->value('value') ?? 650;
+        $marginPercent = \App\Models\PlatformSetting::where('key', 'default_user_margin')->value('value') ?? 30; // Matches admin UI key
 
         $bar = $this->output->createProgressBar(count($services));
         $bar->start();
@@ -104,7 +108,7 @@ class SyncServices extends Command
                     'type' => $this->mapServiceType($serviceData['type'] ?? 'default'),
                     'min_quantity' => $serviceData['min'],
                     'max_quantity' => $serviceData['max'],
-                    'cost_per_unit' => $costXaf / 1000, 
+                    'cost_per_unit' => $costXaf / 1000,
                     'base_price_per_unit' => $basePriceXaf / 1000,
                     'provider' => $provider->name, // Required string
                     'drip_feed' => $serviceData['dripfeed'] ?? false,
@@ -123,11 +127,11 @@ class SyncServices extends Command
     private function mapServiceType($apiType)
     {
         $type = strtolower($apiType);
-        
+
         if (str_contains($type, 'comment')) {
             return 'custom_comments';
         }
-        
+
         if (str_contains($type, 'package')) {
             return 'package';
         }

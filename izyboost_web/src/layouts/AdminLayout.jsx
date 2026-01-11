@@ -16,12 +16,16 @@ import {
     ChevronRight,
     User,
     Package,
-    Clock
+    Clock,
+    AlertTriangle
 } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
+import { adminApi } from '../features/admin/adminApi';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../utils/cn';
 import WhatsAppButton from '../components/WhatsAppButton';
+import apiClient from '../api/client';
+import NotificationDropdown from '../features/notifications/NotificationDropdown';
 
 export default function AdminLayout() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -29,6 +33,27 @@ export default function AdminLayout() {
     const location = useLocation();
     const { user, logout } = useAuthStore();
     const [scrolled, setScrolled] = useState(false);
+    const [settings, setSettings] = useState({ site_logo: null });
+
+    const resolveImgUrl = (url) => {
+        if (!url) return null;
+        if (url.startsWith('http')) return url;
+        const baseUrl = apiClient.defaults.baseURL.replace('/api', '');
+        return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+    };
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const data = await adminApi.getSettings();
+                const logoSetting = data.find(s => s.key === 'site_logo');
+                if (logoSetting) setSettings(prev => ({ ...prev, site_logo: logoSetting.value }));
+            } catch (err) {
+                console.error("Failed to fetch admin settings", err);
+            }
+        };
+        fetchSettings();
+    }, []);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -43,7 +68,9 @@ export default function AdminLayout() {
         { label: 'Utilisateurs', icon: Users, path: '/admin/users' },
         { label: 'Commandes', icon: ShoppingCart, path: '/admin/orders' },
         { label: 'En attente', icon: Clock, path: '/admin/pending-boosts' },
+        { label: 'Échecs API', icon: AlertTriangle, path: '/admin/failed-orders' },
         { label: 'Offres SaaS', icon: Globe, path: '/admin/saas' },
+        { label: 'Services SMM', icon: Package, path: '/admin/services' },
         { label: 'Finances', icon: CreditCard, path: '/admin/finance' },
         { label: 'Support', icon: LifeBuoy, path: '/admin/support' },
         { label: 'Settings', icon: Settings, path: '/admin/settings' },
@@ -66,17 +93,36 @@ export default function AdminLayout() {
         <div className="min-h-screen bg-slate-50 flex flex-col lg:flex-row">
             {/* Desktop Sidebar */}
             <aside className="hidden lg:flex flex-col w-72 fixed inset-y-0 z-50 bg-white border-r border-slate-200 shadow-xl shadow-slate-200/50">
-                <div className="flex h-20 shrink-0 items-center px-6 gap-3 border-b border-slate-100 bg-white">
-                    <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/20">
-                        <LayoutDashboard className="h-5 w-5 text-white" />
-                    </div>
-                    <div>
-                        <h1 className="text-xl font-black text-slate-800 tracking-tight">IzyBoost</h1>
-                        <p className="text-[10px] font-bold text-orange-500 uppercase tracking-widest">Admin 2.0</p>
+                <div className="flex h-22 shrink-0 items-center px-6 gap-3 border-b border-slate-100 bg-white py-4">
+                    {settings.site_logo ? (
+                        <div className="flex items-center gap-3">
+                            <img src={resolveImgUrl(settings.site_logo)} alt="Logo" className="h-10 w-auto max-w-[180px] object-contain" />
+                        </div>
+                    ) : (
+                        <>
+                            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/20">
+                                <LayoutDashboard className="h-5 w-5 text-white" />
+                            </div>
+                            <div>
+                                <h1 className="text-xl font-black text-slate-800 tracking-tight">IzyBoost</h1>
+                                <p className="text-[10px] font-bold text-orange-500 uppercase tracking-widest">Admin 2.0</p>
+                            </div>
+                        </>
+                    )}
+                </div>
+
+                <div className="px-6 py-4">
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <input
+                            type="text"
+                            placeholder="Rechercher..."
+                            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
+                        />
                     </div>
                 </div>
 
-                <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-1">
+                <nav className="flex-1 overflow-y-auto px-4 space-y-1">
                     {menuItems.map((item) => {
                         const isActive = location.pathname === item.path;
                         return (
@@ -107,9 +153,14 @@ export default function AdminLayout() {
                             <p className="text-sm font-bold text-slate-800 truncate">{user?.username || 'Admin'}</p>
                             <p className="text-xs font-medium text-slate-500 truncate">{user?.email}</p>
                         </div>
-                        <button onClick={handleLogout} className="p-2 text-slate-400 hover:text-red-500 transition-colors">
-                            <LogOut className="h-4 w-4" />
-                        </button>
+                        <div className="flex items-center gap-1">
+                            <Link to="/settings" className="p-2 text-slate-400 hover:text-orange-500 transition-colors" title="Paramètres du compte">
+                                <Settings className="h-4 w-4" />
+                            </Link>
+                            <button onClick={handleLogout} className="p-2 text-slate-400 hover:text-red-500 transition-colors" title="Déconnexion">
+                                <LogOut className="h-4 w-4" />
+                            </button>
+                        </div>
                     </div>
                 </div>
             </aside>
@@ -121,22 +172,25 @@ export default function AdminLayout() {
             )}>
                 <div className="px-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/20">
-                            <LayoutDashboard className="h-5 w-5 text-white" />
-                        </div>
-                        <div>
-                            <span className="font-black text-lg text-slate-800 tracking-tight block leading-none">IzyBoost</span>
-                            <span className="text-[9px] font-bold text-orange-500 uppercase tracking-widest leading-none">Admin Panel</span>
-                        </div>
+                        {settings.site_logo ? (
+                            <img src={resolveImgUrl(settings.site_logo)} alt="Logo" className="h-8 w-auto max-w-[120px] object-contain" />
+                        ) : (
+                            <>
+                                <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/20">
+                                    <LayoutDashboard className="h-5 w-5 text-white" />
+                                </div>
+                                <div>
+                                    <span className="font-black text-lg text-slate-800 tracking-tight block leading-none">IzyBoost</span>
+                                    <span className="text-[9px] font-bold text-orange-500 uppercase tracking-widest leading-none">Admin Panel</span>
+                                </div>
+                            </>
+                        )}
                     </div>
                     <div className="flex items-center gap-2">
                         <button className="relative p-2 rounded-full hover:bg-slate-100 transition-colors">
                             <Bell className="h-5 w-5 text-slate-600" />
                             <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
                         </button>
-                        <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center border border-slate-200">
-                            <span className="text-xs font-black text-slate-600">{user?.username?.[0]?.toUpperCase() || 'A'}</span>
-                        </div>
                         <button
                             onClick={() => setSidebarOpen(true)}
                             className="p-2 -mr-2 text-slate-500 hover:text-orange-500 transition-colors"
@@ -148,9 +202,12 @@ export default function AdminLayout() {
             </div>
 
             {/* Mobile Sidebar Overlay (Hamburger Content) */}
-            <AnimatePresence>
+            <AnimatePresence mode="wait">
                 {sidebarOpen && (
-                    <div key="mobile-sidebar-portal" className="fixed inset-0 z-[60] lg:hidden">
+                    <motion.div
+                        key="mobile-sidebar-container"
+                        className="fixed inset-0 z-[60] lg:hidden"
+                    >
                         <motion.div
                             key="sidebar-overlay"
                             initial={{ opacity: 0 }}
@@ -201,7 +258,7 @@ export default function AdminLayout() {
                                 </button>
                             </div>
                         </motion.div>
-                    </div>
+                    </motion.div>
                 )}
             </AnimatePresence>
 
@@ -209,16 +266,20 @@ export default function AdminLayout() {
             <div className="flex-1 flex flex-col lg:pl-72 min-h-screen pb-24 lg:pb-0 pt-20 lg:pt-0 bg-slate-50">
                 {/* Desktop Top Bar */}
                 <header className="hidden lg:flex sticky top-0 z-30 h-20 bg-white/80 backdrop-blur-xl border-b border-slate-200 px-8 items-center justify-between">
-                    <div className="relative w-96">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-                        <input
-                            type="text"
-                            placeholder="Rechercher une commande, un utilisateur..."
-                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
-                        />
+                    <div className="flex items-center gap-6">
+                        <Link to="/" className="flex items-center gap-2 px-4 py-2 rounded-2xl text-slate-500 hover:text-orange-500 hover:bg-orange-50 transition-all font-bold text-sm group">
+                            <Globe size={18} className="group-hover:animate-pulse" />
+                            <span>Voir le site</span>
+                        </Link>
+                        <Link to="/admin/dashboard" className="flex items-center gap-2 px-4 py-2 rounded-xl text-slate-500 hover:text-orange-500 hover:bg-orange-50 transition-all font-bold text-sm">
+                            <LayoutDashboard size={18} />
+                            <span>Dashboard</span>
+                        </Link>
                     </div>
+
                     <div className="flex items-center gap-4">
-                        <button className="relative p-2.5 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-orange-500 transition-colors">
+                        <NotificationDropdown />
+                        <button className="relative p-2.5 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-orange-500 transition-all">
                             <Bell className="h-6 w-6" />
                             <span className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white" />
                         </button>

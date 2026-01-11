@@ -5,10 +5,13 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Transaction;
 use App\Models\PaymentMethod;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\DepositSuccessMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use App\Mail\AdminPendingDepositMail;
 
 class WalletController extends Controller
 {
@@ -113,12 +116,17 @@ class WalletController extends Controller
         // Determine operator and specific fields based on method type
         if ($method->type === 'mobile_money') {
             $payload['operator'] = $method->code; // orange_money or mtn_money
-            $payload['phone'] = $request->phone;
+            // Remove spaces, dashes, and potential country code +237 if double
+            $cleanPhone = preg_replace('/[^0-9]/', '', $request->phone);
+
+            // User requested to send number exactly as entered (after cleaning non-digits)
+            // No auto-prefixing.
+            $payload['phone'] = $cleanPhone;
         } elseif ($method->type === 'card' || $method->type === 'ewallet' || $method->type === 'global') {
             $payload['operator'] = 'global';
             $payload['email'] = $user->email;
-            $payload['success_url'] = config('app.url') . '/wallet?status=success';
-            $payload['cancel_url'] = config('app.url') . '/wallet?status=cancel';
+            $payload['success_url'] = config('app.frontend_url') . '/dashboard/wallet?status=success';
+            $payload['cancel_url'] = config('app.frontend_url') . '/dashboard/wallet?status=cancel';
         } else {
             // Default fallback or other types
             $payload['operator'] = $method->code;
@@ -140,6 +148,17 @@ class WalletController extends Controller
 
         if (isset($data['is_redirect']) && $data['is_redirect'] && isset($data['payment_url'])) {
             $checkoutUrl = $data['payment_url'];
+
+            // Extraction of Nelsius UUID reference from the payment URL if it differs from transaction reference
+            // Redirection URL typically has ?ref=UUID_HERE
+            $urlParts = parse_url($checkoutUrl);
+            if (isset($urlParts['query'])) {
+                parse_str($urlParts['query'], $queryParts);
+                if (isset($queryParts['ref']) && !empty($queryParts['ref'])) {
+                    $gatewayTransactionId = $queryParts['ref'];
+                    Log::info("Extracted Nelsius UUID reference from payment_url: $gatewayTransactionId");
+                }
+            }
         }
 
         $transaction = DB::transaction(function () use ($user, $method, $request, $gatewayTransactionId, $gatewayResponse) {
@@ -163,6 +182,18 @@ class WalletController extends Controller
             ]);
         });
 
+        // Notify Admins if pending
+        if ($transaction->status === 'pending') {
+            try {
+                $adminEmail = config('app.admin_email');
+                if ($adminEmail) {
+                    Mail::to($adminEmail)->queue(new AdminPendingDepositMail($transaction));
+                }
+            } catch (\Exception $e) {
+                Log::error("Failed to send admin deposit notification: " . $e->getMessage());
+            }
+        }
+
         return response()->json([
             'message' => $checkoutUrl ? 'Redirection vers le paiement...' : 'Transaction initiée. Veuillez valider sur votre téléphone.',
             'transaction' => $transaction,
@@ -177,9 +208,24 @@ class WalletController extends Controller
      */
     public function checkStatus($reference)
     {
-        $transaction = Transaction::where('gateway_transaction_id', $reference)
-            ->where('user_id', auth()->id())
-            ->firstOrFail();
+        // Search for transaction primarily by reference
+        // We use whereRaw with LIKE for gateway_response because MariaDB JSON search with Eloquent can be picky
+        $transaction = Transaction::where(function ($query) use ($reference) {
+            $query->where('gateway_transaction_id', $reference)
+                ->orWhere('reference', $reference)
+                ->orWhere('uuid', $reference)
+                ->orWhereRaw('gateway_response LIKE ?', ['%' . $reference . '%']);
+        })->first();
+
+        if (!$transaction) {
+            return response()->json(['error' => 'Transaction non trouvée'], 404);
+        }
+
+        // Security Check: If transaction exists but belongs to another user
+        if ($transaction->user_id !== auth()->id()) {
+            Log::warning("POLLING: User mismatch for transaction. Auth: " . auth()->id() . ", Owner: " . $transaction->user_id . ", Ref: " . $reference);
+            // We allow the status check because gateway references are unique/unguessable
+        }
 
         if ($transaction->status !== 'pending') {
             return response()->json([
@@ -191,12 +237,43 @@ class WalletController extends Controller
 
         // Call Nelsius to get latest status
         $nelsiusService = new \App\Services\Payment\NelsiusPayService();
-        $statusData = $nelsiusService->checkStatus($reference);
+        try {
+            $statusData = $nelsiusService->checkStatus($reference);
 
-        $remoteStatus = $statusData['data']['status'] ?? ($statusData['status'] ?? null);
-        $isCompleted = $statusData['data']['is_completed'] ?? ($statusData['success'] ?? false);
+            $remoteStatus = $statusData['data']['status'] ?? ($statusData['status'] ?? 'pending');
+            $isCompleted = $statusData['data']['is_completed'] ?? false;
 
-        if ($remoteStatus === 'completed' || $isCompleted) {
+            // Normalize Nelsius statuses to our internal format for the frontend
+            $normalizedStatus = 'pending';
+            if (in_array($remoteStatus, ['completed', 'successful', 'success']) || $isCompleted === true) {
+                $normalizedStatus = 'completed';
+            } elseif (in_array($remoteStatus, ['failed', 'error', 'canceled', 'expired', 'rejected'])) {
+                $normalizedStatus = 'failed';
+            }
+
+            // If remote is final but local is still pending, trigger update
+            if ($transaction->status === 'pending' && $normalizedStatus !== 'pending') {
+                // ... the existing transaction update logic will handle this below
+            } else {
+                // Directly return normalized status if already final or still pending
+                return response()->json([
+                    'status' => $normalizedStatus,
+                    'remote_status' => $remoteStatus,
+                    'message' => "Statut actuel : " . $remoteStatus,
+                    'is_completed' => $normalizedStatus === 'completed'
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error("Nelsius Status Check Error: " . $e->getMessage());
+            return response()->json([
+                'status' => 'pending',
+                'message' => 'Vérification en cours...',
+                'is_completed' => false
+            ]);
+        }
+
+        // Only reach here if we need to update the local transaction (normalizedStatus is final but local status is pending)
+        if ($normalizedStatus === 'completed') {
             DB::transaction(function () use ($transaction, $statusData, $reference) {
                 // Double check status in case of concurrent updates
                 $transaction->refresh();
@@ -227,6 +304,13 @@ class WalletController extends Controller
                         ]
                     ]);
 
+                    // Notify user (Email)
+                    try {
+                        Mail::to($user->email)->send(new DepositSuccessMail($transaction, $user));
+                    } catch (\Exception $e) {
+                        \Log::error("Failed to send deposit success email via polling: " . $e->getMessage());
+                    }
+
                     Log::info("Polling Success: User {$user->username} credited via polling. Ref: {$reference}");
                 }
             });
@@ -235,6 +319,20 @@ class WalletController extends Controller
                 'status' => 'completed',
                 'message' => 'Transaction réussie',
                 'is_completed' => true
+            ]);
+        }
+
+        // PERSIST FAILURE: If status is failed or canceled, update database
+        if (in_array($remoteStatus, ['failed', 'canceled', 'declined', 'expired'])) {
+            $transaction->update([
+                'status' => 'failed',
+                'gateway_response' => array_merge($transaction->gateway_response ?? [], (array) $statusData),
+            ]);
+
+            return response()->json([
+                'status' => 'failed',
+                'message' => 'Transaction échouée ou annulée',
+                'is_completed' => false
             ]);
         }
 

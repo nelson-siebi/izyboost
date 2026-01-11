@@ -11,7 +11,7 @@ const WhatsAppButton = () => {
         const loadWhatsapp = async () => {
             console.log("WhatsAppButton: Loading settings...");
             try {
-                const settings = await adminApi.getSettings();
+                const settings = await adminApi.getPublicSettings();
                 console.log("WhatsAppButton: Raw settings:", settings);
 
                 let whatsapp = '';
@@ -22,17 +22,15 @@ const WhatsAppButton = () => {
                 }
 
                 if (whatsapp) {
-                    console.log("WhatsAppButton: Found number:", whatsapp);
                     const cleanNum = whatsapp.replace(/\s+/g, '').replace('+', '');
                     setWhatsappNumber(`https://wa.me/${cleanNum}`);
                 } else {
-                    console.log("WhatsAppButton: No number found in settings, using fallback.");
-                    // Fallback to the number provided by user
-                    setWhatsappNumber("https://wa.me/237676676120");
+                    // Use a sensible default if not set
+                    setWhatsappNumber("https://wa.me/237695345715");
                 }
             } catch (err) {
                 console.error("WhatsAppButton: Failed to load WhatsApp number:", err);
-                setWhatsappNumber("https://wa.me/237676676120");
+                setWhatsappNumber("https://wa.me/237695345715");
             }
         };
         loadWhatsapp();
@@ -45,7 +43,7 @@ const WhatsAppButton = () => {
     if (!whatsappNumber) return null;
 
     return (
-        <AnimatePresence>
+        <AnimatePresence mode="wait">
             {isVisible && (
                 <motion.a
                     href={whatsappNumber}

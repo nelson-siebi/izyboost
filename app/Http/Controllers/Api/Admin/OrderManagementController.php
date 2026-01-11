@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\OrderStatusUpdateMail;
 
 class OrderManagementController extends Controller
 {
@@ -16,9 +18,11 @@ class OrderManagementController extends Controller
     {
         $query = Order::with(['user:id,username', 'service:id,name']);
 
-        // Filters
-        if ($request->has('status')) {
-            $query->where('status', $request->status);
+        // Filters - support comma-separated status values (e.g., "pending,processing")
+        if ($request->has('status') && !empty($request->status)) {
+            $statuses = explode(',', $request->status);
+            $statuses = array_map('trim', $statuses);
+            $query->whereIn('status', $statuses);
         }
 
         if ($request->has('user_id')) {
@@ -33,8 +37,8 @@ class OrderManagementController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('id', $search)
-                  ->orWhere('uuid', 'like', "%{$search}%")
-                  ->orWhere('link', 'like', "%{$search}%");
+                    ->orWhere('uuid', 'like', "%{$search}%")
+                    ->orWhere('link', 'like', "%{$search}%");
             });
         }
 
@@ -65,7 +69,7 @@ class OrderManagementController extends Controller
         ]);
 
         $order = Order::findOrFail($id);
-        
+
         $order->update([
             'status' => $request->status,
             'admin_notes' => $request->admin_notes,
@@ -73,6 +77,13 @@ class OrderManagementController extends Controller
 
         if ($request->status === 'completed') {
             $order->update(['completed_at' => now()]);
+        }
+
+        // Notify User
+        try {
+            Mail::to($order->user->email)->queue(new OrderStatusUpdateMail($order));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Failed to send order update notification: " . $e->getMessage());
         }
 
         return response()->json([
@@ -134,5 +145,109 @@ class OrderManagementController extends Controller
                 'order' => $order,
             ]);
         });
+    }
+
+    /**
+     * Retry an order that failed at the provider level.
+     */
+    public function retry($id)
+    {
+        $order = Order::with(['service', 'provider'])->findOrFail($id);
+
+        if ($order->status !== 'processing' && $order->status !== 'failed') {
+            return response()->json([
+                'error' => 'Seules les commandes en échec ou en traitement peuvent être relancées'
+            ], 422);
+        }
+
+        $service = $order->service;
+        $provider = $order->provider;
+
+        if (!$provider) {
+            return response()->json(['error' => 'Aucun fournisseur associé à ce service'], 422);
+        }
+
+        $endpoint = $provider->base_url;
+        $requestBody = [
+            'key' => $provider->api_key,
+            'action' => 'add',
+            'service' => $service->external_id,
+            'link' => $order->link,
+            'quantity' => $order->quantity,
+        ];
+
+        try {
+            // PROACTIVE BALANCE CHECK (Consistency)
+            $balanceResponse = \Illuminate\Support\Facades\Http::post($endpoint, [
+                'key' => $provider->api_key,
+                'action' => 'balance'
+            ]);
+
+            if ($balanceResponse->successful()) {
+                $balanceData = $balanceResponse->json();
+                $providerBalance = (float) ($balanceData['balance'] ?? 0);
+                $rateUsdXaf = \App\Models\PlatformSetting::where('key', 'currency_rate_usd_xaf')->value('value') ?? 650;
+                $costUsd = $order->cost_price / $rateUsdXaf;
+
+                if ($providerBalance < $costUsd) {
+                    return response()->json([
+                        'error' => "Solde fournisseur toujours insuffisant ({$providerBalance} USD dispo, {$costUsd} USD requis)."
+                    ], 422);
+                }
+            }
+
+            $startTime = microtime(true);
+            $response = \Illuminate\Support\Facades\Http::post($endpoint, $requestBody);
+            $duration = round((microtime(true) - $startTime) * 1000);
+            $apiData = $response->json();
+
+            // Log API Call
+            \App\Models\ApiLog::create([
+                'user_id' => auth()->id(),
+                'method' => 'POST',
+                'endpoint' => $endpoint,
+                'request_body' => array_merge($requestBody, ['key' => '***']),
+                'response_code' => $response->status(),
+                'response_body' => $apiData,
+                'ip_address' => request()->ip(),
+                'duration_ms' => $duration,
+            ]);
+
+            if (isset($apiData['order'])) {
+                $order->update([
+                    'external_order_id' => $apiData['order'],
+                    'status' => 'in_progress',
+                    'api_error' => null,
+                    'admin_notes' => ($order->admin_notes ? $order->admin_notes . "\n" : "") . "[" . now() . "] Relancée avec succès. Nouvel ID: " . $apiData['order']
+                ]);
+
+                return response()->json([
+                    'message' => 'Commande relancée avec succès',
+                    'order' => $order
+                ]);
+            } else {
+                $errorMsg = json_encode($apiData);
+                $order->update([
+                    'api_error' => str_contains($errorMsg, 'not_enough_funds') ? 'provider_low_balance' : $errorMsg,
+                    'admin_notes' => ($order->admin_notes ? $order->admin_notes . "\n" : "") . "[" . now() . "] Échec de relance: " . $errorMsg
+                ]);
+
+                // Notify User of retry result (optional, but keep informed)
+                try {
+                    Mail::to($order->user->email)->queue(new OrderStatusUpdateMail($order));
+                } catch (\Exception $e) {
+                }
+
+                return response()->json([
+                    'error' => 'L\'API a encore retourné une erreur',
+                    'details' => $apiData
+                ], 400);
+            }
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Exception lors de la relance: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

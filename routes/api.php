@@ -19,12 +19,18 @@ use App\Http\Controllers\Api\AuthController;
 Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/forgot-password', [\App\Http\Controllers\Api\PasswordResetController::class, 'sendResetLinkEmail']);
+    Route::post('/reset-password', [\App\Http\Controllers\Api\PasswordResetController::class, 'resetPassword']);
 });
 
 // Webhooks (Public)
 Route::post('/webhooks/nelsius', [\App\Http\Controllers\Api\WebhookController::class, 'nelsius']);
 
+
+
 Route::get('/services', [\App\Http\Controllers\Api\ServiceController::class, 'index']);
+Route::get('/settings/public', [\App\Http\Controllers\Api\Admin\SettingsController::class, 'publicIndex']);
+Route::post('/contact', [\App\Http\Controllers\Api\ContactController::class, 'submit']);
 
 // Protected Routes
 Route::middleware('auth:sanctum')->group(function () {
@@ -120,6 +126,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/', [\App\Http\Controllers\Api\Admin\OrderManagementController::class, 'index']);
             Route::get('/{id}', [\App\Http\Controllers\Api\Admin\OrderManagementController::class, 'show']);
             Route::put('/{id}/status', [\App\Http\Controllers\Api\Admin\OrderManagementController::class, 'updateStatus']);
+            Route::post('/{id}/retry', [\App\Http\Controllers\Api\Admin\OrderManagementController::class, 'retry']);
             Route::post('/{id}/refund', [\App\Http\Controllers\Api\Admin\OrderManagementController::class, 'refund']);
         });
 
@@ -128,6 +135,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/stats', [\App\Http\Controllers\Api\Admin\FinancialController::class, 'stats']);
             Route::get('/transactions', [\App\Http\Controllers\Api\Admin\FinancialController::class, 'transactions']);
             Route::post('/transactions/{id}/verify', [\App\Http\Controllers\Api\Admin\FinancialController::class, 'verifyTransaction']);
+            Route::post('/transactions/{id}/reject', [\App\Http\Controllers\Api\Admin\FinancialController::class, 'rejectTransaction']);
             Route::get('/payment-methods', [\App\Http\Controllers\Api\Admin\FinancialController::class, 'paymentMethods']);
             Route::put('/payment-methods/{id}', [\App\Http\Controllers\Api\Admin\FinancialController::class, 'updatePaymentMethod']);
         });
@@ -148,7 +156,11 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/sites/{id}', [\App\Http\Controllers\Api\Admin\WhiteLabelController::class, 'showSite']);
             Route::post('/sites/{id}/toggle-status', [\App\Http\Controllers\Api\Admin\WhiteLabelController::class, 'toggleSiteStatus']);
             Route::get('/plans', [\App\Http\Controllers\Api\Admin\WhiteLabelController::class, 'plans']);
+            Route::post('/plans', [\App\Http\Controllers\Api\Admin\WhiteLabelController::class, 'storePlan']);
             Route::put('/plans/{id}', [\App\Http\Controllers\Api\Admin\WhiteLabelController::class, 'updatePlan']);
+            Route::delete('/plans/{id}', [\App\Http\Controllers\Api\Admin\WhiteLabelController::class, 'destroyPlan']);
+            Route::post('/sites/{id}/approve', [\App\Http\Controllers\Api\Admin\WhiteLabelController::class, 'approveSite']);
+            Route::post('/sites/{id}/reject', [\App\Http\Controllers\Api\Admin\WhiteLabelController::class, 'rejectSite']);
             Route::get('/templates', [\App\Http\Controllers\Api\Admin\WhiteLabelController::class, 'templates']);
             Route::get('/subscriptions', [\App\Http\Controllers\Api\Admin\WhiteLabelController::class, 'subscriptions']);
         });
@@ -165,7 +177,9 @@ Route::middleware('auth:sanctum')->group(function () {
         // Settings & Configuration
         Route::prefix('settings')->group(function () {
             Route::get('/', [\App\Http\Controllers\Api\Admin\SettingsController::class, 'index']);
+            Route::post('/bulk', [\App\Http\Controllers\Api\Admin\SettingsController::class, 'bulkUpdate']);
             Route::put('/{key}', [\App\Http\Controllers\Api\Admin\SettingsController::class, 'update']);
+            Route::post('/upload-logo', [\App\Http\Controllers\Api\Admin\SettingsController::class, 'uploadLogo']);
             Route::get('/platform-stats', [\App\Http\Controllers\Api\Admin\SettingsController::class, 'platformStats']);
         });
     });

@@ -72,16 +72,38 @@ export default function ServicesPage() {
         setOrderNotification(null);
     };
 
+    // Slugify helper
+    const slugify = (text) => text.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-');
+
     // Filter Logic
     const filteredServices = categories.flatMap(cat =>
-        (cat.services || []).map(svc => ({ ...svc, categoryName: cat.name }))
+        (cat.services || []).map(svc => ({
+            ...svc,
+            categoryName: cat.name,
+            categorySlug: cat.slug || slugify(cat.name)
+        }))
     ).filter(svc => {
-        const matchNetwork = selectedNetwork === 'all' || svc.categoryName.toLowerCase().includes(selectedNetwork);
+        // Match by exact category slug (from Dashboard) or by platform name (from tabs)
+        const matchNetwork = selectedNetwork === 'all' ||
+            svc.categorySlug === selectedNetwork ||
+            svc.categorySlug.startsWith(selectedNetwork + '-') ||
+            svc.categoryName.toLowerCase().includes(selectedNetwork.replace(/-/g, ' '));
+
         const matchSearch = !searchQuery || svc.name.toLowerCase().includes(searchQuery.toLowerCase());
         return matchNetwork && matchSearch;
     });
 
-    const categoriesList = ['all', ...Object.keys(SOCIAL_NETWORKS_CONFIG)];
+    // Generate dynamic categories list from API data
+    const dynamicNetworks = [...new Set(categories.map(cat => {
+        // Extract the main network name (e.g., from "Instagram - Followers" to "instagram")
+        const name = cat.name.toLowerCase();
+        for (const net in SOCIAL_NETWORKS_CONFIG) {
+            if (name.includes(net)) return net;
+        }
+        return slugify(cat.name).split('-')[0]; // Fallback to first part of slug
+    }))].filter(Boolean);
+
+    const categoriesList = ['all', ...dynamicNetworks];
 
     const handleOrder = async (e) => {
         e.preventDefault();
@@ -137,7 +159,7 @@ export default function ServicesPage() {
                                 )}
                             >
                                 <Icon size={16} />
-                                <span className="capitalize text-xs">{net === 'all' ? 'Tous' : net}</span>
+                                <span className="capitalize text-xs font-bold">{net === 'all' ? 'Tous' : net}</span>
                             </button>
                         );
                     })}

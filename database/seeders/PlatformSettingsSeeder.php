@@ -16,6 +16,7 @@ class PlatformSettingsSeeder extends Seeder
             ['key' => 'site_name', 'value' => 'izyboost', 'type' => 'string', 'category' => 'general', 'group' => 'site', 'is_public' => true, 'editable' => true],
             ['key' => 'site_url', 'value' => 'https://izyboost.nelsius.com', 'type' => 'string', 'category' => 'general', 'group' => 'site', 'is_public' => true, 'editable' => true],
             ['key' => 'site_email', 'value' => 'support@izyboost.com', 'type' => 'string', 'category' => 'general', 'group' => 'site', 'is_public' => true, 'editable' => true],
+            ['key' => 'admin_email', 'value' => 'admin@izyboost.com', 'type' => 'string', 'category' => 'general', 'group' => 'site', 'is_public' => false, 'editable' => true],
             ['key' => 'currency_default', 'value' => 'XAF', 'type' => 'string', 'category' => 'general', 'group' => 'site', 'is_public' => true, 'editable' => true],
             ['key' => 'language_default', 'value' => 'fr', 'type' => 'string', 'category' => 'general', 'group' => 'site', 'is_public' => true, 'editable' => true],
             ['key' => 'registration_enabled', 'value' => 'true', 'type' => 'boolean', 'category' => 'general', 'group' => 'site', 'is_public' => true, 'editable' => true],

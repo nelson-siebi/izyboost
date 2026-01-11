@@ -32,14 +32,29 @@ export default function DocumentationPage() {
             method: 'GET',
             path: '/v1/balance',
             title: 'Solde du Compte',
-            description: 'Récupérez le solde actuel de votre compte et la devise associée.',
-            example: `curl -X GET "https://api.izyboost.com/api/v1/balance" \\
+            description: 'Récupérez le solde actuel de votre compte et la devise associée. Indispensable pour vérifier si vous avez assez de fonds avant de commander.',
+            example: {
+                curl: `curl -X GET "https://izyboost.nelsius.com/api/v1/balance" \\
 -H "X-API-Key: VOTRE_CLE_API"`,
+                php: `<?php
+$ch = curl_init("https://izyboost.nelsius.com/api/v1/balance");
+curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-API-Key: VOTRE_CLE_API']);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+$res = curl_exec($ch);
+echo $res;`,
+                python: `import requests
+res = requests.get(
+    "https://izyboost.nelsius.com/api/v1/balance",
+    headers={"X-API-Key": "VOTRE_CLE_API"}
+)
+print(res.json())`
+            },
             response: `{
   "success": true,
   "data": {
     "balance": 25000.50,
-    "currency": "XAF"
+    "currency": "XAF",
+    "formatted": "25 000.50 XAF"
   }
 }`
         },
@@ -47,23 +62,33 @@ export default function DocumentationPage() {
             method: 'GET',
             path: '/v1/services',
             title: 'Liste des Services',
-            description: 'Récupérez tous les services disponibles groupés par catégorie avec leurs prix et limites.',
-            example: `curl -X GET "https://api.izyboost.com/api/v1/services" \\
+            description: 'Récupérez tous les services disponibles groupés par catégorie. Utilisez le service_id pour passer vos commandes.',
+            example: {
+                curl: `curl -X GET "https://izyboost.nelsius.com/api/v1/services" \\
 -H "X-API-Key: VOTRE_CLE_API"`,
+                php: `<?php
+$ch = curl_init("https://izyboost.nelsius.com/api/v1/services");
+curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-API-Key: VOTRE_CLE_API']);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+$res = curl_exec($ch);
+print_r(json_decode($res, true));`,
+                python: `import requests
+res = requests.get("https://izyboost.nelsius.com/api/v1/services", headers={"X-API-Key": "VOTRE_CLE_API"})
+services = res.json()['data']`
+            },
             response: `{
   "success": true,
   "data": [
     {
       "id": 1,
-      "name": "Instagram",
+      "category": "Instagram Followers",
       "services": [
         {
           "id": 101,
-          "name": "Instagram Followers",
-          "type": "default",
-          "min_quantity": 100,
-          "max_quantity": 10000,
-          "base_price_per_unit": 0.05
+          "name": "HQ Followers [Instant]",
+          "min": 100,
+          "max": 10000,
+          "rate": 0.05
         }
       ]
     }
@@ -74,22 +99,34 @@ export default function DocumentationPage() {
             method: 'POST',
             path: '/v1/orders',
             title: 'Créer une Commande',
-            description: 'Placez une nouvelle commande de boost instantanément.',
-            example: `curl -X POST "https://api.izyboost.com/api/v1/orders" \\
+            description: 'Automatisez vos commandes. Le montant est automatiquement déduit de votre solde.',
+            example: {
+                curl: `curl -X POST "https://izyboost.nelsius.com/api/v1/orders" \\
 -H "X-API-Key: VOTRE_CLE_API" \\
 -H "Content-Type: application/json" \\
 -d '{
   "service_id": 101,
-  "link": "https://instagram.com/user",
+  "link": "https://instagram.com/p/...",
   "quantity": 1000
 }'`,
+                php: `<?php
+$data = ['service_id' => 101, 'link' => 'https://...', 'quantity' => 1000];
+$ch = curl_init("https://izyboost.nelsius.com/api/v1/orders");
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-API-Key: VOTRE_CLE_API', 'Content-Type: application/json']);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+$res = curl_exec($ch);`,
+                python: `import requests
+data = {"service_id": 101, "link": "https://...", "quantity": 1000}
+res = requests.post("https://izyboost.nelsius.com/api/v1/orders", json=data, headers={"X-API-Key": "VOTRE_CLE_API"})`
+            },
             response: `{
   "success": true,
   "data": {
     "order_id": 5432,
     "status": "pending",
     "charge": 50.00,
-    "balance": 24950.50
+    "currency": "XAF"
   }
 }`
         },
@@ -97,19 +134,27 @@ export default function DocumentationPage() {
             method: 'GET',
             path: '/v1/orders/{id}',
             title: 'Statut de Commande',
-            description: 'Vérifiez l\'état d\'une ou plusieurs commandes (séparez les IDs par des virgules pour le mode bulk).',
-            example: `curl -X GET "https://api.izyboost.com/api/v1/orders/5432,5433" \\
+            description: 'Vérifiez l\'avancement de vos boosts en temps réel.',
+            example: {
+                curl: `curl -X GET "https://izyboost.nelsius.com/api/v1/orders/5432" \\
 -H "X-API-Key: VOTRE_CLE_API"`,
+                php: `<?php
+$ch = curl_init("https://izyboost.nelsius.com/api/v1/orders/5432");
+curl_setopt($ch, CURLOPT_HTTPHEADER, ['X-API-Key: VOTRE_CLE_API']);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+$res = curl_exec($ch);`,
+                python: `import requests
+res = requests.get("https://izyboost.nelsius.com/api/v1/orders/5432", headers={"X-API-Key": "VOTRE_CLE_API"})`
+            },
             response: `{
   "success": true,
-  "data": [
-    {
-      "order_id": 5432,
-      "status": "in_progress",
-      "start_count": 1200,
-      "remains": 500
-    }
-  ]
+  "data": {
+    "order_id": 5432,
+    "status": "processing",
+    "start_count": 1200,
+    "remains": 450,
+    "created_at": "2024-03-20T10:00:00Z"
+  }
 }`
         }
     ];
@@ -121,6 +166,8 @@ export default function DocumentationPage() {
         { code: '422', title: 'Unprocessable Entity', message: 'Données invalides (ex: quantité hors limites).' },
         { code: '404', title: 'Not Found', message: 'Le service ou la commande demandé n\'existe pas.' }
     ];
+
+    const [selectedLang, setSelectedLang] = useState('curl');
 
     return (
         <div className="space-y-16 max-w-5xl mx-auto pb-24">
@@ -202,14 +249,29 @@ export default function DocumentationPage() {
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-2">
                             <div className="bg-slate-950 rounded-[32px] overflow-hidden border border-slate-800 shadow-2xl">
                                 <div className="flex items-center justify-between px-6 py-4 bg-white/5 border-b border-white/5">
-                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                                        <div className="h-2 w-2 rounded-full bg-slate-700" /> Requête
-                                    </span>
-                                    <button onClick={() => copyToClipboard(ep.example, `req-${i}`)} className="text-slate-500 hover:text-white transition-colors p-2">
-                                        {copied === `req-${i}` ? <CheckCircle2 size={16} className="text-emerald-400" /> : <Copy size={16} />}
+                                    <div className="flex gap-4">
+                                        {['curl', 'php', 'python'].map(lang => (
+                                            <button
+                                                key={lang}
+                                                onClick={() => setSelectedLang(lang)}
+                                                className={cn(
+                                                    "text-[10px] font-black uppercase tracking-widest transition-colors pb-1 border-b-2",
+                                                    selectedLang === lang ? "text-brand-primary border-brand-primary" : "text-slate-500 border-transparent hover:text-slate-300"
+                                                )}
+                                            >
+                                                {lang}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <button onClick={() => copyToClipboard(ep.example[selectedLang], `req-${i}-${selectedLang}`)} className="text-slate-500 hover:text-white transition-colors p-2">
+                                        {copied === `req-${i}-${selectedLang}` ? <CheckCircle2 size={16} className="text-emerald-400" /> : <Copy size={16} />}
                                     </button>
                                 </div>
-                                <div className="p-8"><pre className="text-xs font-mono text-slate-300 leading-relaxed overflow-x-auto">{ep.example}</pre></div>
+                                <div className="p-8 h-[250px] overflow-y-auto custom-scrollbar">
+                                    <pre className="text-xs font-mono text-slate-300 leading-relaxed">
+                                        {ep.example[selectedLang]}
+                                    </pre>
+                                </div>
                             </div>
 
                             <div className="bg-slate-900 rounded-[32px] overflow-hidden border border-slate-800 shadow-2xl">

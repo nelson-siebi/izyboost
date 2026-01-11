@@ -29,12 +29,20 @@ class UserManagementController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('username', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('id', $search);
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('id', $search);
             });
         }
 
-        $users = $query->latest()->paginate(50);
+        $users = $query->withCount(['orders', 'transactions', 'whiteLabelSites'])
+            ->latest()
+            ->paginate(50);
+
+        // Expose ID for admin panel since it's hidden in the model
+        $users->getCollection()->transform(function ($user) {
+            $user->makeVisible(['id']);
+            return $user;
+        });
 
         return response()->json($users);
     }
@@ -163,7 +171,7 @@ class UserManagementController extends Controller
     public function destroy($id)
     {
         $user = User::findOrFail($id);
-        
+
         if ($user->role === 'super_admin') {
             return response()->json([
                 'error' => 'Impossible de supprimer un super admin'

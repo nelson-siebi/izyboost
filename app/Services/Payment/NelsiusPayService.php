@@ -48,9 +48,36 @@ class NelsiusPayService
                 'body' => $response->body()
             ]);
 
+            $errorMessage = $response->json('message') ?? 'Erreur lors de l\'initiation du paiement';
+
+            // Append detailed validation errors with human-friendly mapping
+            $errors = $response->json('errors');
+            if (is_array($errors)) {
+                $detailedErrors = [];
+                $errorMap = [
+                    'validation.regex' => 'Format invalide',
+                    'validation.min.string' => 'Trop court (min. 9 chiffres)',
+                    'validation.max.string' => 'Trop long',
+                    'validation.numeric' => 'Doit être numérique',
+                    'validation.required' => 'Requis'
+                ];
+
+                foreach ($errors as $field => $messages) {
+                    $msgs = is_array($messages) ? $messages : [$messages];
+                    foreach ($msgs as &$msg) {
+                        $msg = $errorMap[$msg] ?? $msg;
+                    }
+                    $fieldLabel = ($field === 'phone') ? 'Téléphone' : $field;
+                    $detailedErrors[] = "$fieldLabel: " . implode(', ', $msgs);
+                }
+                if (!empty($detailedErrors)) {
+                    $errorMessage = implode(' | ', $detailedErrors);
+                }
+            }
+
             return [
                 'success' => false,
-                'message' => $response->json('message') ?? 'Erreur lors de l\'initiation du paiement'
+                'message' => $errorMessage
             ];
         } catch (\Exception $e) {
             Log::error('Nelsius Pay Exception', ['message' => $e->getMessage()]);

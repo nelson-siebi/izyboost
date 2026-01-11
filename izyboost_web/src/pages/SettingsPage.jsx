@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     User,
@@ -8,16 +8,22 @@ import {
     LogOut,
     ChevronRight,
     Moon,
-    Globe,
     Save,
     ArrowLeft,
     CheckCircle2,
     AlertCircle,
     Eye,
-    EyeOff
+    EyeOff,
+    Wallet,
+    ShoppingBag,
+    TrendingUp,
+    Mail,
+    Phone,
+    Calendar
 } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import { userApi } from '../features/auth/userApi';
+import { walletApi } from '../features/wallet/walletApi';
 import { cn } from '../utils/cn';
 
 export default function SettingsPage() {
@@ -26,6 +32,7 @@ export default function SettingsPage() {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState(null);
     const [error, setError] = useState(null);
+    const [stats, setStats] = useState(null);
 
     // Profile Form
     const [profileData, setProfileData] = useState({
@@ -41,6 +48,32 @@ export default function SettingsPage() {
     });
     const [showPasswords, setShowPasswords] = useState(false);
 
+    useEffect(() => {
+        loadUserStats();
+    }, []);
+
+    const loadUserStats = async () => {
+        try {
+            const walletData = await walletApi.getWallet();
+            const txData = await walletApi.getTransactions();
+
+            // Handle both array and paginated response formats
+            const transactions = Array.isArray(txData) ? txData : (txData.data || []);
+            const totalCount = txData.meta?.total || transactions.length;
+
+            setStats({
+                balance: walletData.balance || 0,
+                totalTransactions: totalCount
+            });
+        } catch (err) {
+            console.error('Failed to load stats:', err);
+            setStats({
+                balance: 0,
+                totalTransactions: 0
+            });
+        }
+    };
+
     const handleUpdateProfile = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -50,7 +83,10 @@ export default function SettingsPage() {
             const res = await userApi.updateProfile(profileData);
             setUser(res.user);
             setMessage('Profil mis à jour avec succès !');
-            setTimeout(() => setActiveSection(null), 1500);
+            setTimeout(() => {
+                setMessage(null);
+                setActiveSection(null);
+            }, 2000);
         } catch (err) {
             setError(err.response?.data?.message || 'Une erreur est survenue.');
         } finally {
@@ -60,14 +96,29 @@ export default function SettingsPage() {
 
     const handleUpdatePassword = async (e) => {
         e.preventDefault();
+
+        // Validation
+        if (passwordData.password.length < 8) {
+            setError('Le mot de passe doit contenir au moins 8 caractères.');
+            return;
+        }
+
+        if (passwordData.password !== passwordData.password_confirmation) {
+            setError('Les mots de passe ne correspondent pas.');
+            return;
+        }
+
         setLoading(true);
         setError(null);
         setMessage(null);
         try {
             await userApi.updatePassword(passwordData);
-            setMessage('Mot de passe mis à jour !');
+            setMessage('Mot de passe mis à jour avec succès !');
             setPasswordData({ current_password: '', password: '', password_confirmation: '' });
-            setTimeout(() => setActiveSection(null), 1500);
+            setTimeout(() => {
+                setMessage(null);
+                setActiveSection(null);
+            }, 2000);
         } catch (err) {
             setError(err.response?.data?.message || 'Mot de passe actuel incorrect ou invalide.');
         } finally {
@@ -77,10 +128,12 @@ export default function SettingsPage() {
 
     const handleToggle2FA = async () => {
         setLoading(true);
+        setError(null);
         try {
             const res = await userApi.toggle2FA();
             setUser(res.user);
-            setMessage(res.message);
+            setMessage(res.message || '2FA mis à jour avec succès');
+            setTimeout(() => setMessage(null), 3000);
         } catch (err) {
             setError('Échec de la modification du 2FA');
         } finally {
@@ -94,6 +147,7 @@ export default function SettingsPage() {
             setUser(res.user);
         } catch (err) {
             setError('Échec de la mise à jour des paramètres');
+            setTimeout(() => setError(null), 3000);
         }
     };
 
@@ -125,8 +179,8 @@ export default function SettingsPage() {
                     label: "Notifications Email",
                     sub: "Recevoir des alertes par email",
                     isToggle: true,
-                    value: user?.settings?.email_notifications,
-                    action: () => handleSettingToggle('email_notifications', user?.settings?.email_notifications)
+                    value: user?.settings?.email_notifications ?? true,
+                    action: () => handleSettingToggle('email_notifications', user?.settings?.email_notifications ?? true)
                 },
                 { id: 'appearance', icon: Moon, label: "Apparence", sub: "Mode Sombre (Bientôt)", action: () => { } },
             ]
@@ -135,7 +189,7 @@ export default function SettingsPage() {
 
     if (activeSection === 'profile') {
         return (
-            <div className="max-w-xl mx-auto space-y-6">
+            <div className="max-w-xl mx-auto space-y-6 pb-20">
                 <button onClick={() => setActiveSection(null)} className="flex items-center gap-2 text-slate-500 font-bold hover:text-slate-900 transition-colors">
                     <ArrowLeft size={20} /> Retour
                 </button>
@@ -145,12 +199,28 @@ export default function SettingsPage() {
                 </header>
 
                 <form onSubmit={handleUpdateProfile} className="bg-white rounded-[32px] border border-slate-100 shadow-sm p-8 space-y-6">
-                    {message && <div className="p-4 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100 flex items-center gap-3 font-bold text-sm">
-                        <CheckCircle2 size={18} /> {message}
-                    </div>}
-                    {error && <div className="p-4 bg-red-50 text-red-600 rounded-2xl border border-red-100 flex items-center gap-3 font-bold text-sm">
-                        <AlertCircle size={18} /> {error}
-                    </div>}
+                    <AnimatePresence mode="wait">
+                        {message && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                className="p-4 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100 flex items-center gap-3 font-bold text-sm"
+                            >
+                                <CheckCircle2 size={18} /> {message}
+                            </motion.div>
+                        )}
+                        {error && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                className="p-4 bg-red-50 text-red-600 rounded-2xl border border-red-100 flex items-center gap-3 font-bold text-sm"
+                            >
+                                <AlertCircle size={18} /> {error}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
 
                     <div className="space-y-2">
                         <label className="text-xs font-black uppercase text-slate-400 tracking-widest ml-2">Nom d'utilisateur</label>
@@ -161,6 +231,7 @@ export default function SettingsPage() {
                             className="w-full h-14 px-6 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-brand-primary/20 focus:bg-white outline-none font-bold text-slate-900 transition-all"
                             placeholder="Votre pseudo"
                             required
+                            minLength={3}
                         />
                     </div>
 
@@ -177,10 +248,17 @@ export default function SettingsPage() {
                     </div>
 
                     <button
+                        type="submit"
                         disabled={loading}
-                        className="w-full h-14 bg-slate-900 text-white rounded-2xl font-black shadow-lg shadow-slate-900/10 hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
+                        className="w-full h-14 bg-gradient-to-r from-brand-primary to-blue-600 text-white rounded-2xl font-black shadow-lg shadow-brand-primary/20 hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {loading ? <div className="h-5 w-5 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <><Save size={20} /> Enregistrer les modifications</>}
+                        {loading ? (
+                            <div className="h-5 w-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                        ) : (
+                            <>
+                                <Save size={20} /> Enregistrer les modifications
+                            </>
+                        )}
                     </button>
                 </form>
             </div>
@@ -189,7 +267,7 @@ export default function SettingsPage() {
 
     if (activeSection === 'security') {
         return (
-            <div className="max-w-xl mx-auto space-y-6">
+            <div className="max-w-xl mx-auto space-y-6 pb-20">
                 <button onClick={() => setActiveSection(null)} className="flex items-center gap-2 text-slate-500 font-bold hover:text-slate-900 transition-colors">
                     <ArrowLeft size={20} /> Retour
                 </button>
@@ -199,12 +277,28 @@ export default function SettingsPage() {
                 </header>
 
                 <form onSubmit={handleUpdatePassword} className="bg-white rounded-[32px] border border-slate-100 shadow-sm p-8 space-y-6">
-                    {message && <div className="p-4 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100 flex items-center gap-3 font-bold text-sm">
-                        <CheckCircle2 size={18} /> {message}
-                    </div>}
-                    {error && <div className="p-4 bg-red-50 text-red-600 rounded-2xl border border-red-100 flex items-center gap-3 font-bold text-sm">
-                        <AlertCircle size={18} /> {error}
-                    </div>}
+                    <AnimatePresence mode="wait">
+                        {message && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                className="p-4 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100 flex items-center gap-3 font-bold text-sm"
+                            >
+                                <CheckCircle2 size={18} /> {message}
+                            </motion.div>
+                        )}
+                        {error && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                className="p-4 bg-red-50 text-red-600 rounded-2xl border border-red-100 flex items-center gap-3 font-bold text-sm"
+                            >
+                                <AlertCircle size={18} /> {error}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
 
                     <div className="space-y-2 relative">
                         <label className="text-xs font-black uppercase text-slate-400 tracking-widest ml-2">Mot de passe actuel</label>
@@ -227,7 +321,9 @@ export default function SettingsPage() {
                             onChange={e => setPasswordData({ ...passwordData, password: e.target.value })}
                             className="w-full h-14 px-6 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-brand-primary/20 focus:bg-white outline-none font-bold text-slate-900 transition-all"
                             required
+                            minLength={8}
                         />
+                        <p className="text-xs text-slate-400 font-medium ml-2">Minimum 8 caractères</p>
                     </div>
 
                     <div className="space-y-2">
@@ -246,14 +342,21 @@ export default function SettingsPage() {
                         onClick={() => setShowPasswords(!showPasswords)}
                         className="text-xs font-bold text-slate-400 hover:text-brand-primary flex items-center gap-2 transition-colors ml-2"
                     >
-                        {showPasswords ? <EyeOff size={14} /> : <Eye size={14} />} Afficher les mots de passe
+                        {showPasswords ? <EyeOff size={14} /> : <Eye size={14} />} {showPasswords ? 'Masquer' : 'Afficher'} les mots de passe
                     </button>
 
                     <button
+                        type="submit"
                         disabled={loading}
-                        className="w-full h-14 bg-slate-900 text-white rounded-2xl font-black shadow-lg shadow-slate-900/10 hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 mt-4"
+                        className="w-full h-14 bg-gradient-to-r from-slate-900 to-slate-700 text-white rounded-2xl font-black shadow-lg shadow-slate-900/10 hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {loading ? <div className="h-5 w-5 border-2 border-white/20 border-t-white rounded-full animate-spin" /> : <><Lock size={20} /> Mettre à jour le mot de passe</>}
+                        {loading ? (
+                            <div className="h-5 w-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                        ) : (
+                            <>
+                                <Lock size={20} /> Mettre à jour le mot de passe
+                            </>
+                        )}
                     </button>
                 </form>
             </div>
@@ -267,18 +370,73 @@ export default function SettingsPage() {
                 <p className="text-slate-500 font-medium mt-1">Gérez votre compte et vos préférences.</p>
             </header>
 
-            <div className="bg-white rounded-[40px] border border-slate-100 shadow-sm overflow-hidden p-8 mb-8 flex items-center gap-6 group relative">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-700" />
-                <div className="h-20 w-20 bg-brand-primary text-white rounded-[24px] flex items-center justify-center text-3xl font-black uppercase shadow-xl shadow-brand-primary/20 relative z-10">
-                    {user?.username?.[0] || 'U'}
-                </div>
-                <div className="relative z-10">
-                    <h2 className="text-xl font-black text-slate-900">{user?.username || 'Utilisateur'}</h2>
-                    <p className="text-slate-500 font-bold text-sm">{user?.email || 'email@exemple.com'}</p>
-                    <div className="mt-2 inline-flex items-center gap-2 px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-black uppercase tracking-widest border border-emerald-100">
-                        <Shield size={10} strokeWidth={3} /> Compte Vérifié
+            {/* Global Messages */}
+            <AnimatePresence mode="wait">
+                {message && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="p-4 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100 flex items-center gap-3 font-bold text-sm"
+                    >
+                        <CheckCircle2 size={18} /> {message}
+                    </motion.div>
+                )}
+                {error && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="p-4 bg-red-50 text-red-600 rounded-2xl border border-red-100 flex items-center gap-3 font-bold text-sm"
+                    >
+                        <AlertCircle size={18} /> {error}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* User Profile Card */}
+            <div className="bg-gradient-to-br from-brand-primary to-blue-600 rounded-[32px] shadow-xl shadow-brand-primary/20 overflow-hidden p-8 text-white relative">
+                <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-20 -mt-20" />
+                <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full -ml-16 -mb-16" />
+
+                <div className="relative z-10 flex items-center gap-6">
+                    <div className="h-20 w-20 bg-white/20 backdrop-blur-sm text-white rounded-[24px] flex items-center justify-center text-3xl font-black uppercase shadow-xl border-2 border-white/30">
+                        {user?.username?.[0] || 'U'}
+                    </div>
+                    <div className="flex-1">
+                        <h2 className="text-2xl font-black">{user?.username || 'Utilisateur'}</h2>
+                        <div className="flex items-center gap-2 mt-1 text-white/80">
+                            <Mail size={14} />
+                            <p className="font-bold text-sm">{user?.email || 'email@exemple.com'}</p>
+                        </div>
+                        <div className="flex items-center gap-2 mt-1 text-white/80">
+                            <Calendar size={14} />
+                            <p className="font-medium text-xs">
+                                Membre depuis {new Date(user?.created_at || Date.now()).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
+                            </p>
+                        </div>
                     </div>
                 </div>
+
+                {/* Quick Stats */}
+                {stats && (
+                    <div className="grid grid-cols-2 gap-4 mt-6 relative z-10">
+                        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+                            <div className="flex items-center gap-2 text-white/60 mb-1">
+                                <Wallet size={16} />
+                                <p className="text-xs font-black uppercase tracking-wider">Solde</p>
+                            </div>
+                            <p className="text-2xl font-black">{Number(stats.balance || 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F</p>
+                        </div>
+                        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+                            <div className="flex items-center gap-2 text-white/60 mb-1">
+                                <TrendingUp size={16} />
+                                <p className="text-xs font-black uppercase tracking-wider">Transactions</p>
+                            </div>
+                            <p className="text-2xl font-black">{stats.totalTransactions}</p>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {sections.map((section, idx) => (
@@ -332,13 +490,13 @@ export default function SettingsPage() {
                     onClick={() => {
                         if (window.confirm('Voulez-vous vraiment vous déconnecter ?')) logout();
                     }}
-                    className="w-full bg-red-50 text-red-600 p-5 rounded-[24px] font-black flex items-center justify-center gap-3 hover:bg-red-100 transition-all active:scale-[0.98]"
+                    className="w-full bg-red-50 text-red-600 p-5 rounded-[24px] font-black flex items-center justify-center gap-3 hover:bg-red-100 transition-all active:scale-[0.98] border border-red-100"
                 >
                     <LogOut size={22} strokeWidth={3} />
                     Déconnexion
                 </button>
                 <div className="text-center mt-8">
-                    <p className="text-[10px] font-black tracking-widest text-slate-300 uppercase">IzyBoost Platform v1.2.0 • Build 2024</p>
+                    <p className="text-[10px] font-black tracking-widest text-slate-300 uppercase">IzyBoost Platform v1.2.0 • Build 2026</p>
                 </div>
             </div>
         </div>

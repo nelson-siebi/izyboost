@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => env('APP_NAME', 'IzyBoost'),
 
     /*
     |--------------------------------------------------------------------------
@@ -122,5 +122,9 @@ return [
         'driver' => env('APP_MAINTENANCE_DRIVER', 'file'),
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
+
+    'admin_email' => env('ADMIN_EMAIL', 'admin@izyboost.com'),
+
+    'frontend_url' => env('FRONTEND_URL', 'http://localhost:5173'),
 
 ];

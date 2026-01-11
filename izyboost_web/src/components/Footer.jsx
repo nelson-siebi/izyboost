@@ -8,10 +8,12 @@ import {
     Globe,
     Shield,
     Mail,
-    ArrowRight
+    ArrowRight,
+    Youtube
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { adminApi } from '../features/admin/adminApi';
+import apiClient from '../api/client';
 
 const TikTokIcon = (props) => (
     <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
@@ -25,7 +27,7 @@ const Footer = () => {
     useEffect(() => {
         const loadSettings = async () => {
             try {
-                const data = await adminApi.getSettings();
+                const data = await adminApi.getPublicSettings();
                 const obj = {};
                 data.forEach(s => obj[s.key] = s.value);
                 setSettings(obj);
@@ -36,11 +38,18 @@ const Footer = () => {
         loadSettings();
     }, []);
 
+    const resolveImgUrl = (url) => {
+        if (!url) return null;
+        if (url.startsWith('http')) return url;
+        const baseUrl = apiClient.defaults.baseURL.replace('/api', '');
+        return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+    };
+
     const socialLinks = [
         { icon: Facebook, href: settings.facebook_link, color: 'hover:text-blue-600' },
         { icon: TikTokIcon, href: settings.tiktok_link, color: 'hover:text-black' },
         { icon: Send, href: settings.telegram_link, color: 'hover:text-blue-400' },
-        { icon: Instagram, href: settings.instagram_link, color: 'hover:text-pink-600' },
+        { icon: Youtube, href: settings.youtube_link, color: 'hover:text-red-600' },
     ];
 
     return (
@@ -53,13 +62,23 @@ const Footer = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-20">
                     {/* Brand Section */}
                     <div className="space-y-6">
-                        <Link to="/" className="flex items-center gap-3">
-                            <div className="h-10 w-10 bg-brand-primary rounded-xl flex items-center justify-center text-white font-black shadow-lg shadow-brand-primary/20">
-                                IZ
-                            </div>
-                            <span className="font-black text-2xl text-slate-900 tracking-tighter">
-                                {settings.site_name || 'IZYBOOST'}
-                            </span>
+                        <Link to="/" className="flex items-center">
+                            {settings.site_logo ? (
+                                <img
+                                    src={resolveImgUrl(settings.site_logo)}
+                                    alt="Logo"
+                                    className="h-10 w-auto max-w-[180px] object-contain"
+                                />
+                            ) : (
+                                <div className="flex items-center gap-3">
+                                    <div className="h-10 w-10 bg-brand-primary rounded-xl flex items-center justify-center text-white font-black shadow-lg shadow-brand-primary/20">
+                                        IZ
+                                    </div>
+                                    <span className="font-black text-2xl text-slate-900 tracking-tighter">
+                                        {settings.site_name || 'IZYBOOST'}
+                                    </span>
+                                </div>
+                            )}
                         </Link>
                         <p className="text-slate-500 text-sm font-medium leading-relaxed max-w-sm">
                             {settings.site_description || 'Propulsez votre présence sur les réseaux sociaux avec les meilleurs services de boost du marché.'}
@@ -129,7 +148,7 @@ const Footer = () => {
                                 </div>
                                 <div>
                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Email</p>
-                                    <p className="text-sm font-bold text-slate-900">{settings.contact_email}</p>
+                                    <p className="text-sm font-bold text-slate-900">{settings.site_email}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-4 group">

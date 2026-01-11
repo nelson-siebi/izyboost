@@ -7,6 +7,8 @@ use App\Models\Transaction;
 use App\Models\PaymentMethod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\OrderStatusUpdateMail;
 
 class FinancialController extends Controller
 {
@@ -17,7 +19,7 @@ class FinancialController extends Controller
     {
         $period = $request->input('period', 'month'); // day, week, month, year
 
-        $startDate = match($period) {
+        $startDate = match ($period) {
             'day' => now()->startOfDay(),
             'week' => now()->startOfWeek(),
             'month' => now()->startOfMonth(),
@@ -107,14 +109,42 @@ class FinancialController extends Controller
 
             // Credit user if deposit
             if ($transaction->type === 'deposit') {
-                $transaction->user->increment('balance', $transaction->net_amount);
+                $transaction->user->increment('balance', (float) $transaction->net_amount);
             }
+
+            // Notification User (TODO: Create TransactionMail if needed)
 
             return response()->json([
                 'message' => 'Transaction vérifiée et complétée',
                 'transaction' => $transaction,
             ]);
         });
+    }
+
+    /**
+     * Reject a pending transaction (e.g. proof invalid).
+     */
+    public function rejectTransaction(Request $request, $id)
+    {
+        $transaction = Transaction::findOrFail($id);
+
+        if ($transaction->status !== 'pending') {
+            return response()->json([
+                'error' => 'Seules les transactions en attente peuvent être rejetées'
+            ], 422);
+        }
+
+        $transaction->update([
+            'status' => 'failed',
+            'verified_by' => $request->user()->id,
+            'verified_at' => now(),
+            'admin_notes' => $request->input('reason', 'Transaction rejetée par l\'administrateur'),
+        ]);
+
+        return response()->json([
+            'message' => 'Transaction rejetée',
+            'transaction' => $transaction,
+        ]);
     }
 
     /**

@@ -209,47 +209,34 @@ export default function SupportPage() {
 
                         {/* Chat Messages */}
                         <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/50">
-                            {/* Initial Message */}
-                            <div className="flex gap-4">
-                                <div className="h-10 w-10 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
-                                    <User size={18} className="text-slate-500" />
-                                </div>
-                                <div className="space-y-1 max-w-[80%]">
-                                    <div className="flex items-baseline gap-2">
-                                        <span className="text-xs font-black text-slate-900">Vous</span>
-                                        <span className="text-[10px] font-bold text-slate-400">{new Date(selectedTicket.created_at).toLocaleString()}</span>
-                                    </div>
-                                    <div className="bg-white p-4 rounded-2xl rounded-tl-sm border border-slate-200 shadow-sm text-sm font-medium text-slate-700 leading-relaxed">
-                                        {selectedTicket.message}
-                                    </div>
-                                </div>
-                            </div>
-
                             {/* Conversation Loop */}
-                            {selectedTicket.messages?.map((msg) => (
-                                <div key={msg.id} className={cn("flex gap-4", String(msg.user_id) === String(user?.id) ? "" : "flex-row-reverse")}>
-                                    <div className={cn(
-                                        "h-10 w-10 rounded-full flex items-center justify-center shrink-0",
-                                        String(msg.user_id) === String(user?.id) ? "bg-slate-200" : "bg-brand-primary text-white"
-                                    )}>
-                                        {String(msg.user_id) === String(user?.id) ? <User key="user-icon" size={18} className="text-slate-500" /> : <Shield key="shield-icon" size={18} />}
-                                    </div>
-                                    <div className={cn("space-y-1 max-w-[80%]", String(msg.user_id) === String(user?.id) ? "" : "text-right")}>
-                                        <div className={cn("flex items-baseline gap-2", String(msg.user_id) === String(user?.id) ? "" : "justify-end")}>
-                                            <span className="text-xs font-black text-slate-900">{String(msg.user_id) === String(user?.id) ? 'Vous' : 'Soutien'}</span>
-                                            <span className="text-[10px] font-bold text-slate-400">{new Date(msg.created_at).toLocaleString()}</span>
-                                        </div>
+                            {selectedTicket.messages?.map((msg) => {
+                                const isMe = String(msg.user_id) === String(user?.id);
+                                return (
+                                    <div key={msg.id} className={cn("flex gap-4", isMe ? "flex-row-reverse" : "")}>
                                         <div className={cn(
-                                            "p-4 rounded-2xl border shadow-sm text-sm font-medium leading-relaxed text-left",
-                                            String(msg.user_id) === String(user?.id)
-                                                ? "bg-white border-slate-200 text-slate-700 rounded-tl-sm"
-                                                : "bg-brand-primary text-white border-brand-primary rounded-tr-sm"
+                                            "h-10 w-10 rounded-full flex items-center justify-center shrink-0",
+                                            isMe ? "bg-slate-200" : "bg-brand-primary text-white"
                                         )}>
-                                            {msg.message}
+                                            {isMe ? <User key="user-icon" size={18} className="text-slate-500" /> : <Shield key="shield-icon" size={18} />}
+                                        </div>
+                                        <div className={cn("space-y-1 max-w-[80%]", isMe ? "text-right" : "")}>
+                                            <div className={cn("flex items-baseline gap-2", isMe ? "justify-end flex-row-reverse" : "")}>
+                                                <span className="text-xs font-black text-slate-900">{isMe ? 'Vous' : 'Soutien'}</span>
+                                                <span className="text-[10px] font-bold text-slate-400">{new Date(msg.created_at).toLocaleString()}</span>
+                                            </div>
+                                            <div className={cn(
+                                                "p-4 rounded-2xl border shadow-sm text-sm font-medium leading-relaxed text-left",
+                                                isMe
+                                                    ? "bg-white border-slate-200 text-slate-700 rounded-tr-sm"
+                                                    : "bg-brand-primary text-white border-brand-primary rounded-tl-sm"
+                                            )}>
+                                                {msg.message}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
 
                         {/* Input Area */}

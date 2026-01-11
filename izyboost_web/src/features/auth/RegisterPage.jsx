@@ -5,6 +5,7 @@ import { authApi } from './authApi';
 import { User, Lock, Mail, Loader2, ArrowRight, Gift } from 'lucide-react';
 import { motion } from 'framer-motion';
 import AuthLayout from '../../layouts/AuthLayout';
+import SEO from '../../components/SEO';
 
 export default function RegisterPage() {
     const [searchParams] = useSearchParams();
@@ -36,7 +37,7 @@ export default function RegisterPage() {
         try {
             const data = await authApi.register(formData);
             setAuth(data.user, data.access_token);
-            navigate('/');
+            navigate('/dashboard');
         } catch (err) {
             setError(err.response?.data?.message || 'Erreur lors de l’inscription');
         } finally {
@@ -53,6 +54,10 @@ export default function RegisterPage() {
             title="Créer votre compte"
             subtitle="Rejoignez la communauté IzyBoost et booster vos réseaux."
         >
+            <SEO
+                title="Créer un compte"
+                description="Rejoignez IzyBoost pour booster votre influence sur les réseaux sociaux. Inscription rapide et sécurisée."
+            />
             <form onSubmit={handleSubmit} className="space-y-5">
                 {error && (
                     <div className="p-4 bg-red-50 border border-red-100 text-red-600 rounded-2xl text-sm font-medium">

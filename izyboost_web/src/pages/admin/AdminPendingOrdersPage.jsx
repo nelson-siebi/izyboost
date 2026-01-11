@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { adminApi } from '../../features/admin/adminApi';
 import {
     Clock,
@@ -19,6 +20,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../utils/cn';
 
 export default function AdminPendingOrdersPage() {
+    const navigate = useNavigate();
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);

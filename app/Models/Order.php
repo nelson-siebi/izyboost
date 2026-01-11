@@ -34,7 +34,7 @@ class Order extends Model
         'ip_address',
         'user_agent',
         'placed_via',
-        'provider_response' // We might need to store the raw response temporarily or in a log, but not in main table if not there. Checking schema... NO provider_response column in schema. Removing.
+        'api_error'
     ];
 
     protected static function boot()
@@ -54,7 +54,7 @@ class Order extends Model
     {
         return $this->belongsTo(Service::class);
     }
-    
+
     public function provider()
     {
         return $this->belongsTo(ApiProvider::class, 'external_provider_id');

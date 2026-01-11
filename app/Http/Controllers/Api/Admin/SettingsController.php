@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\PlatformSetting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class SettingsController extends Controller
 {
@@ -40,6 +42,62 @@ class SettingsController extends Controller
     }
 
     /**
+     * Get only public settings.
+     */
+    public function publicIndex()
+    {
+        $settings = PlatformSetting::where('is_public', true)->get()->map(function ($setting) {
+            return [
+                'key' => $setting->key,
+                'value' => $setting->typed_value,
+            ];
+        });
+
+        return response()->json($settings);
+    }
+
+    /**
+     * Bulk update settings.
+     */
+    public function bulkUpdate(Request $request)
+    {
+        $request->validate([
+            'settings' => 'required|array',
+        ]);
+
+        $updated = [];
+        $settings = $request->input('settings'); // Expecting ['key' => 'value', ...]
+
+        foreach ($settings as $key => $value) {
+            $normalizedValue = (is_array($value) || is_object($value)) ? json_encode($value) : $value;
+
+            $setting = PlatformSetting::updateOrCreate(
+                ['key' => $key],
+                ['value' => $normalizedValue]
+            );
+
+            if ($setting) {
+                $updated[] = $key;
+
+                // SPECIAL TRIGGER: If default_user_margin is changed, update ALL service prices immediately
+                if ($key === 'default_user_margin') {
+                    $newMargin = (float) $normalizedValue;
+                    \App\Models\Service::query()->each(function ($service) use ($newMargin) {
+                        $service->update([
+                            'base_price_per_unit' => $service->cost_per_unit * (1 + ($newMargin / 100))
+                        ]);
+                    });
+                }
+            }
+        }
+
+        return response()->json([
+            'message' => count($updated) . ' paramètres mis à jour avec succès',
+            'updated_keys' => $updated
+        ]);
+    }
+
+    /**
      * Update setting.
      */
     public function update(Request $request, $key)
@@ -72,6 +130,42 @@ class SettingsController extends Controller
                 'value' => $setting->typed_value,
             ],
         ]);
+    }
+
+    /**
+     * Upload site logo.
+     */
+    public function uploadLogo(Request $request)
+    {
+        $request->validate([
+            'logo' => 'required|image|mimes:png,jpg,jpeg,svg,webp|max:2048',
+        ]);
+
+        if ($request->hasFile('logo')) {
+            $file = $request->file('logo');
+            $path = $file->storeAs('settings', 'logo.' . $file->getClientOriginalExtension(), 'public');
+            // Store relative path to avoid APP_URL issues
+            $relativeUrl = '/storage/' . $path;
+
+            PlatformSetting::updateOrCreate(
+                ['key' => 'site_logo'],
+                [
+                    'value' => $relativeUrl,
+                    'type' => 'string',
+                    'category' => 'general',
+                    'group' => 'branding',
+                    'is_public' => true,
+                    'editable' => true,
+                ]
+            );
+
+            return response()->json([
+                'message' => 'Logo mis à jour avec succès',
+                'url' => $relativeUrl
+            ]);
+        }
+
+        return response()->json(['error' => 'Aucun fichier reçu'], 400);
     }
 
     /**

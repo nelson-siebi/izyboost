@@ -15,6 +15,7 @@ class WhiteLabelPlan extends Model
         'description',
         'monthly_price',
         'yearly_price',
+        'lifetime_price',
         'setup_fee',
         'transaction_fee_percent',
         'features',
@@ -27,6 +28,7 @@ class WhiteLabelPlan extends Model
     protected $casts = [
         'monthly_price' => 'decimal:2',
         'yearly_price' => 'decimal:2',
+        'lifetime_price' => 'decimal:2',
         'setup_fee' => 'decimal:2',
         'transaction_fee_percent' => 'decimal:2',
         'features' => 'array',

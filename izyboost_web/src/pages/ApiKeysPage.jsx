@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Key, Plus, Trash2, Copy, Shield, Code, Terminal, CheckCircle2 } from 'lucide-react';
+import { Key, Plus, Trash2, Copy, Shield, Code, Terminal, CheckCircle2, Zap, ShieldCheck, Info } from 'lucide-react';
 import { developerApi } from '../features/common/supportApi';
 import { cn } from '../utils/cn';
 
@@ -80,65 +80,116 @@ export default function ApiKeysPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Available Keys List */}
-                <div className="lg:col-span-2 space-y-6">
-                    {loading ? (
-                        [1, 2].map(i => <div key={i} className="h-24 bg-white rounded-[24px] border border-slate-100 animate-pulse" />)
-                    ) : keys.length > 0 ? (
-                        keys.map(key => (
-                            <motion.div
-                                layout
-                                key={key.id}
-                                className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 group hover:border-brand-primary/20 transition-all"
-                            >
-                                <div className="flex items-center gap-4">
-                                    <div className="h-12 w-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-brand-primary/10 group-hover:text-brand-primary transition-colors">
-                                        <Key size={20} />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-black text-slate-900 text-base">{key.name}</h3>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <code className="bg-slate-50 px-2 py-1 rounded-lg text-xs font-mono text-slate-500 border border-slate-100">
-                                                {key.key ? (key.key.substring(0, 10) + '................' + key.key.substring(key.key.length - 5)) : '********************'}
-                                            </code>
-                                            <button
-                                                onClick={() => copyToClipboard(key.key)}
-                                                className="text-slate-300 hover:text-brand-primary transition-colors"
-                                            >
-                                                <Copy size={14} />
-                                            </button>
+                <div className="lg:col-span-2 space-y-8">
+                    {/* Educational Section */}
+                    <div className="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm space-y-6">
+                        <div className="flex items-center gap-4">
+                            <div className="h-12 w-12 rounded-2xl bg-brand-primary/10 text-brand-primary flex items-center justify-center">
+                                <Shield size={24} />
+                            </div>
+                            <h2 className="text-xl font-black text-slate-900">Comprendre vos accès API</h2>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-3">
+                                <h3 className="text-sm font-black text-slate-700 flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-brand-primary" />
+                                    Rôle des Clés
+                                </h3>
+                                <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                                    Vos clés API agissent comme un identifiant unique et sécurisé. Elles permettent à vos applications de passer des commandes, vérifier des soldes et lister des services sans intervention manuelle.
+                                </p>
+                            </div>
+                            <div className="space-y-3">
+                                <h3 className="text-sm font-black text-slate-700 flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                    Sécurité Critique
+                                </h3>
+                                <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                                    Ne partagez jamais vos clés. Une clé compromise peut donner un accès total à votre solde. Utilisez des variables d'environnement (.env) pour les stocker côté serveur uniquement.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-start gap-4">
+                            <Zap size={20} className="text-brand-primary shrink-0 mt-1" />
+                            <div>
+                                <h4 className="text-xs font-black text-slate-900 mb-1">Limites de Taux (Rate Limiting)</h4>
+                                <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
+                                    Par défaut, votre compte est limité à <strong>60 requêtes par minute</strong>. Pour des besoins industriels, contactez le support pour une extension de quota.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between px-2">
+                            <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest">Vos Clés Actives</h3>
+                            <span className="text-[10px] font-bold py-1 px-2 bg-slate-100 text-slate-500 rounded-lg">{keys.length} cl{keys.length > 1 ? 'és' : 'é'}</span>
+                        </div>
+
+                        {loading ? (
+                            [1, 2].map(i => <div key={i} className="h-24 bg-white rounded-[24px] border border-slate-100 animate-pulse" />)
+                        ) : keys.length > 0 ? (
+                            keys.map(key => (
+                                <motion.div
+                                    layout
+                                    key={key.id}
+                                    className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 group hover:border-brand-primary/20 transition-all"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="h-12 w-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-brand-primary/10 group-hover:text-brand-primary transition-colors">
+                                            <Key size={20} />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-black text-slate-900 text-base">{key.name}</h3>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <code className="bg-slate-50 px-2 py-1 rounded-lg text-xs font-mono text-slate-500 border border-slate-100 italic">
+                                                    {key.key ? (key.key.substring(0, 8) + '••••••••' + key.key.substring(key.key.length - 8)) : '********************'}
+                                                </code>
+                                                <button
+                                                    onClick={() => copyToClipboard(key.key)}
+                                                    className="text-slate-300 hover:text-brand-primary transition-colors h-8 w-8 flex items-center justify-center hover:bg-brand-primary/5 rounded-lg"
+                                                    title="Copier la clé"
+                                                >
+                                                    <Copy size={14} />
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div className="flex items-center gap-4 pl-16 sm:pl-0">
-                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">
-                                        Dernière util.: {key.last_used_at ? new Date(key.last_used_at).toLocaleDateString() : 'Jamais'}
-                                    </span>
-                                    <button
-                                        onClick={() => handleDeleteKey(key.id)}
-                                        className="h-10 w-10 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 flex items-center justify-center transition-colors"
-                                    >
-                                        <Trash2 size={18} />
-                                    </button>
-                                </div>
-                            </motion.div>
-                        ))
-                    ) : (
-                        <div className="text-center py-16 bg-white rounded-[32px] border border-dashed border-slate-200">
-                            <Terminal size={48} className="mx-auto mb-4 text-slate-200" />
-                            <h3 className="text-lg font-black text-slate-900 mb-1">Aucune clé API</h3>
-                            <p className="text-slate-400 font-bold text-sm">Créez une clé pour commencer à utiliser l'API.</p>
-                        </div>
-                    )}
+                                    <div className="flex items-center gap-4 pl-16 sm:pl-0">
+                                        <div className="text-right">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-300">Dernière util.</p>
+                                            <p className="text-[11px] font-bold text-slate-500">{key.last_used_at ? new Date(key.last_used_at).toLocaleDateString() : 'Jamais'}</p>
+                                        </div>
+                                        <button
+                                            onClick={() => handleDeleteKey(key.id)}
+                                            className="h-10 w-10 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 flex items-center justify-center transition-colors shadow-sm shadow-red-500/5"
+                                            title="Supprimer la clé"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
+                                </motion.div>
+                            ))
+                        ) : (
+                            <div className="text-center py-16 bg-white rounded-[32px] border border-dashed border-slate-200">
+                                <Terminal size={48} className="mx-auto mb-4 text-slate-200" />
+                                <h3 className="text-lg font-black text-slate-900 mb-1">Aucune clé API</h3>
+                                <p className="text-slate-400 font-bold text-sm">Créez une clé pour commencer à utiliser l'API.</p>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Create Key Form */}
-                <div className="lg:col-span-1">
+                <div className="lg:col-span-1 space-y-6">
                     <div className="bg-slate-900 text-white p-8 rounded-[32px] shadow-2xl relative overflow-hidden sticky top-8">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-brand-primary/20 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
 
                         <div className="relative z-10">
                             <h2 className="text-xl font-black mb-6 flex items-center gap-2">
-                                <Shield className="text-brand-primary" size={24} />
+                                <ShieldCheck className="text-brand-primary" size={24} />
                                 Nouvelle Clé
                             </h2>
 
@@ -149,7 +200,7 @@ export default function ApiKeysPage() {
                                         type="text"
                                         value={newKeyName}
                                         onChange={(e) => setNewKeyName(e.target.value)}
-                                        placeholder="Ex: Mon Site WordPress"
+                                        placeholder="Ex: Mon Panel SMM"
                                         className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-white placeholder:text-slate-500 focus:outline-none focus:border-brand-primary/50 transition-colors"
                                     />
                                 </div>
@@ -157,7 +208,7 @@ export default function ApiKeysPage() {
                                 <button
                                     type="submit"
                                     disabled={!newKeyName.trim() || creating}
-                                    className="w-full py-4 rounded-xl bg-white text-slate-900 font-black flex items-center justify-center gap-2 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
+                                    className="w-full py-4 rounded-xl bg-white text-slate-900 font-black flex items-center justify-center gap-2 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 shadow-xl shadow-brand-primary/10"
                                 >
                                     {creating ? <div className="h-5 w-5 border-2 border-slate-900 rounded-full animate-spin border-t-transparent" /> : (
                                         <>
@@ -168,18 +219,37 @@ export default function ApiKeysPage() {
                             </form>
 
                             {notification && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className={cn(
-                                        "mt-6 p-3 rounded-xl flex items-center gap-3 text-xs font-bold",
-                                        notification.type === 'success' ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/20" : "bg-red-500/20 text-red-400 border border-red-500/20"
-                                    )}
-                                >
-                                    <CheckCircle2 size={16} />
-                                    {notification.message}
-                                </motion.div>
+                                <AnimatePresence>
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -10 }}
+                                        className={cn(
+                                            "mt-6 p-3 rounded-xl flex items-center gap-3 text-xs font-bold",
+                                            notification.type === 'success' ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/20" : "bg-red-500/20 text-red-400 border border-red-500/20"
+                                        )}
+                                    >
+                                        <CheckCircle2 size={16} />
+                                        {notification.message}
+                                    </motion.div>
+                                </AnimatePresence>
                             )}
+
+                            <div className="mt-8 pt-6 border-t border-white/5 space-y-4">
+                                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                                    <Info size={12} /> Rappel de conformité
+                                </h4>
+                                <ul className="space-y-3">
+                                    <li className="flex gap-3 text-[11px] font-bold text-slate-400">
+                                        <div className="w-1 h-1 rounded-full bg-slate-600 mt-1.5 shrink-0" />
+                                        Usage exclusif par le propriétaire du compte.
+                                    </li>
+                                    <li className="flex gap-3 text-[11px] font-bold text-slate-400">
+                                        <div className="w-1 h-1 rounded-full bg-slate-600 mt-1.5 shrink-0" />
+                                        Interdiction de revendre l'accès direct à l'API.
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                 </div>

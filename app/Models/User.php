@@ -58,7 +58,8 @@ class User extends Authenticatable
         'remember_token',
         'google_token',
         'two_factor_secret',
-        'id', // Hide internal ID, expose UUID instead
+        // Hide internal ID by default, but we need it for UI comparisons in support tickets
+        // 'id', 
     ];
 
     /**
@@ -146,5 +147,16 @@ class User extends Authenticatable
     public function notifications()
     {
         return $this->hasMany(Notification::class);
+    }
+
+    /**
+     * Send the password reset notification.
+     *
+     * @param  string  $token
+     * @return void
+     */
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new \App\Notifications\ResetPasswordNotification($token));
     }
 }

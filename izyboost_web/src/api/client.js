@@ -1,7 +1,15 @@
 import axios from 'axios';
 
+const getBaseURL = () => {
+    const url = import.meta.env.VITE_API_URL;
+    if (!url || url === 'undefined') {
+        return 'http://localhost:8000/api';
+    }
+    return url;
+};
+
 const apiClient = axios.create({
-    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api',
+    baseURL: getBaseURL(),
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',

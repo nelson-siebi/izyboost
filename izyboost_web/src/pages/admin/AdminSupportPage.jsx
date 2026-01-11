@@ -227,36 +227,31 @@ export default function AdminSupportPage() {
                                     </div>
                                 )}
 
-                                {/* Initial Message (Ticket Description) */}
-                                <div className="flex justify-start">
-                                    <div className="max-w-[80%] rounded-[20px] rounded-tl-sm p-5 bg-white border border-slate-100 shadow-sm">
-                                        <p className="text-sm text-slate-700 leading-relaxed font-medium">{selectedTicket.message || "Pas de description"}</p>
-                                        <p className="text-[10px] mt-2 font-bold text-slate-400">Message initial • {new Date(selectedTicket.created_at).toLocaleString()}</p>
-                                    </div>
-                                </div>
-
-                                {selectedTicket.messages?.map((msg) => (
-                                    <div
-                                        key={msg.id}
-                                        className={cn(
-                                            "flex w-full",
-                                            String(msg.user_id) === String(selectedTicket.user_id) ? "justify-start" : "justify-end"
-                                        )}
-                                    >
-                                        <div className={cn(
-                                            "max-w-[80%] rounded-[20px] p-5 shadow-sm relative group transition-all",
-                                            String(msg.user_id) === String(selectedTicket.user_id)
-                                                ? "bg-white border border-slate-100 text-slate-700 rounded-tl-sm"
-                                                : "bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-tr-sm shadow-blue-500/20"
-                                        )}>
-                                            <p className="text-sm leading-relaxed font-medium">{msg.message}</p>
-                                            <p className={cn(
-                                                "text-[10px] mt-2 font-bold opacity-70",
-                                                String(msg.user_id) === String(selectedTicket.user_id) ? "text-slate-400" : "text-blue-100"
-                                            )}>{new Date(msg.created_at).toLocaleString()}</p>
+                                {selectedTicket.messages?.map((msg) => {
+                                    const isTicketOwner = String(msg.user_id) === String(selectedTicket.user_id);
+                                    return (
+                                        <div
+                                            key={msg.id}
+                                            className={cn(
+                                                "flex w-full",
+                                                isTicketOwner ? "justify-start" : "justify-end"
+                                            )}
+                                        >
+                                            <div className={cn(
+                                                "max-w-[80%] rounded-[20px] p-5 shadow-sm relative group transition-all",
+                                                isTicketOwner
+                                                    ? "bg-white border border-slate-100 text-slate-700 rounded-tl-sm"
+                                                    : "bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-tr-sm shadow-blue-500/20"
+                                            )}>
+                                                <p className="text-sm leading-relaxed font-medium">{msg.message}</p>
+                                                <p className={cn(
+                                                    "text-[10px] mt-2 font-bold opacity-70",
+                                                    isTicketOwner ? "text-slate-400" : "text-blue-100"
+                                                )}>{new Date(msg.created_at).toLocaleString()}</p>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
 
                                 {selectedTicket.status === 'closed' && (
                                     <div className="flex justify-center py-4">

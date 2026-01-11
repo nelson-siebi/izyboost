@@ -41,7 +41,8 @@ export default function AdminOrdersPage() {
     const loadOrders = async () => {
         setLoading(true);
         try {
-            const status = activeTab === 'all' ? '' : activeTab;
+            // Pass null instead of empty string for 'all' to get all orders
+            const status = activeTab === 'all' ? null : activeTab;
             const data = await adminApi.getOrders(page, status);
             setOrders(data.data || []);
             setMeta(data.meta || null);
@@ -68,6 +69,18 @@ export default function AdminOrdersPage() {
             loadOrders();
         } catch (error) {
             alert('Erreur lors du remboursement');
+        }
+    };
+
+    const handleRetry = async (orderId) => {
+        try {
+            setLoading(true);
+            await adminApi.retryOrder(orderId);
+            loadOrders();
+        } catch (error) {
+            alert(error.response?.data?.error || 'Erreur lors de la relance');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -202,11 +215,27 @@ export default function AdminOrdersPage() {
                                     <td className="px-6 py-4 text-sm font-medium text-slate-600">{order.service?.name || 'Service standard'}</td>
                                     <td className="px-6 py-4 text-sm font-black text-slate-900">{order.total_price?.toLocaleString()} F</td>
                                     <td className="px-6 py-4">
-                                        {getStatusBadge(order.status)}
+                                        <div className="flex flex-col gap-1">
+                                            {getStatusBadge(order.status)}
+                                            {order.api_error && (
+                                                <span className="text-[9px] font-black text-red-500 uppercase tracking-tighter">
+                                                    Erreur API : {order.api_error === 'provider_low_balance' ? 'Solde Fournisseur' : 'Échec Provider'}
+                                                </span>
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="px-6 py-4 text-sm font-medium text-slate-500">{new Date(order.created_at).toLocaleDateString()}</td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            {order.status === 'processing' && order.api_error && (
+                                                <button
+                                                    onClick={() => handleRetry(order.id)}
+                                                    className="p-2 rounded-lg bg-orange-50 text-orange-600 hover:bg-orange-100 transition-colors"
+                                                    title="Relancer le Boostage"
+                                                >
+                                                    <RefreshCw className="h-4 w-4" />
+                                                </button>
+                                            )}
                                             {order.status === 'pending' && (
                                                 <button
                                                     onClick={() => handleUpdateStatus(order.id, 'processing')}
@@ -216,7 +245,7 @@ export default function AdminOrdersPage() {
                                                     <Loader2 className="h-4 w-4" />
                                                 </button>
                                             )}
-                                            {order.status === 'processing' && (
+                                            {order.status === 'processing' && !order.api_error && (
                                                 <button
                                                     onClick={() => handleUpdateStatus(order.id, 'completed')}
                                                     className="p-2 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors"

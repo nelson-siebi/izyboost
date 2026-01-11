@@ -23,18 +23,23 @@ class ReferralService
         // Update new user's sponsor
         $newUser->update(['sponsor_id' => $sponsor->id]);
 
-        // Get commission rates from settings (or use defaults)
+        // Get settings from database
+        $maxLevels = (int) (\App\Models\PlatformSetting::where('key', 'referral_levels')->value('value') ?? 1);
+        $commissionLevel1 = (float) (\App\Models\PlatformSetting::where('key', 'referral_commission_level_1')->value('value') ?? 5.00);
+        $commissionLevel2 = (float) (\App\Models\PlatformSetting::where('key', 'referral_commission_level_2')->value('value') ?? 0);
+        $commissionLevel3 = (float) (\App\Models\PlatformSetting::where('key', 'referral_commission_level_3')->value('value') ?? 0);
+
         $commissionRates = [
-            1 => 10.00, // Level 1: 10%
-            2 => 5.00,  // Level 2: 5%
-            3 => 2.00,  // Level 3: 2%
+            1 => $commissionLevel1,
+            2 => $commissionLevel2,
+            3 => $commissionLevel3,
         ];
 
-        // Create relationships for multiple levels
+        // Create relationships for multiple levels as per settings
         $currentSponsor = $sponsor;
         $level = 1;
 
-        while ($currentSponsor && $level <= 3) {
+        while ($currentSponsor && $level <= $maxLevels) {
             ReferralRelationship::create([
                 'sponsor_id' => $currentSponsor->id,
                 'referred_id' => $newUser->id,
@@ -56,8 +61,11 @@ class ReferralService
      */
     public function awardOrderCommission(User $user, $order)
     {
+        $maxLevels = (int) (\App\Models\PlatformSetting::where('key', 'referral_levels')->value('value') ?? 1);
+
         $relationships = ReferralRelationship::where('referred_id', $user->id)
             ->where('status', 'active')
+            ->where('level', '<=', $maxLevels)
             ->get();
 
         foreach ($relationships as $relationship) {
@@ -104,9 +112,11 @@ class ReferralService
      */
     public function awardDepositCommission(User $user, $transaction)
     {
+        $maxLevels = (int) (\App\Models\PlatformSetting::where('key', 'referral_levels')->value('value') ?? 1);
+
         $relationships = ReferralRelationship::where('referred_id', $user->id)
             ->where('status', 'active')
-            ->where('level', 1) // Only level 1 gets deposit commission
+            ->where('level', '<=', $maxLevels)
             ->get();
 
         foreach ($relationships as $relationship) {
@@ -152,12 +162,15 @@ class ReferralService
             ->where('status', 'pending')
             ->sum('amount');
 
+        $commissionRate = (float) (\App\Models\PlatformSetting::where('key', 'referral_commission_level_1')->value('value') ?? 5.00);
+
         return [
             'direct_referrals' => $directReferrals,
             'total_referrals' => $totalReferrals,
             'total_earned' => $totalEarned,
             'pending_commissions' => $pendingCommissions,
             'sponsor_code' => $user->sponsor_code,
+            'commission_rate' => $commissionRate,
         ];
     }
 }

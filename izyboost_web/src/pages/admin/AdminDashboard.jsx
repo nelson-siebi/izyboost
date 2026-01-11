@@ -14,7 +14,8 @@ import {
     Clock,
     CheckCircle,
     XCircle,
-    MoreHorizontal
+    MoreHorizontal,
+    Zap
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import {
@@ -126,12 +127,7 @@ export default function AdminDashboard() {
     );
 
     return (
-        <motion.div
-            variants={container}
-            initial="hidden"
-            animate="show"
-            className="space-y-8 max-w-7xl mx-auto"
-        >
+        <div className="space-y-8 max-w-7xl mx-auto">
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
@@ -160,7 +156,7 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard
                     title="Revenu Total"
-                    value={`${(stats?.total_revenue || 0).toLocaleString()} F`}
+                    value={`${Number(stats?.total_revenue || 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F`}
                     icon={DollarSign}
                     trend={12.5}
                     color="bg-emerald-500"
@@ -262,7 +258,7 @@ export default function AdminDashboard() {
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <p className="font-black text-slate-900 text-sm">{typeof order.amount === 'number' ? order.amount.toLocaleString() : order.amount} F</p>
+                                        <p className="font-black text-slate-900 text-sm">{Number(order.amount || 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F</p>
                                     </div>
                                 </div>
                             ))}
@@ -281,14 +277,28 @@ export default function AdminDashboard() {
                                     className="p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl text-left transition-all group block"
                                 >
                                     <Users className="h-5 w-5 mb-2 text-orange-400 group-hover:scale-110 transition-transform" />
-                                    <p className="text-xs font-bold">Ajouter Admin</p>
+                                    <p className="text-xs font-bold">Utilisateurs</p>
+                                </Link>
+                                <Link
+                                    to="/admin/services"
+                                    className="p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl text-left transition-all group block"
+                                >
+                                    <Package className="h-5 w-5 mb-2 text-blue-400 group-hover:scale-110 transition-transform" />
+                                    <p className="text-xs font-bold">SMM Services</p>
                                 </Link>
                                 <Link
                                     to="/admin/finance"
                                     className="p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl text-left transition-all group block"
                                 >
                                     <CreditCard className="h-5 w-5 mb-2 text-emerald-400 group-hover:scale-110 transition-transform" />
-                                    <p className="text-xs font-bold">Virement</p>
+                                    <p className="text-xs font-bold">Finances</p>
+                                </Link>
+                                <Link
+                                    to="/admin/settings"
+                                    className="p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-xl text-left transition-all group block"
+                                >
+                                    <Zap className="h-5 w-5 mb-2 text-amber-400 group-hover:scale-110 transition-transform" />
+                                    <p className="text-xs font-bold">Paramètres</p>
                                 </Link>
                             </div>
                         </div>
@@ -298,6 +308,6 @@ export default function AdminDashboard() {
 
                 </div>
             </div>
-        </motion.div>
+        </div>
     );
 }

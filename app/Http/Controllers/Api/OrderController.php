@@ -13,6 +13,10 @@ use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
+    /**
+     * Store a newly created order.
+     * REFACTORED: Debits balance ONLY after successful API call or for manual service.
+     */
     public function store(Request $request)
     {
         $request->validate([
@@ -32,157 +36,221 @@ class OrderController extends Controller
         }
 
         // 2. Calculate Prices
-        // DB stores Price Per Unit (e.g. 0.05 FCFA)
-        // Total = Unit Price * Quantity
-
         $costPrice = $service->cost_per_unit * $request->quantity;
         $sellPrice = $service->base_price_per_unit * $request->quantity;
 
-        // 3. Check Balance
+        // 3. Check Balance (Preliminary)
         if ($user->balance < $sellPrice) {
             return response()->json(['message' => 'Solde insuffisant.'], 402);
         }
 
-        // 4. Transaction (DB)
-        return DB::transaction(function () use ($user, $service, $request, $costPrice, $sellPrice) {
+        // 4. Create Initial Order (Not debited yet)
+        $order = Order::create([
+            'user_id' => $user->id,
+            'service_id' => $service->id,
+            'external_provider_id' => $service->api_provider_id,
+            'link' => $request->link,
+            'quantity' => $request->quantity,
+            'cost_price' => $costPrice,
+            'sell_price' => $sellPrice,
+            'margin_amount' => $sellPrice - $costPrice,
+            'net_amount' => $sellPrice - $costPrice,
+            'status' => 'pending',
+            'placed_via' => 'api',
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
 
-            // Deduct Balance
-            $user->decrement('balance', $sellPrice);
+        // 5. Automated Service Logic
+        $provider = ApiProvider::find($service->api_provider_id);
 
-            // Calculate Margin
-            $margin = $sellPrice - $costPrice;
-
-            // Get Wallet Payment Method
-            $walletMethod = \App\Models\PaymentMethod::firstOrCreate(
-                ['code' => 'wallet'],
-                [
-                    'name' => 'Solde Principal',
-                    'type' => 'ewallet', // Matches enum ['card', 'crypto', 'bank_transfer', 'ewallet', 'mobile_money']
-                    'is_active' => true,
-                    'min_amount' => 0,
-                    'max_amount' => 10000000,
-                    'currencies' => ['XAF', 'EUR', 'USD'],
-                    'config' => [],
-                ]
-            );
-
-            // Create Transaction
-            \App\Models\Transaction::create([
-                'user_id' => $user->id,
-                'payment_method_id' => $walletMethod->id,
-                'type' => 'order_payment',
-                'amount' => $sellPrice,
-                'fees' => 0,
-                'net_amount' => $sellPrice,
-                'currency' => 'XAF', // Assuming default currency
-                'status' => 'completed',
-                'description' => "Commande #{$service->id} - {$service->name}",
-                'completed_at' => now(),
-            ]);
-
-            // Create Order Local
-            $order = Order::create([
-                'user_id' => $user->id,
-                'service_id' => $service->id,
-                'external_provider_id' => $service->api_provider_id, // Link to provider
+        if ($provider) {
+            $startTime = microtime(true);
+            $endpoint = $provider->base_url;
+            $requestBody = [
+                'key' => $provider->api_key,
+                'action' => 'add',
+                'service' => $service->external_id,
                 'link' => $request->link,
                 'quantity' => $request->quantity,
-                'cost_price' => $costPrice,
-                'sell_price' => $sellPrice,
-                'margin_amount' => $margin,
-                'net_amount' => $margin, // Assuming no commission yet
-                'status' => 'pending',
-                'placed_via' => 'api', // or mobile/website
-                'ip_address' => $request->ip(),
-            ]);
+            ];
 
-            // 5. Send to External API
-            $provider = ApiProvider::find($service->api_provider_id);
-
-            if ($provider) {
-                $startTime = microtime(true);
-                $endpoint = $provider->base_url;
-                $requestBody = [
+            try {
+                // 5.1 PROACTIVE BALANCE CHECK (User requested)
+                Log::info("Checking provider balance before order #{$order->id}");
+                $balanceResponse = Http::post($endpoint, [
                     'key' => $provider->api_key,
-                    'action' => 'add',
-                    'service' => $service->external_id,
-                    'link' => $request->link,
-                    'quantity' => $request->quantity,
-                ];
+                    'action' => 'balance'
+                ]);
 
-                try {
-                    $response = Http::post($endpoint, $requestBody);
-                    $duration = round((microtime(true) - $startTime) * 1000);
-                    $apiData = $response->json();
+                if ($balanceResponse->successful()) {
+                    $balanceData = $balanceResponse->json();
+                    $providerBalance = (float) ($balanceData['balance'] ?? 0);
+                    $providerCurrency = $balanceData['currency'] ?? 'USD';
 
-                    // Mask API Key for Log
-                    $logBody = $requestBody;
-                    $logBody['key'] = '***';
+                    // Note: costPrice is in XAF. We need to convert it back to provider currency or vice versa.
+                    // But wait, the SMM Panel rate is usually USD. 
+                    // Let's assume providerBalance is what we compare against.
+                    // To be safe, we'll use the cost_per_unit * quantity in USD (which we don't store directly, but we have cost_per_unit in XAF)
+                    // Let's get the USD cost back: costPrice / rateUsdXaf
+                    $rateUsdXaf = \App\Models\PlatformSetting::where('key', 'currency_rate_usd_xaf')->value('value') ?? 650;
+                    $costUsd = $costPrice / $rateUsdXaf;
 
-                    // Log API Call
-                    \App\Models\ApiLog::create([
-                        'api_key_id' => null, // Internal call
-                        'user_id' => $user->id,
-                        'method' => 'POST',
-                        'endpoint' => $endpoint,
-                        'request_body' => $logBody,
-                        'response_code' => $response->status(),
-                        'response_body' => $apiData,
-                        'ip_address' => $request->ip(),
-                        'duration_ms' => $duration,
-                    ]);
+                    if ($providerBalance < $costUsd) {
+                        Log::warning("Insufficient provider balance for order #{$order->id}. Needed: {$costUsd}, Have: {$providerBalance}");
+                        $order->update([
+                            'status' => 'processing',
+                            'api_error' => 'provider_low_balance',
+                            'admin_notes' => "Solde fournisseur insuffisant. Requis: {$costUsd} {$providerCurrency}, Dispo: {$providerBalance} {$providerCurrency}"
+                        ]);
 
-                    if (isset($apiData['order'])) {
-                        // Success
+                        return response()->json([
+                            'message' => 'Commande en attente de traitement (Solde fournisseur insuffisant).',
+                            'order_id' => $order->id,
+                            'status' => 'processing',
+                            'api_error' => 'provider_low_balance'
+                        ], 202);
+                    }
+                }
+
+                Log::info("Attempting to place order with provider: {$provider->name}", [
+                    'order_id' => $order->id,
+                    'endpoint' => $endpoint,
+                    'service_id' => $service->external_id,
+                    'request' => array_merge($requestBody, ['key' => '***'])
+                ]);
+
+                $response = Http::post($endpoint, $requestBody);
+                $duration = round((microtime(true) - $startTime) * 1000);
+                $apiData = $response->json();
+
+                Log::info("Provider response for order #{$order->id}", [
+                    'status' => $response->status(),
+                    'body' => $apiData
+                ]);
+
+                // Log API Call in Database
+                \App\Models\ApiLog::create([
+                    'user_id' => $user->id,
+                    'method' => 'POST',
+                    'endpoint' => $endpoint,
+                    'request_body' => array_merge($requestBody, ['key' => '***']),
+                    'response_code' => $response->status(),
+                    'response_body' => $apiData,
+                    'ip_address' => $request->ip(),
+                    'duration_ms' => $duration,
+                ]);
+
+                if (isset($apiData['order'])) {
+                    // API SUCCESS -> DEBIT USER
+                    return DB::transaction(function () use ($user, $sellPrice, $order, $apiData, $service) {
+                        // Re-check balance inside transaction for atomicity
+                        $userRefreshed = $user->fresh();
+                        if ($userRefreshed->balance < $sellPrice) {
+                            $order->update(['status' => 'failed', 'api_error' => 'Insufficient funds at deduction']);
+                            return response()->json(['message' => 'Solde insuffisant au moment du débit.'], 402);
+                        }
+
+                        $userRefreshed->decrement('balance', (float) $sellPrice);
+
+                        // Award Referral Commission
+                        app(\App\Services\ReferralService::class)->awardOrderCommission($userRefreshed, $order);
+
+                        // Get Wallet Payment Method
+                        $walletMethod = \App\Models\PaymentMethod::where('code', 'wallet')->first();
+
+                        // Create Transaction record
+                        \App\Models\Transaction::create([
+                            'user_id' => $userRefreshed->id,
+                            'payment_method_id' => $walletMethod->id ?? 1,
+                            'type' => 'order_payment',
+                            'amount' => $sellPrice,
+                            'fees' => 0,
+                            'net_amount' => $sellPrice,
+                            'currency' => 'XAF',
+                            'status' => 'completed',
+                            'description' => "Commande #{$order->id} - {$service->name}",
+                            'completed_at' => now(),
+                        ]);
+
                         $order->update([
                             'external_order_id' => $apiData['order'],
-                            'status' => 'in_progress' // Assuming instant pass
+                            'status' => 'in_progress',
+                            'api_error' => null
                         ]);
-                    } else {
-                        // API Error (e.g. Not enough funds on reseller account)
-                        Log::error("Order API Error: " . $response->body());
-                        $order->update(['status' => 'processing', 'admin_notes' => 'API Error: ' . json_encode($apiData)]);
-                    }
 
-                } catch (\Exception $e) {
-                    $duration = round((microtime(true) - $startTime) * 1000);
-                    Log::error("Order Exception: " . $e->getMessage());
+                        return response()->json([
+                            'message' => 'Commande passée avec succès.',
+                            'order' => $order,
+                            'balance_after' => $userRefreshed->balance
+                        ], 201);
+                    });
+                } else {
+                    // API ERROR -> INFORM ADMIN, DO NOT DEBIT
+                    $errorMsg = json_encode($apiData);
+                    Log::error("Provider API Error for order #{$order->id}: " . $errorMsg);
 
-                    // Mask API Key for Log
-                    $logBody = $requestBody;
-                    $logBody['key'] = '***';
+                    $apiErrorCode = str_contains($errorMsg, 'not_enough_funds') ? 'provider_low_balance' : 'api_error';
 
-                    // Log Exception
-                    \App\Models\ApiLog::create([
-                        'api_key_id' => null,
-                        'user_id' => $user->id,
-                        'method' => 'POST',
-                        'endpoint' => $endpoint,
-                        'request_body' => $logBody,
-                        'response_code' => 500,
-                        'response_body' => ['error' => $e->getMessage()],
-                        'ip_address' => $request->ip(),
-                        'duration_ms' => $duration,
+                    $order->update([
+                        'status' => 'processing',
+                        'api_error' => $apiErrorCode,
+                        'admin_notes' => 'API Error Auto-detected: ' . $errorMsg
                     ]);
 
-                    $order->update(['status' => 'processing', 'admin_notes' => 'Exception: ' . $e->getMessage()]);
+                    return response()->json([
+                        'message' => 'Erreur fournisseur : la commande est en attente de traitement manuel.',
+                        'order_id' => $order->id,
+                        'status' => 'processing',
+                        'api_error' => $apiErrorCode,
+                    ], 202);
                 }
+
+            } catch (\Exception $e) {
+                Log::critical("Exception during order placement for #{$order->id}: " . $e->getMessage());
+                $order->update(['status' => 'processing', 'api_error' => 'Connection Exception: ' . $e->getMessage()]);
+                return response()->json(['message' => 'Erreur de connexion au fournisseur.', 'order_id' => $order->id, 'error' => $e->getMessage()], 500);
             }
+        } else {
+            // 6. Manual Service Logic (Debit immediately)
+            return DB::transaction(function () use ($user, $sellPrice, $order, $service) {
+                $userRefreshed = $user->fresh();
+                if ($userRefreshed->balance < $sellPrice) {
+                    $order->update(['status' => 'failed', 'api_error' => 'Insufficient funds']);
+                    return response()->json(['message' => 'Solde insuffisant.'], 402);
+                }
 
-            // 5. Award Referral Commission
-            app(\App\Services\ReferralService::class)->awardOrderCommission($user, $order);
+                $userRefreshed->decrement('balance', (float) $sellPrice);
+                app(\App\Services\ReferralService::class)->awardOrderCommission($userRefreshed, $order);
 
-            return response()->json([
-                'message' => 'Commande créée avec succès',
-                'order_id' => $order->id,
-                'uuid' => $order->uuid,
-                'status' => $order->status,
-                'price' => $sellPrice,
-                'balance_after' => $user->fresh()->balance
-            ], 201);
-        });
+                $walletMethod = \App\Models\PaymentMethod::where('code', 'wallet')->first();
+                \App\Models\Transaction::create([
+                    'user_id' => $userRefreshed->id,
+                    'payment_method_id' => $walletMethod->id ?? 1,
+                    'type' => 'order_payment',
+                    'amount' => $sellPrice,
+                    'fees' => 0,
+                    'net_amount' => $sellPrice,
+                    'currency' => 'XAF',
+                    'status' => 'completed',
+                    'description' => "Commande #{$order->id} - {$service->name}",
+                    'completed_at' => now(),
+                ]);
+
+                $order->update(['status' => 'processing']);
+
+                return response()->json([
+                    'message' => 'Commande envoyée pour traitement manuel.',
+                    'order' => $order,
+                    'balance_after' => $userRefreshed->balance
+                ], 201);
+            });
+        }
     }
 
+    /**
+     * List user orders.
+     */
     public function index(Request $request)
     {
         $orders = $request->user()->orders()
