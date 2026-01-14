@@ -21,6 +21,17 @@ class AuthController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'sponsor_code' => 'nullable|string|exists:users,sponsor_code',
+        ], [
+            'username.required' => 'L\'identifiant est obligatoire.',
+            'username.unique' => 'Cet identifiant est déjà utilisé.',
+            'username.max' => 'L\'identifiant ne doit pas dépasser 50 caractères.',
+            'email.required' => 'L\'adresse email est obligatoire.',
+            'email.email' => 'L\'adresse email doit être valide.',
+            'email.unique' => 'Cette adresse email est déjà utilisée.',
+            'password.required' => 'Le mot de passe est obligatoire.',
+            'password.min' => 'Le mot de passe doit contenir au moins 8 caractères.',
+            'password.confirmed' => 'La confirmation du mot de passe ne correspond pas.',
+            'sponsor_code.exists' => 'Le code de parrainage est invalide.',
         ]);
 
         $sponsorId = null;

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
     Search, Filter, ShoppingCart, Zap, Star, LayoutGrid, List,
     Instagram, Facebook, Twitter, Youtube, Music, Heart, Globe,
@@ -9,6 +8,8 @@ import {
 import { servicesApi } from '../features/services/servicesApi';
 import { dashboardApi } from '../features/dashboard/dashboardApi';
 import { cn } from '../utils/cn';
+import PageLoader from '../components/PageLoader';
+import TutorialCTA from '../components/TutorialCTA';
 
 const SOCIAL_NETWORKS_CONFIG = {
     facebook: { icon: Facebook, color: 'from-[#1877F2] to-[#165EBE]' },
@@ -118,11 +119,8 @@ export default function ServicesPage() {
             });
             setOrderNotification({ type: 'success', message: 'Commande placée avec succès!' });
 
-            // Close modal after success
-            setTimeout(() => {
-                setIsOrderModalOpen(false);
-                setOrderNotification(null);
-            }, 2000);
+            // Note: with no framer motion, we can safely close the modal if we want, or leave it.
+            // Leaving it open as requested previously for stability.
         } catch (error) {
             setOrderNotification({
                 type: 'error',
@@ -183,8 +181,7 @@ export default function ServicesPage() {
                     [1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-40 bg-white rounded-[24px] border border-slate-100 animate-pulse" />)
                 ) : filteredServices.length > 0 ? (
                     filteredServices.map(service => (
-                        <motion.div
-                            layout
+                        <div
                             key={service.id}
                             onClick={() => openOrderModal(service)}
                             className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm cursor-pointer group transition-all hover:border-brand-primary/30 hover:shadow-xl hover:shadow-brand-primary/5 hover:-translate-y-1"
@@ -223,7 +220,7 @@ export default function ServicesPage() {
                                     <ShoppingCart size={16} />
                                 </div>
                             </div>
-                        </motion.div>
+                        </div>
                     ))
                 ) : (
                     <div className="col-span-full text-center py-20 bg-white rounded-[32px] border border-dashed border-slate-200">
@@ -232,24 +229,19 @@ export default function ServicesPage() {
                 )}
             </div>
 
-            <AnimatePresence>
-                {isOrderModalOpen && selectedService && (
-                    <motion.div
-                        key="modal-overlay"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50"
+            {/* Tutorial Section */}
+            <div className="mt-12 mb-8 animate-[fade-in-up_0.5s_ease-out]">
+                <TutorialCTA variant="grid" />
+            </div>
+
+            {isOrderModalOpen && selectedService && (
+                <>
+                    <div
+                        className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 animate-[fade-in_0.2s_ease-out]"
                         onClick={() => !orderProcessing && setIsOrderModalOpen(false)}
                     />
-                )}
-                {isOrderModalOpen && selectedService && (
-                    <motion.div
-                        key="modal-content"
-                        initial={{ opacity: 0, scale: 0.95, y: 50 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: 50 }}
-                        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-[32px] shadow-2xl z-50 p-6 md:p-8"
+                    <div
+                        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-[32px] shadow-2xl z-50 p-6 md:p-8 animate-[zoom-in_0.3s_ease-out]"
                     >
                         <button
                             onClick={() => setIsOrderModalOpen(false)}
@@ -301,7 +293,7 @@ export default function ServicesPage() {
                             <div className="bg-slate-50 p-4 rounded-2xl flex justify-between items-center">
                                 <span className="text-xs font-bold text-slate-500">Total à payer</span>
                                 <span className="text-xl font-black text-slate-900">
-                                    {quantity ? Math.ceil((selectedService.rate / 1000) * quantity).toLocaleString() : '0'} <span className="text-sm text-brand-primary">FCFA</span>
+                                    <span>{quantity ? Math.ceil((selectedService.rate / 1000) * quantity).toLocaleString() : '0'}</span> <span className="text-sm text-brand-primary">FCFA</span>
                                 </span>
                             </div>
 
@@ -327,9 +319,9 @@ export default function ServicesPage() {
                                 )}
                             </button>
                         </form>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                    </div>
+                </>
+            )}
         </div >
     );
 }

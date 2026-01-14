@@ -1,10 +1,11 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { Menu, X, ArrowRight, Zap } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+
 import { useAuthStore } from '../store/useAuthStore';
 import { cn } from '../utils/cn';
 import Footer from '../components/Footer';
+import ScrollToTop from '../components/ScrollToTop';
 import WhatsAppButton from '../components/WhatsAppButton';
 import { adminApi } from '../features/admin/adminApi';
 import apiClient from '../api/client';
@@ -88,7 +89,7 @@ export default function LandingLayout() {
                         ) : (
                             <img
                                 src="/logo1.png"
-                                alt="IzyBoost"
+                                alt="Logo"
                                 className="h-9 lg:h-10 w-auto object-contain group-hover:scale-105 transition-transform"
                             />
                         )}
@@ -148,95 +149,87 @@ export default function LandingLayout() {
             </header>
 
             {/* Mobile Sidebar */}
-            <AnimatePresence>
-                {isMobileMenuOpen && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[150] lg:hidden"
+            {isMobileMenuOpen && (
+                <div
+                    className="fixed inset-0 z-[150] lg:hidden animate-[fade-in_0.2s_ease-out]"
+                >
+                    <div
+                        className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                    />
+                    <div
+                        className="absolute top-0 right-0 bottom-0 w-[80%] max-w-sm bg-white p-8 space-y-12 shadow-2xl animate-[slide-in-right_0.3s_ease-out]"
                     >
-                        <div
-                            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                        />
-                        <motion.div
-                            initial={{ x: '100%' }}
-                            animate={{ x: 0 }}
-                            exit={{ x: '100%' }}
-                            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                            className="absolute top-0 right-0 bottom-0 w-[80%] max-w-sm bg-white p-8 space-y-12 shadow-2xl"
-                        >
-                            <div className="flex items-center justify-between">
-                                {siteLogo ? (
-                                    <img
-                                        src={resolveImgUrl(siteLogo)}
-                                        alt="Logo"
-                                        className="h-10 w-auto max-w-[150px] object-contain"
-                                    />
-                                ) : (
-                                    <img
-                                        src="/logo1.png"
-                                        alt="IzyBoost"
-                                        className="h-10 w-auto max-w-[150px] object-contain"
-                                    />
-                                )}
-                                <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-slate-400 hover:text-slate-900 rounded-full">
-                                    <X size={24} />
-                                </button>
-                            </div>
+                        <div className="flex items-center justify-between">
+                            {siteLogo ? (
+                                <img
+                                    src={resolveImgUrl(siteLogo)}
+                                    alt="Logo"
+                                    className="h-10 w-auto max-w-[150px] object-contain"
+                                />
+                            ) : (
+                                <img
+                                    src="/logo1.png"
+                                    alt="Logo"
+                                    className="h-10 w-auto max-w-[150px] object-contain"
+                                />
+                            )}
+                            <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-slate-400 hover:text-slate-900 rounded-full">
+                                <X size={24} />
+                            </button>
+                        </div>
 
-                            <nav className="flex flex-col gap-6">
-                                {navLinks.map((link) => (
-                                    <Link
-                                        key={link.path}
-                                        to={link.path}
-                                        onClick={() => setIsMobileMenuOpen(false)}
-                                        className={cn(
-                                            "text-2xl font-black italic transition-colors",
-                                            location.pathname === link.path ? "text-brand-primary" : "text-slate-900"
-                                        )}
-                                    >
-                                        {link.label}
-                                    </Link>
-                                ))}
-                            </nav>
+                        <nav className="flex flex-col gap-6">
+                            {navLinks.map((link) => (
+                                <Link
+                                    key={link.path}
+                                    to={link.path}
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className={cn(
+                                        "text-2xl font-black italic transition-colors",
+                                        location.pathname === link.path ? "text-brand-primary" : "text-slate-900"
+                                    )}
+                                >
+                                    {link.label}
+                                </Link>
+                            ))}
+                        </nav>
 
-                            <div className="space-y-4 pt-10 border-t border-slate-100">
-                                {isAuthenticated ? (
+                        <div className="space-y-4 pt-10 border-t border-slate-100">
+                            {isAuthenticated ? (
+                                <Link
+                                    to="/dashboard"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className="w-full py-5 bg-brand-primary text-white rounded-2xl font-black text-lg flex items-center justify-center gap-3 shadow-xl"
+                                >
+                                    Mon Dashboard <ArrowRight size={20} strokeWidth={3} />
+                                </Link>
+                            ) : (
+                                <>
                                     <Link
-                                        to="/dashboard"
+                                        to="/auth/register"
                                         onClick={() => setIsMobileMenuOpen(false)}
                                         className="w-full py-5 bg-brand-primary text-white rounded-2xl font-black text-lg flex items-center justify-center gap-3 shadow-xl"
                                     >
-                                        Mon Dashboard <ArrowRight size={20} strokeWidth={3} />
+                                        Démarrer <ArrowRight size={20} strokeWidth={3} />
                                     </Link>
-                                ) : (
-                                    <>
-                                        <Link
-                                            to="/auth/register"
-                                            onClick={() => setIsMobileMenuOpen(false)}
-                                            className="w-full py-5 bg-brand-primary text-white rounded-2xl font-black text-lg flex items-center justify-center gap-3 shadow-xl"
-                                        >
-                                            Démarrer <ArrowRight size={20} strokeWidth={3} />
-                                        </Link>
-                                        <Link
-                                            to="/auth/login"
-                                            onClick={() => setIsMobileMenuOpen(false)}
-                                            className="w-full py-5 bg-slate-50 text-slate-900 rounded-2xl font-black text-lg flex items-center justify-center"
-                                        >
-                                            Déjà membre ?
-                                        </Link>
-                                    </>
-                                )}
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                                    <Link
+                                        to="/auth/login"
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                        className="w-full py-5 bg-slate-50 text-slate-900 rounded-2xl font-black text-lg flex items-center justify-center"
+                                    >
+                                        Déjà membre ?
+                                    </Link>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Content Container */}
             <main className="flex-1 pt-20 lg:pt-0 overflow-x-hidden">
+                <ScrollToTop />
                 <Outlet />
             </main>
 

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { authApi } from './authApi';
 import { Lock, Loader2, ArrowRight, CheckCircle2, ShieldCheck } from 'lucide-react';
-import { motion } from 'framer-motion';
+
 import AuthLayout from '../../layouts/AuthLayout';
 import SEO from '../../components/SEO';
 
@@ -61,13 +61,11 @@ export default function ResetPasswordPage() {
                 subtitle="Votre mot de passe a été réinitialisé avec succès."
             >
                 <div className="text-center space-y-8">
-                    <motion.div
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        className="w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center mx-auto"
+                    <div
+                        className="w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center mx-auto animate-[bounce-in_0.5s_ease-out]"
                     >
                         <CheckCircle2 size={48} className="text-emerald-500" />
-                    </motion.div>
+                    </div>
 
                     <p className="text-slate-500 font-medium">
                         Vous allez être redirigé vers la page de connexion...
@@ -90,18 +88,16 @@ export default function ResetPasswordPage() {
         >
             <SEO
                 title="Réinitialisation du mot de passe"
-                description="Définissez un nouveau mot de passe pour votre compte IzyBoost."
+                description="Définissez un nouveau mot de passe pour votre compte."
             />
             <form onSubmit={handleSubmit} className="space-y-6">
                 {error && (
-                    <motion.div
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className="p-4 bg-red-50 border border-red-100 text-red-600 rounded-2xl text-sm font-medium flex items-center"
+                    <div
+                        className="p-4 bg-red-50 border border-red-100 text-red-600 rounded-2xl text-sm font-medium flex items-center animate-[fade-in_0.3s_ease-out]"
                     >
                         <div className="w-2 h-2 bg-red-500 rounded-full mr-3 animate-pulse" />
                         {error}
-                    </motion.div>
+                    </div>
                 )}
 
                 <div className="space-y-2">

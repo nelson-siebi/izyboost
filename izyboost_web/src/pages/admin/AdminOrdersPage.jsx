@@ -15,7 +15,7 @@ import {
     ArrowUpRight,
     ExternalLink
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+
 import { cn } from '../../utils/cn';
 
 export default function AdminOrdersPage() {

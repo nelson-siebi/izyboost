@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import { adminApi } from '../features/admin/adminApi';
-import { motion, AnimatePresence } from 'framer-motion';
+
 import { cn } from '../utils/cn';
 import WhatsAppButton from '../components/WhatsAppButton';
 import apiClient from '../api/client';
@@ -99,15 +99,7 @@ export default function AdminLayout() {
                             <img src={resolveImgUrl(settings.site_logo)} alt="Logo" className="h-10 w-auto max-w-[180px] object-contain" />
                         </div>
                     ) : (
-                        <>
-                            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/20">
-                                <LayoutDashboard className="h-5 w-5 text-white" />
-                            </div>
-                            <div>
-                                <h1 className="text-xl font-black text-slate-800 tracking-tight">IzyBoost</h1>
-                                <p className="text-[10px] font-bold text-orange-500 uppercase tracking-widest">Admin 2.0</p>
-                            </div>
-                        </>
+                        <img src="/logo1.png" alt="Logo" className="h-10 w-auto max-w-[180px] object-contain" />
                     )}
                 </div>
 
@@ -175,15 +167,7 @@ export default function AdminLayout() {
                         {settings.site_logo ? (
                             <img src={resolveImgUrl(settings.site_logo)} alt="Logo" className="h-8 w-auto max-w-[120px] object-contain" />
                         ) : (
-                            <>
-                                <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/20">
-                                    <LayoutDashboard className="h-5 w-5 text-white" />
-                                </div>
-                                <div>
-                                    <span className="font-black text-lg text-slate-800 tracking-tight block leading-none">IzyBoost</span>
-                                    <span className="text-[9px] font-bold text-orange-500 uppercase tracking-widest leading-none">Admin Panel</span>
-                                </div>
-                            </>
+                            <img src="/logo1.png" alt="Logo" className="h-8 w-auto max-w-[120px] object-contain" />
                         )}
                     </div>
                     <div className="flex items-center gap-2">
@@ -202,65 +186,53 @@ export default function AdminLayout() {
             </div>
 
             {/* Mobile Sidebar Overlay (Hamburger Content) */}
-            <AnimatePresence mode="wait">
-                {sidebarOpen && (
-                    <motion.div
-                        key="mobile-sidebar-container"
-                        className="fixed inset-0 z-[60] lg:hidden"
+            {sidebarOpen && (
+                <div
+                    className="fixed inset-0 z-[60] lg:hidden animate-[fade-in_0.2s_ease-out]"
+                >
+                    <div
+                        onClick={() => setSidebarOpen(false)}
+                        className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+                    />
+                    <div
+                        className="absolute inset-y-0 right-0 w-80 bg-white shadow-2xl flex flex-col animate-[slide-in-right_0.3s_ease-out]"
                     >
-                        <motion.div
-                            key="sidebar-overlay"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={() => setSidebarOpen(false)}
-                            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
-                        />
-                        <motion.div
-                            key="sidebar-content"
-                            initial={{ x: '100%' }}
-                            animate={{ x: 0 }}
-                            exit={{ x: '100%' }}
-                            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                            className="absolute inset-y-0 right-0 w-80 bg-white shadow-2xl flex flex-col"
-                        >
-                            <div className="flex items-center justify-between p-6 border-b border-slate-100">
-                                <h2 className="text-xl font-black text-slate-900">Menu Admin</h2>
-                                <button onClick={() => setSidebarOpen(false)} className="p-2 bg-slate-50 rounded-full hover:bg-slate-100 transition-colors">
-                                    <X className="h-5 w-5 text-slate-500" />
-                                </button>
-                            </div>
-                            <div className="flex-1 overflow-y-auto p-4 space-y-2">
-                                {menuItems.map((item) => (
-                                    <Link
-                                        key={item.path}
-                                        to={item.path}
-                                        onClick={() => setSidebarOpen(false)}
-                                        className={cn(
-                                            "flex items-center gap-3 px-4 py-4 rounded-xl text-sm font-bold transition-all",
-                                            location.pathname === item.path
-                                                ? "bg-orange-50 text-orange-600 border border-orange-100"
-                                                : "text-slate-600 hover:bg-slate-50"
-                                        )}
-                                    >
-                                        <item.icon className={cn("h-5 w-5", location.pathname === item.path ? "text-orange-500" : "text-slate-400")} />
-                                        {item.label}
-                                    </Link>
-                                ))}
-                            </div>
-                            <div className="p-6 border-t border-slate-100 bg-slate-50">
-                                <button
-                                    onClick={handleLogout}
-                                    className="flex items-center gap-2 w-full justify-center px-4 py-3 bg-red-50 text-red-600 font-bold rounded-xl hover:bg-red-100 transition-colors"
+                        <div className="flex items-center justify-between p-6 border-b border-slate-100">
+                            <h2 className="text-xl font-black text-slate-900">Menu Admin</h2>
+                            <button onClick={() => setSidebarOpen(false)} className="p-2 bg-slate-50 rounded-full hover:bg-slate-100 transition-colors">
+                                <X className="h-5 w-5 text-slate-500" />
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-4 space-y-2">
+                            {menuItems.map((item) => (
+                                <Link
+                                    key={item.path}
+                                    to={item.path}
+                                    onClick={() => setSidebarOpen(false)}
+                                    className={cn(
+                                        "flex items-center gap-3 px-4 py-4 rounded-xl text-sm font-bold transition-all",
+                                        location.pathname === item.path
+                                            ? "bg-orange-50 text-orange-600 border border-orange-100"
+                                            : "text-slate-600 hover:bg-slate-50"
+                                    )}
                                 >
-                                    <LogOut className="h-5 w-5" />
-                                    Déconnexion
-                                </button>
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                                    <item.icon className={cn("h-5 w-5", location.pathname === item.path ? "text-orange-500" : "text-slate-400")} />
+                                    {item.label}
+                                </Link>
+                            ))}
+                        </div>
+                        <div className="p-6 border-t border-slate-100 bg-slate-50">
+                            <button
+                                onClick={handleLogout}
+                                className="flex items-center gap-2 w-full justify-center px-4 py-3 bg-red-50 text-red-600 font-bold rounded-xl hover:bg-red-100 transition-colors"
+                            >
+                                <LogOut className="h-5 w-5" />
+                                Déconnexion
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col lg:pl-72 min-h-screen pb-24 lg:pb-0 pt-20 lg:pt-0 bg-slate-50">
@@ -305,8 +277,7 @@ export default function AdminLayout() {
                                 className="relative flex flex-col items-center justify-center w-16 group"
                             >
                                 {isActive && (
-                                    <motion.div
-                                        layoutId="bottom-nav-active"
+                                    <div
                                         className="absolute -top-3 h-1 w-8 bg-orange-500 rounded-full shadow-[0_0_10px_rgba(249,115,22,0.5)]"
                                     />
                                 )}

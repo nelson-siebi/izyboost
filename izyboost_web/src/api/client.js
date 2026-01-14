@@ -3,7 +3,9 @@ import axios from 'axios';
 const getBaseURL = () => {
     const url = import.meta.env.VITE_API_URL;
     if (!url || url === 'undefined') {
-        return 'https://izyboost.nelsius.com/api/';
+
+        return 'https://izymail.nelsius.com/api';
+        
     }
     return url;
 };

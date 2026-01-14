@@ -17,16 +17,19 @@ import {
     Globe,
     Share2,
     Key,
+    ExternalLink,
     MoreHorizontal,
     Plus,
     CreditCard,
-    ShieldCheck
+    ShieldCheck,
+    Youtube
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { cn } from '../utils/cn';
 import NotificationDropdown from '../features/notifications/NotificationDropdown';
-import { motion, AnimatePresence } from 'framer-motion';
+
 import Footer from '../components/Footer';
+import ScrollToTop from '../components/ScrollToTop';
 import WhatsAppButton from '../components/WhatsAppButton';
 import { adminApi } from '../features/admin/adminApi';
 import apiClient from '../api/client';
@@ -48,9 +51,12 @@ export default function MainLayout() {
         { label: 'Portefeuille', icon: Wallet, path: '/dashboard/wallet' },
     ];
 
+    const [ytLink, setYtLink] = useState('https://youtube.com');
+
     const secondaryItems = [
-        { label: 'Marque Blanche', icon: Globe, path: '/dashboard/white-label' },
+        { label: 'Mon Business', icon: Globe, path: '/dashboard/white-label' },
         { label: 'Affiliation', icon: Share2, path: '/dashboard/referrals' },
+        { label: 'Tutos YouTube', icon: Youtube, path: ytLink, external: true },
         { label: 'API Développeurs', icon: Key, path: '/dashboard/api-keys' },
         { label: 'Support Client', icon: LifeBuoy, path: '/dashboard/support' },
         { label: 'Paramètres', icon: Settings, path: '/dashboard/settings' },
@@ -85,18 +91,21 @@ export default function MainLayout() {
         return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
     };
 
-    // Fetch site logo
+    // Fetch site logo & social links
     useEffect(() => {
-        const fetchLogo = async () => {
+        const fetchSettings = async () => {
             try {
                 const data = await adminApi.getSettings();
                 const logoSetting = data.find(s => s.key === 'site_logo');
                 if (logoSetting?.value) setSiteLogo(logoSetting.value);
+
+                const ytSetting = data.find(s => s.key === 'youtube_link');
+                if (ytSetting?.value) setYtLink(ytSetting.value);
             } catch (err) {
-                console.error("Failed to fetch logo", err);
+                console.error("Failed to fetch settings", err);
             }
         };
-        fetchLogo();
+        fetchSettings();
     }, []);
 
     return (
@@ -147,10 +156,8 @@ export default function MainLayout() {
                                     <item.icon size={16} className={cn("transition-transform group-hover/nav:scale-110", isActive ? "stroke-[3px]" : "stroke-[2px]")} />
                                     <span>{item.label}</span>
                                     {isActive && (
-                                        <motion.div
-                                            layoutId="headerNavActive"
-                                            className="absolute -bottom-1 left-1/2 -translate-x-1/2 h-1 w-4 bg-brand-primary rounded-full shadow-[0_0_10px_rgba(var(--brand-primary-rgb),0.5)]"
-                                            transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                        <div
+                                            className="absolute -bottom-1 left-1/2 -translate-x-1/2 h-1 w-4 bg-brand-primary rounded-full shadow-[0_0_10px_rgba(var(--brand-primary-rgb),0.5)] transition-all duration-300"
                                         />
                                     )}
                                 </Link>
@@ -170,16 +177,27 @@ export default function MainLayout() {
                                 <span>Plus</span>
                             </button>
 
-                            <AnimatePresence>
-                                {isPlusOpen && (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                        className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 bg-white rounded-3xl shadow-2xl shadow-slate-200/50 border border-slate-100 p-2 z-50 overflow-hidden"
-                                    >
-                                        <div className="grid grid-cols-1 gap-1">
-                                            {secondaryItems.map((item) => (
+                            {isPlusOpen && (
+                                <div
+                                    className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 bg-white rounded-3xl shadow-2xl shadow-slate-200/50 border border-slate-100 p-2 z-50 overflow-hidden animate-[fade-in-up_0.2s_ease-out]"
+                                >
+                                    <div className="grid grid-cols-1 gap-1">
+                                        {secondaryItems.map((item) => (
+                                            item.external ? (
+                                                <a
+                                                    key={item.label}
+                                                    href={item.path}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex items-center gap-3 p-2.5 rounded-2xl hover:bg-slate-50 transition-colors group"
+                                                >
+                                                    <div className="h-8 w-8 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 group-hover:bg-brand-primary group-hover:text-white transition-colors">
+                                                        <item.icon size={14} />
+                                                    </div>
+                                                    <span className="font-bold text-xs text-slate-700 group-hover:text-slate-900">{item.label}</span>
+                                                    <ExternalLink size={10} className="ml-auto text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                </a>
+                                            ) : (
                                                 <Link
                                                     key={item.path}
                                                     to={item.path}
@@ -191,11 +209,11 @@ export default function MainLayout() {
                                                     </div>
                                                     <span className="font-bold text-xs text-slate-700 group-hover:text-slate-900">{item.label}</span>
                                                 </Link>
-                                            ))}
-                                        </div>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
+                                            )
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </nav>
 
@@ -247,66 +265,77 @@ export default function MainLayout() {
 
 
             {/* Mobile Sidebar (Drawer) */}
-            < AnimatePresence mode="wait" >
-                {isMobileMenuOpen && (
-                    <motion.div
-                        key="mobile-menu-container"
-                        className="fixed inset-0 z-[150] lg:hidden"
+            {isMobileMenuOpen && (
+                <div
+                    className="fixed inset-0 z-[150] lg:hidden animate-[fade-in_0.2s_ease-out]"
+                >
+                    <div
+                        className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                    />
+                    <div
+                        className="absolute top-0 bottom-0 left-0 w-[280px] bg-white shadow-2xl p-6 overflow-y-auto animate-[slide-in-left_0.3s_ease-out]"
                     >
-                        <motion.div
-                            key="mobile-menu-overlay"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                        />
-                        <motion.div
-                            key="mobile-menu-content"
-                            initial={{ x: '-100%' }}
-                            animate={{ x: 0 }}
-                            exit={{ x: '-100%' }}
-                            className="absolute top-0 bottom-0 left-0 w-[280px] bg-white shadow-2xl p-6 overflow-y-auto"
-                        >
-                            <div className="flex items-center justify-between mb-8">
-                                <div className="flex items-center gap-3">
-                                    <div className="h-10 w-10 bg-brand-primary rounded-xl flex items-center justify-center text-white font-black">
-                                        IZ
-                                    </div>
-                                    <span className="font-black text-xl text-slate-900">IzyBoost</span>
+                        <div className="flex items-center justify-between mb-8">
+                            <div className="flex items-center gap-3">
+                                {siteLogo ? (
+                                    <img
+                                        src={resolveImgUrl(siteLogo)}
+                                        alt="Logo"
+                                        className="h-10 w-auto max-w-[150px] object-contain"
+                                    />
+                                ) : (
+                                    <img
+                                        src="/logo1.png"
+                                        alt="Logo"
+                                        className="h-10 w-auto max-w-[150px] object-contain"
+                                    />
+                                )}
+                            </div>
+                            <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 bg-slate-50 rounded-full text-slate-400">
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-6">
+                            <div>
+                                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-4">Menu Principal</p>
+                                <div className="space-y-1">
+                                    {primaryItems.map((item) => {
+                                        const isActive = location.pathname === item.path;
+                                        return (
+                                            <Link
+                                                key={item.path}
+                                                to={item.path}
+                                                className={cn(
+                                                    "flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm",
+                                                    isActive ? "bg-brand-primary text-white shadow-lg shadow-brand-primary/20" : "text-slate-500 hover:bg-slate-50"
+                                                )}
+                                            >
+                                                <item.icon size={18} />
+                                                {item.label}
+                                            </Link>
+                                        );
+                                    })}
                                 </div>
-                                <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 bg-slate-50 rounded-full text-slate-400">
-                                    <X size={20} />
-                                </button>
                             </div>
 
-                            <div className="space-y-6">
-                                <div>
-                                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-4">Menu Principal</p>
-                                    <div className="space-y-1">
-                                        {primaryItems.map((item) => {
-                                            const isActive = location.pathname === item.path;
-                                            return (
-                                                <Link
-                                                    key={item.path}
-                                                    to={item.path}
-                                                    className={cn(
-                                                        "flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm",
-                                                        isActive ? "bg-brand-primary text-white shadow-lg shadow-brand-primary/20" : "text-slate-500 hover:bg-slate-50"
-                                                    )}
-                                                >
-                                                    <item.icon size={18} />
-                                                    {item.label}
-                                                </Link>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-4">Autres</p>
-                                    <div className="space-y-1">
-                                        {secondaryItems.map((item) => (
+                            <div>
+                                <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-4">Autres</p>
+                                <div className="space-y-1">
+                                    {secondaryItems.map((item) => (
+                                        item.external ? (
+                                            <a
+                                                key={item.label}
+                                                href={item.path}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                                            >
+                                                <item.icon size={18} />
+                                                {item.label}
+                                            </a>
+                                        ) : (
                                             <Link
                                                 key={item.path}
                                                 to={item.path}
@@ -315,34 +344,34 @@ export default function MainLayout() {
                                                 <item.icon size={18} />
                                                 {item.label}
                                             </Link>
-                                        ))}
-                                        {user?.role === 'admin' && (
-                                            <Link
-                                                to="/admin/dashboard"
-                                                className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm text-amber-600 bg-amber-50 hover:bg-amber-100"
-                                            >
-                                                <ShieldCheck size={18} />
-                                                Administration
-                                            </Link>
-                                        )}
-                                    </div>
+                                        )
+                                    ))}
+                                    {user?.role === 'admin' && (
+                                        <Link
+                                            to="/admin/dashboard"
+                                            className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-bold text-sm text-amber-600 bg-amber-50 hover:bg-amber-100"
+                                        >
+                                            <ShieldCheck size={18} />
+                                            Administration
+                                        </Link>
+                                    )}
                                 </div>
                             </div>
+                        </div>
 
-                            <div className="mt-8 pt-6 border-t border-slate-100">
-                                <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 font-bold text-sm w-full">
-                                    <LogOut size={18} />
-                                    Déconnexion
-                                </button>
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )
-                }
-            </AnimatePresence >
+                        <div className="mt-8 pt-6 border-t border-slate-100">
+                            <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 font-bold text-sm w-full">
+                                <LogOut size={18} />
+                                Déconnexion
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Content Container */}
-            < main className="flex-1 min-w-0 bg-pattern" >
+            <main className="flex-1 min-w-0 bg-pattern pt-20 lg:pt-24">
+                <ScrollToTop />
                 <div className="max-w-[1400px] mx-auto px-4 lg:px-6 py-8 lg:py-12 min-h-[60vh]">
                     <Outlet />
                 </div>
@@ -363,13 +392,11 @@ export default function MainLayout() {
                                 className="relative flex flex-col items-center justify-center w-full h-full group"
                             >
                                 {isActive && (
-                                    <motion.div
-                                        layoutId="mobileNavActive"
+                                    <div
                                         className="absolute -top-10 mb-1"
-                                        transition={{ type: "spring", bounce: 0.3, duration: 0.6 }}
                                     >
                                         <div className="h-1 w-8 bg-brand-primary rounded-full shadow-[0_0_15px_rgba(var(--brand-primary-rgb),0.5)]" />
-                                    </motion.div>
+                                    </div>
                                 )}
                                 <div className={cn(
                                     "p-2.5 rounded-2xl transition-all duration-300",

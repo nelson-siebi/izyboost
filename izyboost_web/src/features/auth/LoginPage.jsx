@@ -3,7 +3,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
 import { authApi } from './authApi';
 import { LogIn, User, Lock, Loader2, ArrowRight } from 'lucide-react';
-import { motion } from 'framer-motion';
 import AuthLayout from '../../layouts/AuthLayout';
 import SEO from '../../components/SEO';
 
@@ -39,18 +38,16 @@ export default function LoginPage() {
         >
             <SEO
                 title="Connexion"
-                description="Connectez-vous à votre compte IzyBoost pour gérer vos boosts et suivre vos commandes."
+                description="Connectez-vous à votre compte pour gérer vos boosts et suivre vos commandes."
             />
             <form onSubmit={handleSubmit} className="space-y-6">
                 {error && (
-                    <motion.div
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className="p-4 bg-red-50 border border-red-100 text-red-600 rounded-2xl text-sm font-medium flex items-center"
+                    <div
+                        className="p-4 bg-red-50 border border-red-100 text-red-600 rounded-2xl text-sm font-medium flex items-center animate-[fade-in-up_0.3s_ease-out]"
                     >
                         <div className="w-2 h-2 bg-red-500 rounded-full mr-3 animate-pulse" />
                         {error}
-                    </motion.div>
+                    </div>
                 )}
 
                 <div className="space-y-2">

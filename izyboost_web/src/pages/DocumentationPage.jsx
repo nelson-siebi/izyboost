@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+
 import {
     Terminal,
     Key,
@@ -174,14 +174,12 @@ res = requests.get("https://izyboost.nelsius.com/api/v1/orders/5432", headers={"
             {/* Hero Section */}
             <header className="relative py-12 text-center space-y-6">
                 <div className="absolute inset-0 bg-brand-primary/5 rounded-[64px] blur-3xl -z-10" />
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl shadow-brand-primary/20"
+                <div
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl shadow-brand-primary/20 animate-[fade-in-up_0.5s_ease-out]"
                 >
                     <Terminal size={14} /> Documentation API v1.2
-                </motion.div>
-                <h1 className="text-5xl lg:text-7xl font-black text-slate-900 tracking-tight">IzyBoost <span className="text-brand-primary">API</span></h1>
+                </div>
+                <h1 className="text-5xl lg:text-7xl font-black text-slate-900 tracking-tight">Elite <span className="text-brand-primary">API</span></h1>
                 <p className="text-lg text-slate-500 font-medium max-w-2xl mx-auto">
                     La documentation complète pour les développeurs et revendeurs souhaitant automatiser leurs services de boost.
                 </p>

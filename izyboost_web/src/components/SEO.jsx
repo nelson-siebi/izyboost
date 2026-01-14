@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 
 /**
  * SEO Component to manage page titles and meta descriptions dynamically.
@@ -8,57 +8,58 @@ const SEO = ({
     title,
     description,
     keywords,
-    ogImage,
-    ogType = 'website'
+    ogImage = '/logo1.png',
+    ogType = 'website',
+    canonicalUrl,
+    children
 }) => {
-    const siteName = 'IzyBoost';
-    const defaultDescription = 'Boostez votre présence sur les réseaux sociaux avec les meilleurs services de SMM au Cameroun et en Afrique.';
+    const siteName = 'Elite Boost';
+    const defaultDescription = 'Boostez votre présence sur les réseaux sociaux avec les meilleurs services de SMM en Afrique.';
+    const fullTitle = title ? `${title} | ${siteName}` : `${siteName} - #1 SMM Portal`;
+    const metaDescription = description || defaultDescription;
 
-    useEffect(() => {
-        // Update Title
-        const fullTitle = title ? `${title} | ${siteName}` : `${siteName} - Boostez vos Réseaux Sociaux`;
-        document.title = fullTitle;
+    const currentUrl = canonicalUrl || window.location.href;
 
-        // Update Meta Description
-        let metaDescription = document.querySelector('meta[name="description"]');
-        if (!metaDescription) {
-            metaDescription = document.createElement('meta');
-            metaDescription.name = 'description';
-            document.head.appendChild(metaDescription);
+    const schemaOrgJSONLD = [
+        {
+            '@context': 'http://schema.org',
+            '@type': 'WebSite',
+            url: window.location.origin,
+            name: siteName,
+            alternateName: 'Elite Boost Africa',
         }
-        metaDescription.setAttribute('content', description || defaultDescription);
+    ];
 
-        // Update Open Graph Tags
-        const updateOG = (property, content) => {
-            if (!content) return;
-            let meta = document.querySelector(`meta[property="${property}"]`);
-            if (!meta) {
-                meta = document.createElement('meta');
-                meta.setAttribute('property', property);
-                document.head.appendChild(meta);
-            }
-            meta.setAttribute('content', content);
-        };
+    return (
+        <Helmet>
+            {/* Basic Meta Tags */}
+            <title>{fullTitle}</title>
+            <meta name="description" content={metaDescription} />
+            {keywords && <meta name="keywords" content={keywords} />}
+            <link rel="canonical" href={currentUrl} />
 
-        updateOG('og:title', fullTitle);
-        updateOG('og:description', description || defaultDescription);
-        updateOG('og:type', ogType);
-        if (ogImage) updateOG('og:image', ogImage);
+            {/* Open Graph Tags */}
+            <meta property="og:type" content={ogType} />
+            <meta property="og:title" content={fullTitle} />
+            <meta property="og:description" content={metaDescription} />
+            <meta property="og:image" content={ogImage} />
+            <meta property="og:url" content={currentUrl} />
+            <meta property="og:site_name" content={siteName} />
 
-        // Update Keywords
-        if (keywords) {
-            let metaKeywords = document.querySelector('meta[name="keywords"]');
-            if (!metaKeywords) {
-                metaKeywords = document.createElement('meta');
-                metaKeywords.name = 'keywords';
-                document.head.appendChild(metaKeywords);
-            }
-            metaKeywords.setAttribute('content', keywords);
-        }
+            {/* Twitter Card Tags */}
+            <meta name="twitter:card" content="summary_large_image" />
+            <meta name="twitter:title" content={fullTitle} />
+            <meta name="twitter:description" content={metaDescription} />
+            <meta name="twitter:image" content={ogImage} />
 
-    }, [title, description, keywords, ogImage, ogType]);
+            {/* Structured Data */}
+            <script type="application/ld+json">
+                {JSON.stringify(schemaOrgJSONLD)}
+            </script>
 
-    return null; // This component doesn't render anything
+            {children}
+        </Helmet>
+    );
 };
 
 export default SEO;

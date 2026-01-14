@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+
 import { MessageCircle, Search, Clock, CheckCircle2, AlertCircle, Send, ChevronRight, User, Shield } from 'lucide-react';
 import { supportApi } from '../features/common/supportApi';
 import { cn } from '../utils/cn';
@@ -101,50 +101,45 @@ export default function SupportPage() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                    <AnimatePresence>
-                        {creating && (
-                            <motion.div
-                                key="create-ticket-form"
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: 'auto' }}
-                                exit={{ opacity: 0, height: 0 }}
-                                className="mb-4 bg-slate-50 p-4 rounded-2xl border border-slate-200 overflow-hidden"
-                            >
-                                <form onSubmit={handleCreateTicket} className="space-y-3">
-                                    <div className="flex gap-2">
-                                        <select
-                                            value={department}
-                                            onChange={e => setDepartment(e.target.value)}
-                                            className="bg-white px-3 py-2 rounded-xl text-xs font-bold border-none focus:ring-2 focus:ring-brand-primary/20"
-                                        >
-                                            <option value="support">Support</option>
-                                            <option value="billing">Facturation</option>
-                                            <option value="technical">Technique</option>
-                                            <option value="sales">Commercial</option>
-                                            <option value="abuse">Abus</option>
-                                        </select>
-                                        <input
-                                            autoFocus
-                                            placeholder="Sujet"
-                                            className="flex-1 bg-white px-3 py-2 rounded-xl text-sm font-bold border-none focus:ring-2 focus:ring-brand-primary/20"
-                                            value={subject}
-                                            onChange={e => setSubject(e.target.value)}
-                                        />
-                                    </div>
-                                    <textarea
-                                        placeholder="Message..."
-                                        className="w-full bg-white px-3 py-2 rounded-xl text-sm font-medium border-none focus:ring-2 focus:ring-brand-primary/20 resize-none h-24"
-                                        value={message}
-                                        onChange={e => setMessage(e.target.value)}
+                    {creating && (
+                        <div
+                            key="create-ticket-form"
+                            className="mb-4 bg-slate-50 p-4 rounded-2xl border border-slate-200 overflow-hidden animate-[fade-in_0.3s_ease-out]"
+                        >
+                            <form onSubmit={handleCreateTicket} className="space-y-3">
+                                <div className="flex gap-2">
+                                    <select
+                                        value={department}
+                                        onChange={e => setDepartment(e.target.value)}
+                                        className="bg-white px-3 py-2 rounded-xl text-xs font-bold border-none focus:ring-2 focus:ring-brand-primary/20"
+                                    >
+                                        <option value="support">Support</option>
+                                        <option value="billing">Facturation</option>
+                                        <option value="technical">Technique</option>
+                                        <option value="sales">Commercial</option>
+                                        <option value="abuse">Abus</option>
+                                    </select>
+                                    <input
+                                        autoFocus
+                                        placeholder="Sujet"
+                                        className="flex-1 bg-white px-3 py-2 rounded-xl text-sm font-bold border-none focus:ring-2 focus:ring-brand-primary/20"
+                                        value={subject}
+                                        onChange={e => setSubject(e.target.value)}
                                     />
-                                    <div className="flex justify-end gap-2">
-                                        <button type="button" onClick={() => setCreating(false)} className="text-xs font-bold text-slate-400 px-3 py-2">Annuler</button>
-                                        <button type="submit" className="bg-slate-900 text-white text-xs font-bold px-4 py-2 rounded-lg">Envoyer</button>
-                                    </div>
-                                </form>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                                </div>
+                                <textarea
+                                    placeholder="Message..."
+                                    className="w-full bg-white px-3 py-2 rounded-xl text-sm font-medium border-none focus:ring-2 focus:ring-brand-primary/20 resize-none h-24"
+                                    value={message}
+                                    onChange={e => setMessage(e.target.value)}
+                                />
+                                <div className="flex justify-end gap-2">
+                                    <button type="button" onClick={() => setCreating(false)} className="text-xs font-bold text-slate-400 px-3 py-2">Annuler</button>
+                                    <button type="submit" className="bg-slate-900 text-white text-xs font-bold px-4 py-2 rounded-lg">Envoyer</button>
+                                </div>
+                            </form>
+                        </div>
+                    )}
 
                     {loading ? (
                         Array(3).fill(0).map((_, i) => <div key={`skeleton-ticket-${i}`} className="h-20 bg-slate-50 rounded-2xl animate-pulse" />)

@@ -38,7 +38,7 @@ class ResetPasswordNotification extends Notification
     {
         // Use frontend URL if available, fallback to app url
         $frontendUrl = config('app.frontend_url');
-        $url = $frontendUrl . '/reset-password?token=' . $this->token . '&email=' . urlencode($notifiable->email);
+        $url = $frontendUrl . '/auth/reset-password?token=' . $this->token . '&email=' . urlencode($notifiable->email);
 
         return (new MailMessage)
             ->subject('Réinitialisation de votre mot de passe 🔐')

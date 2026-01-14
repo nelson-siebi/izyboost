@@ -23,7 +23,7 @@ import {
     User,
     AlertCircle
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+
 import { cn } from '../../utils/cn';
 
 export default function AdminUsersPage() {
@@ -322,104 +322,103 @@ export default function AdminUsersPage() {
             </div>
 
             {/* Modals Container */}
-            <AnimatePresence>
-                {/* Balance Adjustment Modal */}
-                {showBalanceModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowBalanceModal(false)} className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm" />
-                        <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden p-6">
-                            <div className="flex items-center justify-between mb-6">
-                                <h3 className="text-xl font-black text-slate-900">Ajuster le solde</h3>
-                                <button onClick={() => setShowBalanceModal(false)} className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 transition-colors"><X size={20} /></button>
+            {/* Modals Container */}
+            {/* Balance Adjustment Modal */}
+            {showBalanceModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div onClick={() => setShowBalanceModal(false)} className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm animate-[fade-in_0.2s_ease-out]" />
+                    <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden p-6 animate-[scale-in_0.2s_ease-out]">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-xl font-black text-slate-900">Ajuster le solde</h3>
+                            <button onClick={() => setShowBalanceModal(false)} className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 transition-colors"><X size={20} /></button>
+                        </div>
+                        <form onSubmit={handleAdjustBalance} className="space-y-4">
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-black text-slate-500 uppercase">Montant (F)</label>
+                                <div className="relative">
+                                    <DollarSign className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+                                    <input type="number" value={adjustData.amount} onChange={(e) => setAdjustData({ ...adjustData, amount: e.target.value })} placeholder="Ex: 5000 ou -1000" className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none font-bold" required />
+                                </div>
                             </div>
-                            <form onSubmit={handleAdjustBalance} className="space-y-4">
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-black text-slate-500 uppercase">Montant (F)</label>
-                                    <div className="relative">
-                                        <DollarSign className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-                                        <input type="number" value={adjustData.amount} onChange={(e) => setAdjustData({ ...adjustData, amount: e.target.value })} placeholder="Ex: 5000 ou -1000" className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none font-bold" required />
-                                    </div>
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-black text-slate-500 uppercase">Raison</label>
-                                    <textarea value={adjustData.reason} onChange={(e) => setAdjustData({ ...adjustData, reason: e.target.value })} placeholder="Détails de l'opération..." rows={2} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none font-medium text-sm resize-none" required />
-                                </div>
-                                <button type="submit" disabled={actionLoading} className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all flex items-center justify-center gap-2">
-                                    {actionLoading ? <Loader2 className="animate-spin" /> : 'Confirmer'}
-                                </button>
-                            </form>
-                        </motion.div>
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-black text-slate-500 uppercase">Raison</label>
+                                <textarea value={adjustData.reason} onChange={(e) => setAdjustData({ ...adjustData, reason: e.target.value })} placeholder="Détails de l'opération..." rows={2} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none font-medium text-sm resize-none" required />
+                            </div>
+                            <button type="submit" disabled={actionLoading} className="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all flex items-center justify-center gap-2">
+                                {actionLoading ? <Loader2 className="animate-spin" /> : 'Confirmer'}
+                            </button>
+                        </form>
                     </div>
-                )}
+                </div>
+            )}
 
-                {/* Edit User Modal */}
-                {showEditModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowEditModal(false)} className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm" />
-                        <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="relative bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden p-6">
-                            <div className="flex items-center justify-between mb-6">
-                                <h3 className="text-xl font-black text-slate-900">Modifier l'utilisateur</h3>
-                                <button onClick={() => setShowEditModal(false)} className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 transition-colors"><X size={20} /></button>
+            {/* Edit User Modal */}
+            {showEditModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div onClick={() => setShowEditModal(false)} className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm animate-[fade-in_0.2s_ease-out]" />
+                    <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden p-6 animate-[scale-in_0.2s_ease-out]">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-xl font-black text-slate-900">Modifier l'utilisateur</h3>
+                            <button onClick={() => setShowEditModal(false)} className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 transition-colors"><X size={20} /></button>
+                        </div>
+                        <form onSubmit={handleEditUser} className="space-y-4">
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-black text-slate-500 uppercase">Nom d'utilisateur</label>
+                                <div className="relative">
+                                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                    <input type="text" value={editData.username} onChange={(e) => setEditData({ ...editData, username: e.target.value })} className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none font-bold text-sm" required />
+                                </div>
                             </div>
-                            <form onSubmit={handleEditUser} className="space-y-4">
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-black text-slate-500 uppercase">Email</label>
+                                <div className="relative">
+                                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                                    <input type="email" value={editData.email} onChange={(e) => setEditData({ ...editData, email: e.target.value })} className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none font-bold text-sm" required />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-black text-slate-500 uppercase">Nom d'utilisateur</label>
-                                    <div className="relative">
-                                        <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                                        <input type="text" value={editData.username} onChange={(e) => setEditData({ ...editData, username: e.target.value })} className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none font-bold text-sm" required />
-                                    </div>
+                                    <label className="text-xs font-black text-slate-500 uppercase">Rôle</label>
+                                    <select value={editData.role} onChange={(e) => setEditData({ ...editData, role: e.target.value })} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none font-bold text-sm">
+                                        <option value="user">Utilisateur</option>
+                                        <option value="admin">Admin</option>
+                                    </select>
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-xs font-black text-slate-500 uppercase">Email</label>
-                                    <div className="relative">
-                                        <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                                        <input type="email" value={editData.email} onChange={(e) => setEditData({ ...editData, email: e.target.value })} className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none font-bold text-sm" required />
+                                    <label className="text-xs font-black text-slate-500 uppercase">Statut</label>
+                                    <div className="flex items-center mt-2.5 gap-2 px-3 py-2 bg-slate-50 rounded-xl border border-slate-200">
+                                        <input type="checkbox" checked={editData.is_active} onChange={(e) => setEditData({ ...editData, is_active: e.target.checked })} className="h-4 w-4 text-orange-600 focus:ring-orange-500 rounded" />
+                                        <span className="text-sm font-bold text-slate-700">Compte Actif</span>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-1.5">
-                                        <label className="text-xs font-black text-slate-500 uppercase">Rôle</label>
-                                        <select value={editData.role} onChange={(e) => setEditData({ ...editData, role: e.target.value })} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none font-bold text-sm">
-                                            <option value="user">Utilisateur</option>
-                                            <option value="admin">Admin</option>
-                                        </select>
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <label className="text-xs font-black text-slate-500 uppercase">Statut</label>
-                                        <div className="flex items-center mt-2.5 gap-2 px-3 py-2 bg-slate-50 rounded-xl border border-slate-200">
-                                            <input type="checkbox" checked={editData.is_active} onChange={(e) => setEditData({ ...editData, is_active: e.target.checked })} className="h-4 w-4 text-orange-600 focus:ring-orange-500 rounded" />
-                                            <span className="text-sm font-bold text-slate-700">Compte Actif</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <button type="submit" disabled={actionLoading} className="w-full py-3.5 bg-orange-500 text-white rounded-xl font-bold hover:bg-orange-600 transition-all flex items-center justify-center gap-2 mt-2">
-                                    {actionLoading ? <Loader2 className="animate-spin" /> : 'Enregistrer'}
-                                </button>
-                            </form>
-                        </motion.div>
+                            </div>
+                            <button type="submit" disabled={actionLoading} className="w-full py-3.5 bg-orange-500 text-white rounded-xl font-bold hover:bg-orange-600 transition-all flex items-center justify-center gap-2 mt-2">
+                                {actionLoading ? <Loader2 className="animate-spin" /> : 'Enregistrer'}
+                            </button>
+                        </form>
                     </div>
-                )}
+                </div>
+            )}
 
-                {/* Delete Confirmation Modal */}
-                {showDeleteModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowDeleteModal(false)} className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm" />
-                        <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden p-8 text-center">
-                            <div className="w-16 h-16 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                <Trash2 size={32} />
-                            </div>
-                            <h3 className="text-xl font-black text-slate-900 mb-2">Supprimer l'utilisateur ?</h3>
-                            <p className="text-slate-500 text-sm mb-8">Cette action est irréversible. Toutes les données de <strong>{selectedUser?.username}</strong> seront définitivement supprimées.</p>
-                            <div className="flex gap-3">
-                                <button onClick={() => setShowDeleteModal(false)} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition-all">Annuler</button>
-                                <button onClick={handleDeleteUser} disabled={actionLoading} className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-all flex items-center justify-center gap-2">
-                                    {actionLoading ? <Loader2 size={18} className="animate-spin" /> : 'Supprimer'}
-                                </button>
-                            </div>
-                        </motion.div>
+            {/* Delete Confirmation Modal */}
+            {showDeleteModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div onClick={() => setShowDeleteModal(false)} className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm animate-[fade-in_0.2s_ease-out]" />
+                    <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden p-8 text-center animate-[scale-in_0.2s_ease-out]">
+                        <div className="w-16 h-16 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <Trash2 size={32} />
+                        </div>
+                        <h3 className="text-xl font-black text-slate-900 mb-2">Supprimer l'utilisateur ?</h3>
+                        <p className="text-slate-500 text-sm mb-8">Cette action est irréversible. Toutes les données de <strong>{selectedUser?.username}</strong> seront définitivement supprimées.</p>
+                        <div className="flex gap-3">
+                            <button onClick={() => setShowDeleteModal(false)} className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition-all">Annuler</button>
+                            <button onClick={handleDeleteUser} disabled={actionLoading} className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-all flex items-center justify-center gap-2">
+                                {actionLoading ? <Loader2 size={18} className="animate-spin" /> : 'Supprimer'}
+                            </button>
+                        </div>
                     </div>
-                )}
-            </AnimatePresence>
+                </div>
+            )}
         </div>
     );
 }

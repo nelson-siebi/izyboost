@@ -13,7 +13,7 @@ import {
     Mail,
     AlertCircle
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+
 import { cn } from '../../utils/cn';
 
 export default function AdminSupportPage() {
@@ -68,10 +68,23 @@ export default function AdminSupportPage() {
         e.preventDefault();
         if (!message.trim() || !selectedTicket) return;
         try {
-            await adminApi.replyTicket(selectedTicket.uuid, message);
+            const newMsg = await adminApi.replyTicket(selectedTicket.uuid, message);
+
+            // Optimistic/Local Update
+            setSelectedTicket(prev => ({
+                ...prev,
+                messages: [...prev.messages, newMsg],
+                status: 'answered'
+            }));
+
+            // Update list status without full reload
+            setTickets(prev => prev.map(t =>
+                t.id === selectedTicket.id
+                    ? { ...t, status: 'answered', updated_at: new Date().toISOString() }
+                    : t
+            ));
+
             setMessage('');
-            await loadTicketDetails(selectedTicket);
-            loadTickets(); // Refresh list to update status/last message
         } catch (error) {
             alert('Erreur lors de l\'envoi');
         }

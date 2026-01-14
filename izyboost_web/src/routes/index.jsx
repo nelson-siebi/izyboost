@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter, Navigate, useLocation } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 import { useAuthStore } from '../store/useAuthStore';
 import LoginPage from '../features/auth/LoginPage';
@@ -57,6 +57,11 @@ const ProtectedRoute = ({ children }) => {
     return isAuthenticated ? children : <Navigate to="/auth/login" />;
 };
 
+const RedirectWithSearch = ({ to }) => {
+    const { search } = useLocation();
+    return <Navigate to={`${to}${search}`} replace />;
+};
+
 export const router = createBrowserRouter([
     {
         path: '/',
@@ -66,7 +71,8 @@ export const router = createBrowserRouter([
             { path: '/', element: <LandingPage /> },
             { path: '/contact', element: <ContactPage /> },
             { path: '/docs', element: <DocumentationPage /> },
-            { path: '/register', element: <Navigate to="/auth/register" replace /> }, // Support old referral links
+            { path: '/reset-password', element: <RedirectWithSearch to="/auth/reset-password" /> },
+            { path: '/register', element: <RedirectWithSearch to="/auth/register" /> }, // Support old referral links
         ],
     },
     {

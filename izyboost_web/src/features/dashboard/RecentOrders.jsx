@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+
 import { Eye, Clock, CheckCircle, AlertCircle, ShoppingCart } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '../../utils/cn';
@@ -54,12 +54,10 @@ export default function RecentOrders({ orders = [], limit = 5 }) {
                     </thead>
                     <tbody className="divide-y divide-slate-50">
                         {displayedOrders.map((order, i) => (
-                            <motion.tr
+                            <tr
                                 key={order.id}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: i * 0.05 }}
-                                className="group hover:bg-slate-50/50 transition-colors cursor-pointer"
+                                style={{ animationDelay: `${i * 50}ms` }}
+                                className="group hover:bg-slate-50/50 transition-colors cursor-pointer animate-[fade-in-up_0.3s_ease-out_both]"
                                 onClick={() => setSelectedOrder(order)}
                             >
                                 <td className="px-6 py-4">
@@ -95,7 +93,7 @@ export default function RecentOrders({ orders = [], limit = 5 }) {
                                         <Eye size={16} />
                                     </button>
                                 </td>
-                            </motion.tr>
+                            </tr>
                         ))}
                     </tbody>
                 </table>
@@ -104,12 +102,10 @@ export default function RecentOrders({ orders = [], limit = 5 }) {
             {/* Mobile List - Cards */}
             <div className="md:hidden space-y-3">
                 {displayedOrders.map((order, i) => (
-                    <motion.div
+                    <div
                         key={order.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.05 }}
-                        className="bg-white rounded-xl border border-slate-100 p-4 shadow-sm active:scale-98 transition-transform"
+                        style={{ animationDelay: `${i * 50}ms` }}
+                        className="bg-white rounded-xl border border-slate-100 p-4 shadow-sm active:scale-98 transition-transform animate-[fade-in-up_0.3s_ease-out_both]"
                         onClick={() => setSelectedOrder(order)}
                     >
                         <div className="flex justify-between items-start mb-3">
@@ -138,26 +134,20 @@ export default function RecentOrders({ orders = [], limit = 5 }) {
                                 Détails
                             </button>
                         </div>
-                    </motion.div>
+                    </div>
                 ))}
             </div>
 
             {/* Order Details Modal */}
             <div className="relative z-[200]">
                 {selectedOrder && (
-                    <div className="fixed inset-0 flex items-center justify-center p-4">
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+                    <div className="fixed inset-0 flex items-center justify-center p-4 z-50">
+                        <div
+                            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-[fade-in_0.2s_ease-out]"
                             onClick={() => setSelectedOrder(null)}
                         />
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                            className="relative w-full max-w-md bg-white rounded-[32px] shadow-2xl p-6 md:p-8"
+                        <div
+                            className="relative w-full max-w-md bg-white rounded-[32px] shadow-2xl p-6 md:p-8 animate-[zoom-in_0.3s_ease-out]"
                         >
                             <button
                                 onClick={() => setSelectedOrder(null)}
@@ -178,7 +168,7 @@ export default function RecentOrders({ orders = [], limit = 5 }) {
                                 <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
                                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Service</p>
                                     <p className="text-sm font-bold text-slate-900 leading-snug">
-                                        {selectedOrder.service?.name || 'Service IzyBoost'}
+                                        {selectedOrder.service?.name || 'Service Boost'}
                                     </p>
                                 </div>
 
@@ -220,7 +210,7 @@ export default function RecentOrders({ orders = [], limit = 5 }) {
                             >
                                 Fermer
                             </button>
-                        </motion.div>
+                        </div>
                     </div>
                 )}
             </div>

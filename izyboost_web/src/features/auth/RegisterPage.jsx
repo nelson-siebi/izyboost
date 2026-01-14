@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
 import { authApi } from './authApi';
-import { User, Lock, Mail, Loader2, ArrowRight, Gift } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { User, Lock, Mail, Loader2, ArrowRight, Gift, CheckCircle2 } from 'lucide-react';
 import AuthLayout from '../../layouts/AuthLayout';
 import SEO from '../../components/SEO';
 
@@ -23,7 +22,7 @@ export default function RegisterPage() {
     const setAuth = useAuthStore((state) => state.setAuth);
 
     useEffect(() => {
-        const ref = searchParams.get('ref');
+        const ref = searchParams.get('ref') || searchParams.get('code') || localStorage.getItem('sponsor_code');
         if (ref) {
             setFormData(prev => ({ ...prev, sponsor_code: ref }));
         }
@@ -37,9 +36,18 @@ export default function RegisterPage() {
         try {
             const data = await authApi.register(formData);
             setAuth(data.user, data.access_token);
+            // Clear referral code after success
+            localStorage.removeItem('sponsor_code');
             navigate('/dashboard');
         } catch (err) {
-            setError(err.response?.data?.message || 'Erreur lors de l’inscription');
+            const validationErrors = err.response?.data?.errors;
+            if (validationErrors) {
+                // Collect all error messages into a single string
+                const messages = Object.values(validationErrors).flat().join(' ');
+                setError(messages);
+            } else {
+                setError(err.response?.data?.message || 'Erreur lors de l’inscription');
+            }
         } finally {
             setIsLoading(false);
         }
@@ -52,11 +60,11 @@ export default function RegisterPage() {
     return (
         <AuthLayout
             title="Créer votre compte"
-            subtitle="Rejoignez la communauté IzyBoost et booster vos réseaux."
+            subtitle="Rejoignez la communauté et booster vos réseaux."
         >
             <SEO
                 title="Créer un compte"
-                description="Rejoignez IzyBoost pour booster votre influence sur les réseaux sociaux. Inscription rapide et sécurisée."
+                description="Rejoignez notre plateforme pour booster votre influence sur les réseaux sociaux. Inscription rapide et sécurisée."
             />
             <form onSubmit={handleSubmit} className="space-y-5">
                 {error && (
@@ -94,6 +102,9 @@ export default function RegisterPage() {
                                 value={formData.sponsor_code}
                                 onChange={handleChange}
                             />
+                            {formData.sponsor_code && (
+                                <CheckCircle2 size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-emerald-500 animate-in zoom-in duration-300" />
+                            )}
                         </div>
                     </div>
                 </div>

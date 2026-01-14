@@ -16,7 +16,7 @@ import {
     Zap,
     AlertCircle
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+
 import { cn } from '../../utils/cn';
 
 export default function AdminServicesPage() {
@@ -92,8 +92,14 @@ export default function AdminServicesPage() {
     const handleUpdate = async (id) => {
         try {
             await adminApi.updateService(id, editForm);
+
+            // Optimistic update / Local update
+            setServices(services.map(service =>
+                service.id === id ? { ...service, ...editForm } : service
+            ));
+
             setEditingId(null);
-            loadData();
+            // Removed loadData() to prevent full table re-render/skeleton flash
         } catch (error) {
             alert('Erreur lors de la mise à jour');
         }

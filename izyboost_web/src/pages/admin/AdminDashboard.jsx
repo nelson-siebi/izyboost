@@ -17,7 +17,6 @@ import {
     MoreHorizontal,
     Zap
 } from 'lucide-react';
-import { motion } from 'framer-motion';
 import {
     AreaChart,
     Area,
@@ -30,21 +29,6 @@ import {
     Bar
 } from 'recharts';
 import { cn } from '../../utils/cn';
-
-const container = {
-    hidden: { opacity: 0 },
-    show: {
-        opacity: 1,
-        transition: {
-            staggerChildren: 0.1
-        }
-    }
-};
-
-const item = {
-    hidden: { y: 20, opacity: 0 },
-    show: { y: 0, opacity: 1 }
-};
 
 export default function AdminDashboard() {
     const navigate = useNavigate();
@@ -94,9 +78,8 @@ export default function AdminDashboard() {
     };
 
     const StatCard = ({ title, value, icon: Icon, trend, color, subValue }) => (
-        <motion.div
-            variants={item}
-            className="bg-white p-6 rounded-[24px] shadow-sm border border-slate-100 relative overflow-hidden group hover:shadow-md transition-all"
+        <div
+            className="bg-white p-6 rounded-[24px] shadow-sm border border-slate-100 relative overflow-hidden group hover:shadow-md transition-all animate-[fade-in-up_0.3s_ease-out]"
         >
             <div className={cn("absolute top-0 right-0 w-32 h-32 bg-gradient-to-br opacity-5 rounded-full -mr-10 -mt-10 transition-transform group-hover:scale-110", color)} />
 
@@ -117,7 +100,7 @@ export default function AdminDashboard() {
                 <p className="text-3xl font-black text-slate-800 tracking-tight">{value}</p>
                 {subValue && <span className="text-sm font-medium text-slate-400">{subValue}</span>}
             </div>
-        </motion.div>
+        </div>
     );
 
     if (loading) return (
@@ -189,7 +172,7 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
                 {/* Revenue Chart (Big Block) */}
-                <motion.div variants={item} className="lg:col-span-2 bg-white p-8 rounded-[32px] shadow-sm border border-slate-100">
+                <div className="lg:col-span-2 bg-white p-8 rounded-[32px] shadow-sm border border-slate-100 animate-[fade-in-up_0.4s_ease-out]">
                     <div className="flex items-center justify-between mb-8">
                         <div>
                             <h3 className="text-xl font-black text-slate-900">Analyse des Revenus</h3>
@@ -229,13 +212,13 @@ export default function AdminDashboard() {
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
-                </motion.div>
+                </div>
 
                 {/* Right Column Stack */}
                 <div className="space-y-8 flex flex-col">
 
                     {/* Recent Orders Widget */}
-                    <motion.div variants={item} className="bg-white p-6 rounded-[32px] shadow-sm border border-slate-100 flex-1">
+                    <div className="bg-white p-6 rounded-[32px] shadow-sm border border-slate-100 flex-1 animate-[fade-in-up_0.5s_ease-out]">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-lg font-black text-slate-900">Commandes Récentes</h3>
                             <button className="text-sm font-bold text-orange-500 hover:text-orange-600">Voir tout</button>
@@ -263,10 +246,10 @@ export default function AdminDashboard() {
                                 </div>
                             ))}
                         </div>
-                    </motion.div>
+                    </div>
 
                     {/* Quick Action Widget */}
-                    <motion.div variants={item} className="bg-gradient-to-br from-slate-900 to-slate-800 p-6 rounded-[32px] text-white shadow-xl relative overflow-hidden">
+                    <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-6 rounded-[32px] text-white shadow-xl relative overflow-hidden animate-[fade-in-up_0.6s_ease-out]">
                         <div className="relative z-10">
                             <h3 className="text-lg font-black mb-1">Actions Rapides</h3>
                             <p className="text-slate-400 text-xs font-medium mb-6">Gérez votre plateforme efficacement</p>
@@ -304,7 +287,7 @@ export default function AdminDashboard() {
                         </div>
                         {/* Decorative background blob */}
                         <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-orange-500 rounded-full blur-[60px] opacity-20 pointer-events-none" />
-                    </motion.div>
+                    </div>
 
                 </div>
             </div>

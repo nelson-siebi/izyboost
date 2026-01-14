@@ -11,7 +11,7 @@ import {
     Package,
     Clock
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+
 import { cn } from '../../utils/cn';
 
 export default function AdminFailedOrdersPage() {

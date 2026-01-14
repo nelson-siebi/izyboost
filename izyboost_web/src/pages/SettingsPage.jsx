@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+
 import {
     User,
     Lock,
@@ -83,10 +83,6 @@ export default function SettingsPage() {
             const res = await userApi.updateProfile(profileData);
             setUser(res.user);
             setMessage('Profil mis à jour avec succès !');
-            setTimeout(() => {
-                setMessage(null);
-                setActiveSection(null);
-            }, 2000);
         } catch (err) {
             setError(err.response?.data?.message || 'Une erreur est survenue.');
         } finally {
@@ -115,10 +111,6 @@ export default function SettingsPage() {
             await userApi.updatePassword(passwordData);
             setMessage('Mot de passe mis à jour avec succès !');
             setPasswordData({ current_password: '', password: '', password_confirmation: '' });
-            setTimeout(() => {
-                setMessage(null);
-                setActiveSection(null);
-            }, 2000);
         } catch (err) {
             setError(err.response?.data?.message || 'Mot de passe actuel incorrect ou invalide.');
         } finally {
@@ -199,28 +191,20 @@ export default function SettingsPage() {
                 </header>
 
                 <form onSubmit={handleUpdateProfile} className="bg-white rounded-[32px] border border-slate-100 shadow-sm p-8 space-y-6">
-                    <AnimatePresence mode="wait">
-                        {message && (
-                            <motion.div
-                                initial={{ opacity: 0, y: -10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                                className="p-4 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100 flex items-center gap-3 font-bold text-sm"
-                            >
-                                <CheckCircle2 size={18} /> {message}
-                            </motion.div>
-                        )}
-                        {error && (
-                            <motion.div
-                                initial={{ opacity: 0, y: -10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                                className="p-4 bg-red-50 text-red-600 rounded-2xl border border-red-100 flex items-center gap-3 font-bold text-sm"
-                            >
-                                <AlertCircle size={18} /> {error}
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                    {message && (
+                        <div
+                            className="p-4 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100 flex items-center gap-3 font-bold text-sm animate-[fade-in-up_0.3s_ease-out]"
+                        >
+                            <CheckCircle2 size={18} /> {message}
+                        </div>
+                    )}
+                    {error && (
+                        <div
+                            className="p-4 bg-red-50 text-red-600 rounded-2xl border border-red-100 flex items-center gap-3 font-bold text-sm animate-[fade-in-up_0.3s_ease-out]"
+                        >
+                            <AlertCircle size={18} /> {error}
+                        </div>
+                    )}
 
                     <div className="space-y-2">
                         <label className="text-xs font-black uppercase text-slate-400 tracking-widest ml-2">Nom d'utilisateur</label>
@@ -277,28 +261,20 @@ export default function SettingsPage() {
                 </header>
 
                 <form onSubmit={handleUpdatePassword} className="bg-white rounded-[32px] border border-slate-100 shadow-sm p-8 space-y-6">
-                    <AnimatePresence mode="wait">
-                        {message && (
-                            <motion.div
-                                initial={{ opacity: 0, y: -10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                                className="p-4 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100 flex items-center gap-3 font-bold text-sm"
-                            >
-                                <CheckCircle2 size={18} /> {message}
-                            </motion.div>
-                        )}
-                        {error && (
-                            <motion.div
-                                initial={{ opacity: 0, y: -10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                                className="p-4 bg-red-50 text-red-600 rounded-2xl border border-red-100 flex items-center gap-3 font-bold text-sm"
-                            >
-                                <AlertCircle size={18} /> {error}
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                    {message && (
+                        <div
+                            className="p-4 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100 flex items-center gap-3 font-bold text-sm animate-[fade-in-up_0.3s_ease-out]"
+                        >
+                            <CheckCircle2 size={18} /> {message}
+                        </div>
+                    )}
+                    {error && (
+                        <div
+                            className="p-4 bg-red-50 text-red-600 rounded-2xl border border-red-100 flex items-center gap-3 font-bold text-sm animate-[fade-in-up_0.3s_ease-out]"
+                        >
+                            <AlertCircle size={18} /> {error}
+                        </div>
+                    )}
 
                     <div className="space-y-2 relative">
                         <label className="text-xs font-black uppercase text-slate-400 tracking-widest ml-2">Mot de passe actuel</label>
@@ -371,28 +347,20 @@ export default function SettingsPage() {
             </header>
 
             {/* Global Messages */}
-            <AnimatePresence mode="wait">
-                {message && (
-                    <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="p-4 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100 flex items-center gap-3 font-bold text-sm"
-                    >
-                        <CheckCircle2 size={18} /> {message}
-                    </motion.div>
-                )}
-                {error && (
-                    <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="p-4 bg-red-50 text-red-600 rounded-2xl border border-red-100 flex items-center gap-3 font-bold text-sm"
-                    >
-                        <AlertCircle size={18} /> {error}
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            {message && (
+                <div
+                    className="p-4 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100 flex items-center gap-3 font-bold text-sm animate-[fade-in-up_0.3s_ease-out]"
+                >
+                    <CheckCircle2 size={18} /> <span>{message}</span>
+                </div>
+            )}
+            {error && (
+                <div
+                    className="p-4 bg-red-50 text-red-600 rounded-2xl border border-red-100 flex items-center gap-3 font-bold text-sm animate-[fade-in-up_0.3s_ease-out]"
+                >
+                    <AlertCircle size={18} /> <span>{error}</span>
+                </div>
+            )}
 
             {/* User Profile Card */}
             <div className="bg-gradient-to-br from-brand-primary to-blue-600 rounded-[32px] shadow-xl shadow-brand-primary/20 overflow-hidden p-8 text-white relative">
@@ -496,7 +464,7 @@ export default function SettingsPage() {
                     Déconnexion
                 </button>
                 <div className="text-center mt-8">
-                    <p className="text-[10px] font-black tracking-widest text-slate-300 uppercase">IzyBoost Platform v1.2.0 • Build 2026</p>
+                    <p className="text-[10px] font-black tracking-widest text-slate-300 uppercase">Platform v1.2.0 • Build 2026</p>
                 </div>
             </div>
         </div>

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+
 import {
     Facebook,
     Instagram,
@@ -14,6 +14,7 @@ import {
 import { useEffect, useState } from 'react';
 import { adminApi } from '../features/admin/adminApi';
 import apiClient from '../api/client';
+import TutorialCTA from './TutorialCTA';
 
 const TikTokIcon = (props) => (
     <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
@@ -70,14 +71,11 @@ const Footer = () => {
                                     className="h-10 w-auto max-w-[180px] object-contain"
                                 />
                             ) : (
-                                <div className="flex items-center gap-3">
-                                    <div className="h-10 w-10 bg-brand-primary rounded-xl flex items-center justify-center text-white font-black shadow-lg shadow-brand-primary/20">
-                                        IZ
-                                    </div>
-                                    <span className="font-black text-2xl text-slate-900 tracking-tighter">
-                                        {settings.site_name || 'IZYBOOST'}
-                                    </span>
-                                </div>
+                                <img
+                                    src="/logo1.png"
+                                    alt="Logo"
+                                    className="h-10 w-auto max-w-[180px] object-contain"
+                                />
                             )}
                         </Link>
                         <p className="text-slate-500 text-sm font-medium leading-relaxed max-w-sm">
@@ -103,10 +101,10 @@ const Footer = () => {
                         <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-6">Plateforme</h4>
                         <ul className="space-y-4">
                             {[
-                                { label: 'Tableau de bord', path: '/' },
-                                { label: 'Services', path: '/services' },
-                                { label: 'Wallet', path: '/wallet' },
-                                { label: 'Mes Commandes', path: '/orders' },
+                                { label: 'Tableau de bord', path: '/dashboard' },
+                                { label: 'Assistance Client', path: '/dashboard/support' },
+                                { label: 'Affiliation', path: '/dashboard/referrals' },
+                                { label: 'Documentation API', path: '/dashboard/api-keys' },
                             ].map(item => (
                                 <li key={item.path}>
                                     <Link to={item.path} className="text-slate-500 hover:text-brand-primary text-sm font-bold flex items-center gap-2 group">
@@ -118,24 +116,9 @@ const Footer = () => {
                         </ul>
                     </div>
 
-                    {/* Support & Docs */}
+                    {/* Support & Tutorials */}
                     <div>
-                        <h4 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-6">Support</h4>
-                        <ul className="space-y-4">
-                            {[
-                                { label: 'Assistance Client', path: '/support' },
-                                { label: 'Documentation API', path: '/docs' },
-                                { label: 'White Label', path: '/white-label' },
-                                { label: 'Affiliation', path: '/referrals' },
-                            ].map(item => (
-                                <li key={item.path}>
-                                    <Link to={item.path} className="text-slate-500 hover:text-brand-primary text-sm font-bold flex items-center gap-2 group">
-                                        <ArrowRight size={14} className="opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all" />
-                                        {item.label}
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
+                        <TutorialCTA variant="footer" />
                     </div>
 
                     {/* Contact Info */}

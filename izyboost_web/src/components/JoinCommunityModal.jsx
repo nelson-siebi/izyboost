@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, Facebook, Send, Users } from 'lucide-react';
+
+import { X, Facebook, Send, Users, Youtube } from 'lucide-react';
 import { adminApi } from '../features/admin/adminApi';
+import { cn } from '../utils/cn';
 
 const TikTokIcon = (props) => (
     <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
@@ -28,6 +29,7 @@ const JoinCommunityModal = () => {
                     const telegramLink = data.find(s => s.key === 'telegram_link')?.value;
                     const tiktokLink = data.find(s => s.key === 'tiktok_link')?.value;
                     const whatsappLink = data.find(s => s.key === 'whatsapp_number')?.value;
+                    const youtubeLink = data.find(s => s.key === 'youtube_link')?.value;
 
                     if (facebookLink) {
                         links.push({
@@ -69,6 +71,16 @@ const JoinCommunityModal = () => {
                         });
                     }
 
+                    if (youtubeLink) {
+                        links.push({
+                            name: 'YouTube',
+                            icon: Youtube,
+                            url: youtubeLink,
+                            color: 'from-rose-500 to-rose-600',
+                            hoverColor: 'hover:shadow-rose-500/50'
+                        });
+                    }
+
                     if (links.length > 0) {
                         setSocialLinks(links);
                         // Show modal after 2 seconds
@@ -96,22 +108,15 @@ const JoinCommunityModal = () => {
     if (socialLinks.length === 0) return null;
 
     return (
-        <AnimatePresence>
+        <>
             {isOpen && (
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+                <div
+                    className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-[fade-in_0.2s_ease-out]"
                     onClick={handleClose}
                 >
-                    <motion.div
-                        initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                        animate={{ scale: 1, opacity: 1, y: 0 }}
-                        exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                    <div
                         onClick={(e) => e.stopPropagation()}
-                        className="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-8 relative overflow-hidden"
+                        className="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-8 relative overflow-hidden animate-[zoom-in_0.3s_ease-out]"
                     >
                         {/* Background decoration */}
                         <div className="absolute top-0 right-0 w-64 h-64 bg-brand-primary/5 blur-[100px] rounded-full -mr-32 -mt-32 pointer-events-none" />
@@ -127,44 +132,36 @@ const JoinCommunityModal = () => {
                         <div className="relative z-10 space-y-6">
                             {/* Header */}
                             <div className="text-center space-y-3">
-                                <motion.div
-                                    initial={{ scale: 0 }}
-                                    animate={{ scale: 1 }}
-                                    transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-                                    className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-brand-primary to-brand-secondary rounded-2xl shadow-lg shadow-brand-primary/20"
+                                <div
+                                    className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-brand-primary to-brand-secondary rounded-2xl shadow-lg shadow-brand-primary/20 animate-[bounce-in_0.5s_ease-out]"
                                 >
                                     <Users size={32} className="text-white" />
-                                </motion.div>
+                                </div>
 
-                                <motion.h2
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.3 }}
-                                    className="text-3xl font-black text-slate-900"
+                                <h2
+                                    className="text-3xl font-black text-slate-900 animate-[fade-in-up_0.3s_ease-out_0.1s_both]"
                                 >
                                     Rejoignez notre communauté !
-                                </motion.h2>
+                                </h2>
 
-                                <motion.p
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.4 }}
-                                    className="text-slate-500 font-medium max-w-sm mx-auto"
+                                <p
+                                    className="text-slate-500 font-medium max-w-sm mx-auto animate-[fade-in-up_0.3s_ease-out_0.2s_both]"
                                 >
                                     Restez connecté avec nous pour recevoir des offres exclusives, des astuces et du support prioritaire.
-                                </motion.p>
+                                </p>
                             </div>
 
                             {/* Social links */}
-                            <div className="grid grid-cols-2 gap-4 pt-4">
+                            <div className={cn(
+                                "grid gap-4 pt-4",
+                                socialLinks.length > 4 ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-2"
+                            )}>
                                 {socialLinks.map((social, index) => (
-                                    <motion.button
+                                    <button
                                         key={social.name}
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 0.5 + index * 0.1 }}
                                         onClick={() => handleJoin(social.url)}
-                                        className={`group relative p-6 bg-gradient-to-br ${social.color} rounded-2xl shadow-lg ${social.hoverColor} hover:shadow-2xl transition-all duration-300 active:scale-95`}
+                                        style={{ animationDelay: `${0.3 + index * 0.1}s` }}
+                                        className={`group relative p-6 bg-gradient-to-br ${social.color} rounded-2xl shadow-lg ${social.hoverColor} hover:shadow-2xl transition-all duration-300 active:scale-95 animate-[fade-in-up_0.3s_ease-out_both]`}
                                     >
                                         <div className="flex flex-col items-center gap-3">
                                             <social.icon size={32} className="text-white" />
@@ -173,25 +170,22 @@ const JoinCommunityModal = () => {
 
                                         {/* Shine effect */}
                                         <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/20 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
-                                    </motion.button>
+                                    </button>
                                 ))}
                             </div>
 
                             {/* Skip button */}
-                            <motion.button
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ delay: 0.8 }}
+                            <button
                                 onClick={handleClose}
-                                className="w-full py-3 text-sm font-bold text-slate-400 hover:text-slate-900 transition-colors"
+                                className="w-full py-3 text-sm font-bold text-slate-400 hover:text-slate-900 transition-colors animate-[fade-in_0.3s_ease-out_0.6s_both]"
                             >
                                 Peut-être plus tard
-                            </motion.button>
+                            </button>
                         </div>
-                    </motion.div>
-                </motion.div>
+                    </div>
+                </div>
             )}
-        </AnimatePresence>
+        </>
     );
 };
 

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+
 import { ShoppingCart, Filter, Search, ChevronRight, Copy, CheckCircle2, Clock, XCircle, PlayCircle, Loader2 } from 'lucide-react';
 import { ordersApi } from '../features/orders/ordersApi';
 import { cn } from '../utils/cn';
+import Skeleton from '../components/Skeleton';
 
 export default function OrdersPage() {
     const [orders, setOrders] = useState([]);
@@ -107,22 +108,31 @@ export default function OrdersPage() {
             <div className="space-y-4">
                 {loading && page === 1 ? (
                     // Loading Skeletons
-                    [1, 2, 3].map(i => (
-                        <div key={i} className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm animate-pulse space-y-4">
-                            <div className="flex justify-between">
-                                <div className="h-6 w-1/3 bg-slate-100 rounded-lg" />
-                                <div className="h-6 w-24 bg-slate-100 rounded-full" />
+                    [1, 2, 3, 4].map(i => (
+                        <div key={i} className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm space-y-4">
+                            <div className="flex justify-between items-center">
+                                <div className="flex items-center gap-4">
+                                    <Skeleton className="h-12 w-12" />
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-5 w-48" />
+                                        <Skeleton className="h-3 w-32" />
+                                    </div>
+                                </div>
+                                <Skeleton className="h-8 w-24 rounded-full" />
                             </div>
-                            <div className="h-4 w-1/2 bg-slate-100 rounded" />
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <Skeleton className="h-12 w-full" />
+                                <Skeleton className="h-12 w-full" />
+                                <Skeleton className="h-12 w-full" />
+                                <Skeleton className="h-12 w-full" />
+                            </div>
                         </div>
                     ))
                 ) : orders.length > 0 ? (
                     orders.map((order) => (
-                        <motion.div
+                        <div
                             key={order.id}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="bg-white rounded-[24px] border border-slate-100 shadow-sm hover:shadow-md transition-all overflow-hidden group"
+                            className="bg-white rounded-[24px] border border-slate-100 shadow-sm hover:shadow-md transition-all overflow-hidden group animate-[fade-in-up_0.3s_ease-out]"
                         >
                             <div className="p-6 cursor-pointer" onClick={() => setExpandedOrder(expandedOrder === order.id ? null : order.id)}>
                                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
@@ -165,46 +175,41 @@ export default function OrdersPage() {
                             </div>
 
                             {/* Details Expanded Section */}
-                            <AnimatePresence>
-                                {expandedOrder === order.id && (
-                                    <motion.div
-                                        key={`order-details-${order.id}`}
-                                        initial={{ height: 0 }}
-                                        animate={{ height: 'auto' }}
-                                        exit={{ height: 0 }}
-                                        className="bg-slate-50 border-t border-slate-100 overflow-hidden"
-                                    >
-                                        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div>
-                                                <p className="text-[10px] uppercase font-black text-slate-400 tracking-widest mb-3">Détails de démarrage</p>
-                                                <div className="flex justify-between items-center py-2 border-b border-slate-200/50">
-                                                    <span className="text-sm font-bold text-slate-600">Compteur Initial</span>
-                                                    <span className="text-sm font-black text-slate-900">{order.start_count || 0}</span>
-                                                </div>
-                                                <div className="flex justify-between items-center py-2 border-b border-slate-200/50">
-                                                    <span className="text-sm font-bold text-slate-600">Compteur Actuel</span>
-                                                    <span className="text-sm font-black text-slate-900">{(parseInt(order.start_count || 0) + parseInt(order.quantity) - parseInt(order.remains || 0))}</span>
-                                                </div>
+                            {expandedOrder === order.id && (
+                                <div
+                                    key={`order-details-${order.id}`}
+                                    className="bg-slate-50 border-t border-slate-100 overflow-hidden animate-[fade-in_0.3s_ease-out]"
+                                >
+                                    <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <p className="text-[10px] uppercase font-black text-slate-400 tracking-widest mb-3">Détails de démarrage</p>
+                                            <div className="flex justify-between items-center py-2 border-b border-slate-200/50">
+                                                <span className="text-sm font-bold text-slate-600">Compteur Initial</span>
+                                                <span className="text-sm font-black text-slate-900">{order.start_count || 0}</span>
                                             </div>
-                                            <div>
-                                                <p className="text-[10px] uppercase font-black text-slate-400 tracking-widest mb-3">Actions</p>
-                                                <button className="w-full py-3 bg-white border border-slate-200 rounded-xl text-xs font-black uppercase tracking-widest text-slate-600 hover:bg-brand-primary hover:text-white hover:border-brand-primary transition-all flex items-center justify-center gap-2"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        navigator.clipboard.writeText(order.link);
-                                                        // Could add toast here
-                                                    }}
-                                                >
-                                                    <Copy size={14} />
-                                                    Copier le lien
-                                                </button>
-                                                {/* Re-order button could go here */}
+                                            <div className="flex justify-between items-center py-2 border-b border-slate-200/50">
+                                                <span className="text-sm font-bold text-slate-600">Compteur Actuel</span>
+                                                <span className="text-sm font-black text-slate-900">{(parseInt(order.start_count || 0) + parseInt(order.quantity) - parseInt(order.remains || 0))}</span>
                                             </div>
                                         </div>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-                        </motion.div>
+                                        <div>
+                                            <p className="text-[10px] uppercase font-black text-slate-400 tracking-widest mb-3">Actions</p>
+                                            <button className="w-full py-3 bg-white border border-slate-200 rounded-xl text-xs font-black uppercase tracking-widest text-slate-600 hover:bg-brand-primary hover:text-white hover:border-brand-primary transition-all flex items-center justify-center gap-2"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    navigator.clipboard.writeText(order.link);
+                                                    // Could add toast here
+                                                }}
+                                            >
+                                                <Copy size={14} />
+                                                Copier le lien
+                                            </button>
+                                            {/* Re-order button could go here */}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     ))
                 ) : (
                     <div className="flex flex-col items-center justify-center py-20 bg-white rounded-[32px] border border-dashed border-slate-200">

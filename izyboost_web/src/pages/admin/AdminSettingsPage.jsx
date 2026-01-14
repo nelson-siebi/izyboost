@@ -6,7 +6,7 @@ import {
     Check, X as XIcon, LayoutDashboard, Send, Upload, Image as ImageIcon,
     Activity, DollarSign
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+
 import { cn } from '../../utils/cn';
 import apiClient from '../../api/client';
 
@@ -26,10 +26,10 @@ export default function AdminSettingsPage() {
 
     const settingsConfig = {
         general: [
-            { key: 'site_name', label: 'Nom de la Plateforme', type: 'text', placeholder: 'IzyBoost', icon: Globe },
+            { key: 'site_name', label: 'Nom de la Plateforme', type: 'text', placeholder: 'Votre Plateforme', icon: Globe },
             { key: 'site_description', label: 'Description SEO Global', type: 'textarea', placeholder: 'La plateforme N°1 pour...', icon: null },
-            { key: 'site_email', label: 'Email de Contact Officiel', type: 'email', placeholder: 'contact@izyboost.com', icon: Mail },
-            { key: 'admin_email', label: 'Email de Notification Admin', type: 'email', placeholder: 'admin@izyboost.com', icon: Shield, description: 'Email utilisé pour recevoir les alertes de dépôts et système.' },
+            { key: 'site_email', label: 'Email de Contact Officiel', type: 'email', placeholder: 'contact@votre-domaine.com', icon: Mail },
+            { key: 'admin_email', label: 'Email de Notification Admin', type: 'email', placeholder: 'admin@votre-domaine.com', icon: Shield, description: 'Email utilisé pour recevoir les alertes de dépôts et système.' },
         ],
         social: [
             { key: 'whatsapp_number', label: 'Numéro WhatsApp (Support)', type: 'text', placeholder: '+237690000000', icon: Smartphone },
@@ -37,6 +37,8 @@ export default function AdminSettingsPage() {
             { key: 'telegram_link', label: 'Canal Telegram', type: 'text', placeholder: 'https://t.me/...', icon: Send },
             { key: 'facebook_link', label: 'Page Facebook', type: 'text', placeholder: 'https://facebook.com/...', icon: Facebook },
             { key: 'youtube_link', label: 'Chaîne YouTube', type: 'text', placeholder: 'https://youtube.com/@...', icon: Globe },
+            { key: 'youtube_tutorial_video', label: 'Vidéo : Comment booster', type: 'text', placeholder: 'https://youtube.com/watch?v=...', icon: Youtube, description: 'Lien vers le tutoriel d\'utilisation du site.' },
+            { key: 'youtube_growth_video', label: 'Vidéo : Gagner des abonnés', type: 'text', placeholder: 'https://youtube.com/watch?v=...', icon: Youtube, description: 'Lien vers le tutoriel stratégique.' },
         ],
         referral: [
             { key: 'referral_levels', label: 'Nombre de Niveaux', type: 'number', placeholder: '1', icon: Activity, description: 'Profondeur du système de parrainage (1 par défaut).' },
@@ -175,7 +177,7 @@ export default function AdminSettingsPage() {
                         </div>
                         <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">Configuration</h1>
                         <p className="text-slate-500 font-medium mt-2 max-w-lg">
-                            Pilotez les paramètres globaux de IzyBoost, des réseaux sociaux aux protocoles de sécurité.
+                            Pilotez les paramètres globaux de votre plateforme, des réseaux sociaux aux protocoles de sécurité.
                         </p>
                     </div>
                     <div className="flex flex-col items-end gap-4">
@@ -207,16 +209,9 @@ export default function AdminSettingsPage() {
                             onClick={() => setActiveTab(tab.id)}
                             className={cn(
                                 "relative flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all z-10 whitespace-nowrap",
-                                activeTab === tab.id ? "text-white" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+                                activeTab === tab.id ? "text-white bg-orange-500 shadow-lg shadow-orange-500/20" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
                             )}
                         >
-                            {activeTab === tab.id && (
-                                <motion.div
-                                    layoutId="active-tab-pill"
-                                    className="absolute inset-0 bg-orange-500 rounded-xl shadow-lg shadow-orange-500/20 -z-10"
-                                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                                />
-                            )}
                             <Icon size={16} className={cn("transition-transform", activeTab === tab.id ? "scale-110" : "")} />
                             {tab.label}
                         </button>
@@ -225,13 +220,9 @@ export default function AdminSettingsPage() {
             </div>
 
             {/* Content Area */}
-            <AnimatePresence mode="wait">
-                <motion.div
+            <div className="animate-[fade-in_0.3s_ease-out]">
+                <div
                     key={activeTab}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
                     className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
                 >
                     {activeTab === 'general' && (
@@ -350,8 +341,8 @@ export default function AdminSettingsPage() {
                             )}
                         </div>
                     ))}
-                </motion.div>
-            </AnimatePresence>
+                </div>
+            </div>
         </div>
     );
 }

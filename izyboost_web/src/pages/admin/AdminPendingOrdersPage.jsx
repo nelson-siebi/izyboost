@@ -16,7 +16,7 @@ import {
     Copy,
     Check
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+
 import { cn } from '../../utils/cn';
 
 export default function AdminPendingOrdersPage() {

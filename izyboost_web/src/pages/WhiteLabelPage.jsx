@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Globe, Server, Palette, Layers, Plus, ExternalLink, Activity, Check, X, Shield, Zap, AlertCircle, ArrowRight, ArrowUpRight, CheckCircle2 } from 'lucide-react';
 import { whiteLabelApi } from '../features/common/extraApi';
 import { cn } from '../utils/cn';
@@ -134,7 +133,7 @@ export default function WhiteLabelPage() {
                         <div className="p-2.5 bg-brand-primary rounded-2xl text-white shadow-lg shadow-brand-primary/20">
                             <Layers size={28} />
                         </div>
-                        Marque Blanche <span className="text-brand-primary">SaaS</span>
+                        Mon Business <span className="text-brand-primary">SaaS</span>
                     </h1>
                     <p className="text-slate-500 font-semibold text-lg max-w-xl">
                         Propulsez votre propre agence SMM avec notre technologie de pointe.
@@ -166,11 +165,9 @@ export default function WhiteLabelPage() {
                     {/* Management Section */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {sites.map(site => (
-                            <motion.div
+                            <div
                                 key={site.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all group relative overflow-hidden"
+                                className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all group relative overflow-hidden animate-[fade-in-up_0.3s_ease-out]"
                             >
                                 <div className="absolute top-0 right-0 w-40 h-40 bg-slate-50 rounded-full -mr-12 -mt-12 group-hover:bg-brand-primary/5 transition-colors duration-500" />
 
@@ -212,7 +209,7 @@ export default function WhiteLabelPage() {
                                         </button>
                                     </div>
                                 </div>
-                            </motion.div>
+                            </div>
                         ))}
                     </div>
                 </div>
@@ -275,317 +272,297 @@ export default function WhiteLabelPage() {
             )}
 
             {/* Premium Creation Modal */}
-            <AnimatePresence mode="wait">
-                {isCreating && (
-                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
-                            onClick={() => !processing && !success && setIsCreating(false)}
-                        />
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.9, y: 40 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.9, y: 40 }}
-                            className="relative w-full max-w-xl bg-white rounded-[48px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
-                        >
-                            {/* Close Button */}
-                            {!success && (
-                                <button
-                                    onClick={() => setIsCreating(false)}
-                                    disabled={processing}
-                                    className="absolute top-8 right-8 p-3 bg-slate-50 rounded-full hover:bg-slate-100 hover:rotate-90 transition-all z-10"
-                                >
-                                    <X size={20} className="text-slate-500" />
-                                </button>
-                            )}
+            {isCreating && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                    <div
+                        className="absolute inset-0 bg-slate-900/60 backdrop-blur-md animate-[fade-in_0.3s_ease-out]"
+                        onClick={() => !processing && !success && setIsCreating(false)}
+                    />
+                    <div
+                        className="relative w-full max-w-xl bg-white rounded-[48px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-[scale-in_0.3s_ease-out]"
+                    >
+                        {/* Close Button */}
+                        {!success && (
+                            <button
+                                onClick={() => setIsCreating(false)}
+                                disabled={processing}
+                                className="absolute top-8 right-8 p-3 bg-slate-50 rounded-full hover:bg-slate-100 hover:rotate-90 transition-all z-10"
+                            >
+                                <X size={20} className="text-slate-500" />
+                            </button>
+                        )}
 
-                            {/* Header Progress */}
-                            <div className="p-10 pb-0 shrink-0">
-                                <div className="flex items-center gap-4 mb-2">
-                                    <div className="h-12 w-12 rounded-2xl bg-brand-primary flex items-center justify-center text-white shadow-lg shadow-brand-primary/20">
-                                        {success ? <Check size={24} strokeWidth={3} /> : <Zap size={24} />}
+                        {/* Header Progress */}
+                        <div className="p-10 pb-0 shrink-0">
+                            <div className="flex items-center gap-4 mb-2">
+                                <div className="h-12 w-12 rounded-2xl bg-brand-primary flex items-center justify-center text-white shadow-lg shadow-brand-primary/20">
+                                    {success ? <Check size={24} strokeWidth={3} /> : <Zap size={24} />}
+                                </div>
+                                <div>
+                                    <h2 className="text-2xl font-black text-slate-900 leading-none">
+                                        {success ? "C'est Parti !" : "Configuration SaaS"}
+                                    </h2>
+                                    <p className="text-slate-400 text-sm font-black uppercase tracking-widest mt-1">
+                                        {success ? "Bienvenue Propriétaire" : `Étape ${step} sur 4`}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="h-2 w-full bg-slate-100 rounded-full mt-6 overflow-hidden">
+                                <div
+                                    className="h-full bg-brand-primary shadow-[0_0_10px_rgba(var(--brand-primary-rgb),0.5)] transition-all duration-500 ease-out"
+                                    style={{ width: success ? '100%' : `${(step / 4) * 100}%` }}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Scrollable Content */}
+                        <div className="p-10 overflow-y-auto custom-scrollbar">
+                            {success ? (
+                                <div
+                                    key="success-view"
+                                    className="py-10 text-center space-y-8 animate-[fade-in_0.3s_ease-out]"
+                                >
+                                    <div className="relative inline-block">
+                                        <div className="h-32 w-32 bg-emerald-500 text-white rounded-[40px] flex items-center justify-center mx-auto shadow-2xl shadow-emerald-500/30 relative z-10">
+                                            <Check size={64} strokeWidth={4} />
+                                        </div>
+                                        <div
+                                            className="absolute inset-0 bg-emerald-500 rounded-[40px] blur-2xl -z-0 animate-pulse"
+                                        />
                                     </div>
-                                    <div>
-                                        <h2 className="text-2xl font-black text-slate-900 leading-none">
-                                            {success ? "C'est Parti !" : "Configuration SaaS"}
-                                        </h2>
-                                        <p className="text-slate-400 text-sm font-black uppercase tracking-widest mt-1">
-                                            {success ? "Bienvenue Propriétaire" : `Étape ${step} sur 4`}
+                                    <div className="space-y-4">
+                                        <h3 className="text-3xl font-black text-slate-900 leading-tight">Commande Validée !</h3>
+                                        <p className="text-slate-500 font-bold max-w-xs mx-auto text-lg leading-relaxed">
+                                            Votre nouvelle agence est en cours de déploiement. Un administrateur l'activera sous peu.
                                         </p>
                                     </div>
                                 </div>
-                                <div className="h-2 w-full bg-slate-100 rounded-full mt-6 overflow-hidden">
-                                    <motion.div
-                                        className="h-full bg-brand-primary shadow-[0_0_10px_rgba(var(--brand-primary-rgb),0.5)]"
-                                        animate={{ width: success ? '100%' : `${(step / 4) * 100}%` }}
-                                        transition={{ type: "spring", stiffness: 50, damping: 15 }}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Scrollable Content */}
-                            <div className="p-10 overflow-y-auto custom-scrollbar">
-                                <AnimatePresence mode="wait">
-                                    {success ? (
-                                        <motion.div
-                                            key="success-view"
-                                            initial={{ opacity: 0, scale: 0.8 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            className="py-10 text-center space-y-8"
+                            ) : (
+                                <div
+                                    key={`step-${step}`}
+                                    className="space-y-8 animate-[slide-in-right_0.3s_ease-out]"
+                                >
+                                    {/* Error Message */}
+                                    {error && (
+                                        <div
+                                            className="p-5 bg-red-50 text-red-600 rounded-3xl border border-red-100 flex items-start gap-4 shadow-sm animate-[fade-in_0.3s_ease-out]"
                                         >
-                                            <div className="relative inline-block">
-                                                <div className="h-32 w-32 bg-emerald-500 text-white rounded-[40px] flex items-center justify-center mx-auto shadow-2xl shadow-emerald-500/30 relative z-10">
-                                                    <Check size={64} strokeWidth={4} />
-                                                </div>
-                                                <motion.div
-                                                    animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
-                                                    transition={{ repeat: Infinity, duration: 2 }}
-                                                    className="absolute inset-0 bg-emerald-500 rounded-[40px] blur-2xl -z-0"
+                                            <AlertCircle size={22} className="shrink-0 mt-0.5" />
+                                            <span className="text-sm font-black leading-snug">{error}</span>
+                                        </div>
+                                    )}
+
+                                    {/* Step 1: Plan Selection */}
+                                    {step === 1 && (
+                                        <div className="space-y-6">
+                                            <div className="grid grid-cols-1 gap-4">
+                                                {plans.map(plan => (
+                                                    <div
+                                                        key={plan.id}
+                                                        onClick={() => setFormData({ ...formData, plan_id: plan.id, interval: 'monthly' })}
+                                                        className={cn(
+                                                            "p-6 rounded-[32px] border-2 cursor-pointer transition-all duration-300 flex items-center justify-between group relative overflow-hidden",
+                                                            String(formData.plan_id) === String(plan.id)
+                                                                ? "border-brand-primary bg-brand-primary/[0.04] shadow-lg shadow-brand-primary/5"
+                                                                : "border-slate-100 hover:border-slate-300 bg-white"
+                                                        )}
+                                                    >
+                                                        <div className="flex items-center gap-4">
+                                                            <div className={cn(
+                                                                "h-6 w-6 rounded-full border-2 flex items-center justify-center transition-all",
+                                                                String(formData.plan_id) === String(plan.id) ? "bg-brand-primary border-brand-primary" : "border-slate-200"
+                                                            )}>
+                                                                {String(formData.plan_id) === String(plan.id) && <Check size={14} className="text-white" strokeWidth={4} />}
+                                                            </div>
+                                                            <div>
+                                                                <h3 className="font-black text-slate-900 text-lg uppercase tracking-tight">{plan.name}</h3>
+                                                                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">
+                                                                    + {Number(plan.setup_fee).toLocaleString()} F frais d'init
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <span className="text-2xl font-black text-brand-primary">
+                                                                {Number(plan.monthly_price).toLocaleString()} F
+                                                            </span>
+                                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">/ mois</p>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Step 2: Design Selection */}
+                                    {step === 2 && (
+                                        <div className="space-y-6">
+                                            <div className="grid grid-cols-2 gap-6">
+                                                {templates.map(tpl => (
+                                                    <div
+                                                        key={tpl.id}
+                                                        onClick={() => setFormData({ ...formData, template_id: tpl.id })}
+                                                        className={cn(
+                                                            "p-6 rounded-[32px] border-2 cursor-pointer transition-all text-center group relative overflow-hidden",
+                                                            String(formData.template_id) === String(tpl.id)
+                                                                ? "border-brand-primary bg-brand-primary/[0.04]"
+                                                                : "border-slate-100 hover:border-slate-200"
+                                                        )}
+                                                    >
+                                                        <div className="aspect-square bg-slate-50 rounded-3xl mb-4 flex items-center justify-center group-hover:scale-110 transition-transform duration-500 overflow-hidden relative">
+                                                            <Palette size={40} className="text-slate-200" />
+                                                            {String(formData.template_id) === String(tpl.id) && (
+                                                                <div className="absolute inset-0 bg-brand-primary/10 flex items-center justify-center">
+                                                                    <CheckCircle2 size={40} className="text-brand-primary" />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <p className="font-black text-slate-900">{tpl.name}</p>
+                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Design Standard Pro</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Step 3: Identity */}
+                                    {step === 3 && (
+                                        <div className="space-y-8">
+                                            <div className="space-y-4">
+                                                <label className="text-xs font-black uppercase text-slate-400 tracking-widest ml-4">Nom de la Plateforme</label>
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    value={formData.site_name}
+                                                    onChange={e => setFormData({ ...formData, site_name: e.target.value })}
+                                                    placeholder="Ex: Mon Agence SMM"
+                                                    className="w-full h-16 px-8 rounded-[24px] bg-slate-50 border-2 border-transparent focus:bg-white focus:border-brand-primary/30 outline-none font-bold text-lg text-slate-900 shadow-inner transition-all"
                                                 />
                                             </div>
                                             <div className="space-y-4">
-                                                <h3 className="text-3xl font-black text-slate-900 leading-tight">Commande Validée !</h3>
-                                                <p className="text-slate-500 font-bold max-w-xs mx-auto text-lg leading-relaxed">
-                                                    Votre nouvelle agence est en cours de déploiement. Un administrateur l'activera sous peu.
+                                                <label className="text-xs font-black uppercase text-slate-400 tracking-widest ml-4">Adresse Internet (Sous-domaine)</label>
+                                                <div className="relative group">
+                                                    <input
+                                                        type="text"
+                                                        required
+                                                        value={formData.subdomain}
+                                                        onChange={e => setFormData({ ...formData, subdomain: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
+                                                        placeholder="votre-nom"
+                                                        className="w-full h-16 pl-8 pr-[140px] rounded-[24px] bg-slate-50 border-2 border-transparent focus:bg-white focus:border-brand-primary/30 outline-none font-black text-lg text-slate-900 shadow-inner transition-all"
+                                                    />
+                                                    <div className="absolute right-2 top-2 bottom-2 px-6 flex items-center bg-white rounded-[18px] text-slate-400 font-black text-sm border border-slate-100 group-focus-within:border-brand-primary/20 group-focus-within:text-brand-primary transition-all">
+                                                        .izyboost.com
+                                                    </div>
+                                                </div>
+                                                <p className="text-[10px] font-bold text-slate-400 px-4 uppercase tracking-wider leading-relaxed">
+                                                    Vous pourrez configurer votre propre domaine (.com, .net) plus tard dans le panneau de gestion.
                                                 </p>
                                             </div>
-                                        </motion.div>
-                                    ) : (
-                                        <motion.div
-                                            key={`step-${step}`}
-                                            initial={{ opacity: 0, x: 30 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            exit={{ opacity: 0, x: -30 }}
-                                            className="space-y-8"
-                                        >
-                                            {/* Error Message */}
-                                            {error && (
-                                                <motion.div
-                                                    initial={{ opacity: 0, height: 0 }}
-                                                    animate={{ opacity: 1, height: 'auto' }}
-                                                    className="p-5 bg-red-50 text-red-600 rounded-3xl border border-red-100 flex items-start gap-4 shadow-sm"
-                                                >
-                                                    <AlertCircle size={22} className="shrink-0 mt-0.5" />
-                                                    <span className="text-sm font-black leading-snug">{error}</span>
-                                                </motion.div>
-                                            )}
-
-                                            {/* Step 1: Plan Selection */}
-                                            {step === 1 && (
-                                                <div className="space-y-6">
-                                                    <div className="grid grid-cols-1 gap-4">
-                                                        {plans.map(plan => (
-                                                            <div
-                                                                key={plan.id}
-                                                                onClick={() => setFormData({ ...formData, plan_id: plan.id, interval: 'monthly' })}
-                                                                className={cn(
-                                                                    "p-6 rounded-[32px] border-2 cursor-pointer transition-all duration-300 flex items-center justify-between group relative overflow-hidden",
-                                                                    String(formData.plan_id) === String(plan.id)
-                                                                        ? "border-brand-primary bg-brand-primary/[0.04] shadow-lg shadow-brand-primary/5"
-                                                                        : "border-slate-100 hover:border-slate-300 bg-white"
-                                                                )}
-                                                            >
-                                                                <div className="flex items-center gap-4">
-                                                                    <div className={cn(
-                                                                        "h-6 w-6 rounded-full border-2 flex items-center justify-center transition-all",
-                                                                        String(formData.plan_id) === String(plan.id) ? "bg-brand-primary border-brand-primary" : "border-slate-200"
-                                                                    )}>
-                                                                        {String(formData.plan_id) === String(plan.id) && <Check size={14} className="text-white" strokeWidth={4} />}
-                                                                    </div>
-                                                                    <div>
-                                                                        <h3 className="font-black text-slate-900 text-lg uppercase tracking-tight">{plan.name}</h3>
-                                                                        <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">
-                                                                            + {Number(plan.setup_fee).toLocaleString()} F frais d'init
-                                                                        </p>
-                                                                    </div>
-                                                                </div>
-                                                                <div className="text-right">
-                                                                    <span className="text-2xl font-black text-brand-primary">
-                                                                        {Number(plan.monthly_price).toLocaleString()} F
-                                                                    </span>
-                                                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">/ mois</p>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {/* Step 2: Design Selection */}
-                                            {step === 2 && (
-                                                <div className="space-y-6">
-                                                    <div className="grid grid-cols-2 gap-6">
-                                                        {templates.map(tpl => (
-                                                            <div
-                                                                key={tpl.id}
-                                                                onClick={() => setFormData({ ...formData, template_id: tpl.id })}
-                                                                className={cn(
-                                                                    "p-6 rounded-[32px] border-2 cursor-pointer transition-all text-center group relative overflow-hidden",
-                                                                    String(formData.template_id) === String(tpl.id)
-                                                                        ? "border-brand-primary bg-brand-primary/[0.04]"
-                                                                        : "border-slate-100 hover:border-slate-200"
-                                                                )}
-                                                            >
-                                                                <div className="aspect-square bg-slate-50 rounded-3xl mb-4 flex items-center justify-center group-hover:scale-110 transition-transform duration-500 overflow-hidden relative">
-                                                                    <Palette size={40} className="text-slate-200" />
-                                                                    {String(formData.template_id) === String(tpl.id) && (
-                                                                        <div className="absolute inset-0 bg-brand-primary/10 flex items-center justify-center">
-                                                                            <CheckCircle2 size={40} className="text-brand-primary" />
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                                <p className="font-black text-slate-900">{tpl.name}</p>
-                                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Design Standard Pro</p>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {/* Step 3: Identity */}
-                                            {step === 3 && (
-                                                <div className="space-y-8">
-                                                    <div className="space-y-4">
-                                                        <label className="text-xs font-black uppercase text-slate-400 tracking-widest ml-4">Nom de la Plateforme</label>
-                                                        <input
-                                                            type="text"
-                                                            required
-                                                            value={formData.site_name}
-                                                            onChange={e => setFormData({ ...formData, site_name: e.target.value })}
-                                                            placeholder="Ex: Mon Agence SMM"
-                                                            className="w-full h-16 px-8 rounded-[24px] bg-slate-50 border-2 border-transparent focus:bg-white focus:border-brand-primary/30 outline-none font-bold text-lg text-slate-900 shadow-inner transition-all"
-                                                        />
-                                                    </div>
-                                                    <div className="space-y-4">
-                                                        <label className="text-xs font-black uppercase text-slate-400 tracking-widest ml-4">Adresse Internet (Sous-domaine)</label>
-                                                        <div className="relative group">
-                                                            <input
-                                                                type="text"
-                                                                required
-                                                                value={formData.subdomain}
-                                                                onChange={e => setFormData({ ...formData, subdomain: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
-                                                                placeholder="votre-nom"
-                                                                className="w-full h-16 pl-8 pr-[140px] rounded-[24px] bg-slate-50 border-2 border-transparent focus:bg-white focus:border-brand-primary/30 outline-none font-black text-lg text-slate-900 shadow-inner transition-all"
-                                                            />
-                                                            <div className="absolute right-2 top-2 bottom-2 px-6 flex items-center bg-white rounded-[18px] text-slate-400 font-black text-sm border border-slate-100 group-focus-within:border-brand-primary/20 group-focus-within:text-brand-primary transition-all">
-                                                                .izyboost.com
-                                                            </div>
-                                                        </div>
-                                                        <p className="text-[10px] font-bold text-slate-400 px-4 uppercase tracking-wider leading-relaxed">
-                                                            Vous pourrez configurer votre propre domaine (.com, .net) plus tard dans le panneau de gestion.
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {/* Step 4: Billing Recap */}
-                                            {step === 4 && (
-                                                <div className="space-y-10">
-                                                    <div className="space-y-4">
-                                                        <label className="text-xs font-black uppercase text-slate-400 tracking-widest ml-4">Plan de Facturation</label>
-                                                        <div className="flex gap-2 p-2 bg-slate-100 rounded-[28px]">
-                                                            {['monthly', 'yearly', 'lifetime'].filter(int => {
-                                                                if (!currentPlan) return false;
-                                                                if (int === 'monthly') return true;
-                                                                if (int === 'yearly') return !!currentPlan.yearly_price;
-                                                                if (int === 'lifetime') return !!currentPlan.lifetime_price;
-                                                                return false;
-                                                            }).map(interval => (
-                                                                <button
-                                                                    key={interval}
-                                                                    type="button"
-                                                                    onClick={() => setFormData({ ...formData, interval })}
-                                                                    className={cn(
-                                                                        "flex-1 py-4 px-4 rounded-[22px] text-sm font-black transition-all whitespace-nowrap",
-                                                                        formData.interval === interval ? "bg-white text-slate-900 shadow-lg shadow-slate-900/5 ring-1 ring-slate-900/5" : "text-slate-500 hover:text-slate-900"
-                                                                    )}
-                                                                >
-                                                                    {interval === 'monthly' ? 'Mensuel' : interval === 'yearly' ? 'Annuel (-20%)' : 'Accès à Vie'}
-                                                                </button>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="bg-slate-900 p-10 rounded-[40px] text-white shadow-2xl relative overflow-hidden group">
-                                                        <div className="absolute top-0 right-0 w-32 h-32 bg-brand-primary/10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-1000" />
-
-                                                        <div className="space-y-4 relative z-10">
-                                                            <div className="flex justify-between items-center text-slate-400 font-bold uppercase tracking-widest text-[10px]">
-                                                                <span>Détails Transaction</span>
-                                                                <span>Résumé Final</span>
-                                                            </div>
-                                                            <div className="h-px bg-white/10" />
-                                                            <div className="flex justify-between text-lg font-black">
-                                                                <span>{currentPlan?.name} SaaS</span>
-                                                                <span className="text-brand-primary">
-                                                                    {(formData.interval === 'monthly' ? Number(currentPlan?.monthly_price) :
-                                                                        formData.interval === 'yearly' ? Number(currentPlan?.yearly_price) :
-                                                                            Number(currentPlan?.lifetime_price)).toLocaleString()} F
-                                                                </span>
-                                                            </div>
-                                                            {Number(currentPlan?.setup_fee) > 0 && (
-                                                                <div className="flex justify-between text-sm font-bold text-slate-400">
-                                                                    <span>Frais Technique Initial</span>
-                                                                    <span>{Number(currentPlan.setup_fee).toLocaleString()} F</span>
-                                                                </div>
-                                                            )}
-                                                            <div className="h-px bg-white/10" />
-                                                            <div className="flex justify-between items-end pt-2">
-                                                                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Total Agence</span>
-                                                                <div className="text-right">
-                                                                    <span className="text-4xl font-black text-white">{calculateTotal().toLocaleString()} <span className="text-brand-primary text-xl">F</span></span>
-                                                                    <p className="text-[10px] font-black text-slate-400 mt-1 uppercase">Paiement via Solde Compte</p>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {/* Navigation Controls */}
-                                            <div className="flex gap-4 pt-4">
-                                                {step > 1 && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setStep(step - 1)}
-                                                        disabled={processing}
-                                                        className="h-16 px-10 bg-slate-100 text-slate-600 rounded-[24px] font-black hover:bg-slate-200 transition-all"
-                                                    >
-                                                        Précédent
-                                                    </button>
-                                                )}
-                                                <button
-                                                    type="button"
-                                                    onClick={() => step < 4 ? setStep(step + 1) : handlePurchase()}
-                                                    disabled={
-                                                        processing ||
-                                                        (step === 1 && !formData.plan_id) ||
-                                                        (step === 2 && !formData.template_id) ||
-                                                        (step === 3 && (!formData.site_name || !formData.subdomain))
-                                                    }
-                                                    className="flex-1 h-16 bg-slate-900 text-white rounded-[24px] font-black shadow-xl shadow-slate-900/10 hover:bg-brand-primary hover:shadow-brand-primary/20 hover:-translate-y-1 active:translate-y-0 disabled:opacity-50 disabled:transform-none transition-all flex items-center justify-center gap-3 relative overflow-hidden"
-                                                >
-                                                    {processing ? (
-                                                        <div className="h-6 w-6 border-3 border-white/20 border-t-white rounded-full animate-spin" />
-                                                    ) : (
-                                                        <>
-                                                            {step === 4 ? "Lancer mon Agence" : "Suivant"}
-                                                            <ArrowRight size={20} />
-                                                        </>
-                                                    )}
-                                                </button>
-                                            </div>
-                                        </motion.div>
+                                        </div>
                                     )}
-                                </AnimatePresence>
-                            </div>
-                        </motion.div>
+
+                                    {/* Step 4: Billing Recap */}
+                                    {step === 4 && (
+                                        <div className="space-y-10">
+                                            <div className="space-y-4">
+                                                <label className="text-xs font-black uppercase text-slate-400 tracking-widest ml-4">Plan de Facturation</label>
+                                                <div className="flex gap-2 p-2 bg-slate-100 rounded-[28px]">
+                                                    {['monthly', 'yearly', 'lifetime'].filter(int => {
+                                                        if (!currentPlan) return false;
+                                                        if (int === 'monthly') return true;
+                                                        if (int === 'yearly') return !!currentPlan.yearly_price;
+                                                        if (int === 'lifetime') return !!currentPlan.lifetime_price;
+                                                        return false;
+                                                    }).map(interval => (
+                                                        <button
+                                                            key={interval}
+                                                            type="button"
+                                                            onClick={() => setFormData({ ...formData, interval })}
+                                                            className={cn(
+                                                                "flex-1 py-4 px-4 rounded-[22px] text-sm font-black transition-all whitespace-nowrap",
+                                                                formData.interval === interval ? "bg-white text-slate-900 shadow-lg shadow-slate-900/5 ring-1 ring-slate-900/5" : "text-slate-500 hover:text-slate-900"
+                                                            )}
+                                                        >
+                                                            {interval === 'monthly' ? 'Mensuel' : interval === 'yearly' ? 'Annuel (-20%)' : 'Accès à Vie'}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="bg-slate-900 p-10 rounded-[40px] text-white shadow-2xl relative overflow-hidden group">
+                                                <div className="absolute top-0 right-0 w-32 h-32 bg-brand-primary/10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-1000" />
+
+                                                <div className="space-y-4 relative z-10">
+                                                    <div className="flex justify-between items-center text-slate-400 font-bold uppercase tracking-widest text-[10px]">
+                                                        <span>Détails Transaction</span>
+                                                        <span>Résumé Final</span>
+                                                    </div>
+                                                    <div className="h-px bg-white/10" />
+                                                    <div className="flex justify-between text-lg font-black">
+                                                        <span>{currentPlan?.name} SaaS</span>
+                                                        <span className="text-brand-primary">
+                                                            {(formData.interval === 'monthly' ? Number(currentPlan?.monthly_price) :
+                                                                formData.interval === 'yearly' ? Number(currentPlan?.yearly_price) :
+                                                                    Number(currentPlan?.lifetime_price)).toLocaleString()} F
+                                                        </span>
+                                                    </div>
+                                                    {Number(currentPlan?.setup_fee) > 0 && (
+                                                        <div className="flex justify-between text-sm font-bold text-slate-400">
+                                                            <span>Frais Technique Initial</span>
+                                                            <span>{Number(currentPlan.setup_fee).toLocaleString()} F</span>
+                                                        </div>
+                                                    )}
+                                                    <div className="h-px bg-white/10" />
+                                                    <div className="flex justify-between items-end pt-2">
+                                                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Total Agence</span>
+                                                        <div className="text-right">
+                                                            <span className="text-4xl font-black text-white">{calculateTotal().toLocaleString()} <span className="text-brand-primary text-xl">F</span></span>
+                                                            <p className="text-[10px] font-black text-slate-400 mt-1 uppercase">Paiement via Solde Compte</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Navigation Controls */}
+                                    <div className="flex gap-4 pt-4">
+                                        {step > 1 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setStep(step - 1)}
+                                                disabled={processing}
+                                                className="h-16 px-10 bg-slate-100 text-slate-600 rounded-[24px] font-black hover:bg-slate-200 transition-all"
+                                            >
+                                                Précédent
+                                            </button>
+                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={() => step < 4 ? setStep(step + 1) : handlePurchase()}
+                                            disabled={
+                                                processing ||
+                                                (step === 1 && !formData.plan_id) ||
+                                                (step === 2 && !formData.template_id) ||
+                                                (step === 3 && (!formData.site_name || !formData.subdomain))
+                                            }
+                                            className="flex-1 h-16 bg-slate-900 text-white rounded-[24px] font-black shadow-xl shadow-slate-900/10 hover:bg-brand-primary hover:shadow-brand-primary/20 hover:-translate-y-1 active:translate-y-0 disabled:opacity-50 disabled:transform-none transition-all flex items-center justify-center gap-3 relative overflow-hidden"
+                                        >
+                                            {processing ? (
+                                                <div className="h-6 w-6 border-3 border-white/20 border-t-white rounded-full animate-spin" />
+                                            ) : (
+                                                <>
+                                                    {step === 4 ? "Lancer mon Agence" : "Suivant"}
+                                                    <ArrowRight size={20} />
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
-                )}
-            </AnimatePresence>
+                </div>
+            )}
         </div>
     );
 }

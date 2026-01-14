@@ -14,23 +14,10 @@ import {
     Activity,
     CreditCard as CardIcon
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+
 import { cn } from '../../utils/cn';
 
-const container = {
-    hidden: { opacity: 0 },
-    show: {
-        opacity: 1,
-        transition: {
-            staggerChildren: 0.1
-        }
-    }
-};
 
-const item = {
-    hidden: { y: 20, opacity: 0 },
-    show: { y: 0, opacity: 1 }
-};
 
 export default function AdminFinancePage() {
     const [stats, setStats] = useState(null);
@@ -101,9 +88,8 @@ export default function AdminFinancePage() {
     };
 
     const StatCard = ({ title, value, icon: Icon, color, trend }) => (
-        <motion.div
-            variants={item}
-            className="bg-white p-6 rounded-[24px] shadow-sm border border-slate-100 relative overflow-hidden group hover:shadow-md transition-all"
+        <div
+            className="bg-white p-6 rounded-[24px] shadow-sm border border-slate-100 relative overflow-hidden group hover:shadow-md transition-all animate-[fade-in-up_0.3s_ease-out]"
         >
             <div className={cn("absolute top-0 right-0 w-32 h-32 bg-gradient-to-br opacity-5 rounded-full -mr-10 -mt-10 transition-transform group-hover:scale-110", color)} />
 
@@ -121,7 +107,7 @@ export default function AdminFinancePage() {
 
             <h3 className="text-slate-500 text-sm font-bold mb-1">{title}</h3>
             <p className="text-3xl font-black text-slate-800 tracking-tight">{value}</p>
-        </motion.div>
+        </div>
     );
 
     if (loading) {
@@ -133,11 +119,8 @@ export default function AdminFinancePage() {
     }
 
     return (
-        <motion.div
-            variants={container}
-            initial="hidden"
-            animate="show"
-            className="space-y-8 max-w-7xl mx-auto"
+        <div
+            className="space-y-8 max-w-7xl mx-auto animate-[fade-in_0.5s_ease-out]"
         >
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -179,7 +162,7 @@ export default function AdminFinancePage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
                 {/* Payment Methods */}
-                <motion.div variants={item} className="lg:col-span-1 bg-white rounded-[24px] border border-slate-200 shadow-xl shadow-slate-200/50 flex flex-col overflow-hidden">
+                <div className="lg:col-span-1 bg-white rounded-[24px] border border-slate-200 shadow-xl shadow-slate-200/50 flex flex-col overflow-hidden animate-[fade-in-up_0.5s_ease-out]">
                     <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
                         <h3 className="text-lg font-black text-slate-900">Méthodes</h3>
                         <button className="text-xs font-bold text-blue-600 hover:text-blue-700">Configurer</button>
@@ -230,10 +213,10 @@ export default function AdminFinancePage() {
                             </div>
                         ))}
                     </div>
-                </motion.div>
+                </div>
 
                 {/* Recent Transactions */}
-                <motion.div variants={item} className="lg:col-span-2 bg-white rounded-[24px] border border-slate-200 shadow-xl shadow-slate-200/50 flex flex-col overflow-hidden">
+                <div className="lg:col-span-2 bg-white rounded-[24px] border border-slate-200 shadow-xl shadow-slate-200/50 flex flex-col overflow-hidden animate-[fade-in-up_0.6s_ease-out]">
                     <div className="p-6 border-b border-slate-100 bg-slate-50/50">
                         <h3 className="text-lg font-black text-slate-900">Transactions Récentes</h3>
                     </div>
@@ -306,8 +289,8 @@ export default function AdminFinancePage() {
                             </tbody>
                         </table>
                     </div>
-                </motion.div>
+                </div>
             </div>
-        </motion.div>
+        </div>
     );
 }

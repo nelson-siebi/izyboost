@@ -1,23 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { adminApi } from '../../features/admin/adminApi';
-import { Globe, Edit2, Check, X, ExternalLink, Loader2, Cloud, Layout, Server, AlertCircle, Plus, Lock, User, Link as LinkIcon, Mail } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../utils/cn';
+import { Globe, Edit2, Check, X, ExternalLink, Loader2, Cloud, Layout, Server, AlertCircle, Plus, Lock, User, Link as LinkIcon, Mail } from 'lucide-react';
 
-const container = {
-    hidden: { opacity: 0 },
-    show: {
-        opacity: 1,
-        transition: {
-            staggerChildren: 0.1
-        }
-    }
-};
-
-const item = {
-    hidden: { y: 20, opacity: 0 },
-    show: { y: 0, opacity: 1 }
-};
 
 export default function AdminSaaSPage() {
     const [activeTab, setActiveTab] = useState('plans');
@@ -168,11 +153,8 @@ export default function AdminSaaSPage() {
     }
 
     return (
-        <motion.div
-            variants={container}
-            initial="hidden"
-            animate="show"
-            className="space-y-8 max-w-7xl mx-auto pb-20"
+        <div
+            className="space-y-8 max-w-7xl mx-auto pb-20 animate-[fade-in_0.5s_ease-out]"
         >
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -222,36 +204,31 @@ export default function AdminSaaSPage() {
 
             {/* Quick Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <motion.div variants={item} className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-[24px] p-6 text-white shadow-lg shadow-blue-500/20 relative overflow-hidden">
+                <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-[24px] p-6 text-white shadow-lg shadow-blue-500/20 relative overflow-hidden animate-[fade-in-up_0.3s_ease-out]">
                     <Cloud className="absolute -right-4 -bottom-4 h-32 w-32 opacity-10" />
                     <p className="font-bold text-blue-100 uppercase text-xs tracking-wider mb-2">Plateformes Actives</p>
                     <p className="text-4xl font-black">{stats.active_platforms}</p>
-                </motion.div>
-                <motion.div variants={item} className="bg-white rounded-[24px] p-6 border border-slate-200 shadow-sm relative overflow-hidden">
+                </div>
+                <div className="bg-white rounded-[24px] p-6 border border-slate-200 shadow-sm relative overflow-hidden animate-[fade-in-up_0.4s_ease-out]">
                     <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-500/5 rounded-bl-full" />
                     <p className="font-bold text-slate-400 uppercase text-xs tracking-wider mb-2">Plan Populaire</p>
                     <p className="text-2xl font-black text-slate-800">{stats.top_plan}</p>
-                </motion.div>
-                <motion.div variants={item} className="bg-white rounded-[24px] p-6 border border-slate-200 shadow-sm relative overflow-hidden">
+                </div>
+                <div className="bg-white rounded-[24px] p-6 border border-slate-200 shadow-sm relative overflow-hidden animate-[fade-in-up_0.5s_ease-out]">
                     <p className="font-bold text-slate-400 uppercase text-xs tracking-wider mb-2">Revenu Mensuel Est.</p>
                     <p className="text-2xl font-black text-slate-800">{(stats.active_platforms * 15000).toLocaleString()} F</p>
-                </motion.div>
+                </div>
             </div>
 
             {/* Content Area */}
-            <AnimatePresence mode="wait">
+            <div>
                 {activeTab === 'plans' ? (
-                    <motion.div
-                        key="plans"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        transition={{ duration: 0.2 }}
-                        className="space-y-6"
+                    <div
+                        className="space-y-6 animate-[fade-in_0.3s_ease-out]"
                     >
                         <div className="flex justify-end">
                             {isCreatingPlan ? (
-                                <div className="bg-white p-6 rounded-[24px] shadow-xl w-full max-w-2xl border border-slate-200">
+                                <div className="bg-white p-6 rounded-[24px] shadow-xl w-full max-w-2xl border border-slate-200 animate-[fade-in-up_0.3s_ease-out]">
                                     <div className="flex justify-between items-center mb-4">
                                         <h3 className="font-black text-lg">Créer un Nouveau Plan</h3>
                                         <button onClick={() => setIsCreatingPlan(false)}><X size={20} className="text-slate-400" /></button>
@@ -407,15 +384,11 @@ export default function AdminSaaSPage() {
                                 </div>
                             ))}
                         </div>
-                    </motion.div>
+                    </div>
                 ) : activeTab === 'subscriptions' ? (
-                    <motion.div
+                    <div
                         key="subscriptions"
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -20 }}
-                        transition={{ duration: 0.2 }}
-                        className="bg-white rounded-[24px] border border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden"
+                        className="bg-white rounded-[24px] border border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden animate-[fade-in_0.3s_ease-out]"
                     >
                         <div className="overflow-x-auto">
                             <table className="w-full">
@@ -482,14 +455,11 @@ export default function AdminSaaSPage() {
                                 </tbody>
                             </table>
                         </div>
-                    </motion.div>
+                    </div>
                 ) : activeTab === 'pending' ? (
-                    <motion.div
+                    <div
                         key="pending"
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                        className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-[fade-in_0.3s_ease-out]"
                     >
                         {subscriptions.filter(s => s.status === 'pending').map((sub) => (
                             <div key={sub.id} className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xl shadow-slate-200/50">
@@ -545,101 +515,93 @@ export default function AdminSaaSPage() {
                                 <p className="text-slate-500 font-bold">Aucune demande en attente</p>
                             </div>
                         )}
-                    </motion.div>
+                    </div>
                 ) : null}
-            </AnimatePresence>
+            </div>
 
-            <AnimatePresence>
-                {isApproving && (
-                    <>
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-50"
-                            onClick={() => setIsApproving(false)}
-                        />
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-[32px] shadow-2xl z-50 p-6"
-                        >
-                            <h3 className="text-xl font-black text-slate-900 mb-4">Valider & Livrer le Site</h3>
+            {isApproving && (
+                <>
+                    <div
+                        className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-50 animate-[fade-in_0.2s_ease-out]"
+                        onClick={() => setIsApproving(false)}
+                    />
+                    <div
+                        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-[32px] shadow-2xl z-50 p-6 animate-[scale-in_0.2s_ease-out]"
+                    >
+                        <h3 className="text-xl font-black text-slate-900 mb-4">Valider & Livrer le Site</h3>
 
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="text-xs font-black uppercase text-slate-500 tracking-widest ml-2 mb-1 block">URL Finale du Site</label>
-                                    <div className="relative">
-                                        <Globe className="absolute left-3 top-3 text-slate-400" size={16} />
-                                        <input
-                                            value={approvalForm.site_url}
-                                            onChange={e => setApprovalForm({ ...approvalForm, site_url: e.target.value })}
-                                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 rounded-xl border border-slate-200 font-bold text-slate-900 text-sm focus:outline-none focus:border-emerald-500"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="p-4 bg-slate-50 rounded-xl space-y-3 border border-slate-100">
-                                    <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Identifiants Admin</p>
-
-                                    <div className="flex items-center gap-2">
-                                        <LinkIcon size={14} className="text-slate-400" />
-                                        <input
-                                            value={approvalForm.admin_url}
-                                            onChange={e => setApprovalForm({ ...approvalForm, admin_url: e.target.value })}
-                                            className="bg-transparent text-sm font-medium text-slate-700 w-full focus:outline-none placeholder-slate-300"
-                                            placeholder="/admin path"
-                                        />
-                                    </div>
-                                    <div className="h-px bg-slate-200" />
-                                    <div className="flex items-center gap-2">
-                                        <User size={14} className="text-slate-400" />
-                                        <input
-                                            value={approvalForm.admin_username}
-                                            onChange={e => setApprovalForm({ ...approvalForm, admin_username: e.target.value })}
-                                            className="bg-transparent text-sm font-medium text-slate-700 w-full focus:outline-none"
-                                            placeholder="Username"
-                                        />
-                                    </div>
-                                    <div className="h-px bg-slate-200" />
-                                    <div className="flex items-center gap-2">
-                                        <Lock size={14} className="text-slate-400" />
-                                        <input
-                                            value={approvalForm.admin_password}
-                                            onChange={e => setApprovalForm({ ...approvalForm, admin_password: e.target.value })}
-                                            className="bg-transparent text-sm font-medium text-slate-700 w-full focus:outline-none"
-                                            placeholder="Password"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-3 p-3 rounded-xl border border-emerald-100 bg-emerald-50/50">
-                                    <div className={`w-5 h-5 rounded-md flex items-center justify-center cursor-pointer ${approvalForm.send_email ? 'bg-emerald-500' : 'bg-slate-200'}`} onClick={() => setApprovalForm({ ...approvalForm, send_email: !approvalForm.send_email })}>
-                                        {approvalForm.send_email && <Check size={14} className="text-white" />}
-                                    </div>
-                                    <span className="text-sm font-bold text-slate-700">Envoyer l'email de bienvenue</span>
-                                </div>
-
-                                <div className="flex gap-3 mt-6">
-                                    <button
-                                        onClick={() => setIsApproving(false)}
-                                        className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition-colors"
-                                    >
-                                        Annuler
-                                    </button>
-                                    <button
-                                        onClick={handleConfirmApproval}
-                                        className="flex-1 py-3 rounded-xl bg-emerald-500 text-white font-bold hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-500/20"
-                                    >
-                                        Valider & Envoyer
-                                    </button>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="text-xs font-black uppercase text-slate-500 tracking-widest ml-2 mb-1 block">URL Finale du Site</label>
+                                <div className="relative">
+                                    <Globe className="absolute left-3 top-3 text-slate-400" size={16} />
+                                    <input
+                                        value={approvalForm.site_url}
+                                        onChange={e => setApprovalForm({ ...approvalForm, site_url: e.target.value })}
+                                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 rounded-xl border border-slate-200 font-bold text-slate-900 text-sm focus:outline-none focus:border-emerald-500"
+                                    />
                                 </div>
                             </div>
-                        </motion.div>
-                    </>
-                )}
-            </AnimatePresence>
-        </motion.div>
+
+                            <div className="p-4 bg-slate-50 rounded-xl space-y-3 border border-slate-100">
+                                <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Identifiants Admin</p>
+
+                                <div className="flex items-center gap-2">
+                                    <LinkIcon size={14} className="text-slate-400" />
+                                    <input
+                                        value={approvalForm.admin_url}
+                                        onChange={e => setApprovalForm({ ...approvalForm, admin_url: e.target.value })}
+                                        className="bg-transparent text-sm font-medium text-slate-700 w-full focus:outline-none placeholder-slate-300"
+                                        placeholder="/admin path"
+                                    />
+                                </div>
+                                <div className="h-px bg-slate-200" />
+                                <div className="flex items-center gap-2">
+                                    <User size={14} className="text-slate-400" />
+                                    <input
+                                        value={approvalForm.admin_username}
+                                        onChange={e => setApprovalForm({ ...approvalForm, admin_username: e.target.value })}
+                                        className="bg-transparent text-sm font-medium text-slate-700 w-full focus:outline-none"
+                                        placeholder="Username"
+                                    />
+                                </div>
+                                <div className="h-px bg-slate-200" />
+                                <div className="flex items-center gap-2">
+                                    <Lock size={14} className="text-slate-400" />
+                                    <input
+                                        value={approvalForm.admin_password}
+                                        onChange={e => setApprovalForm({ ...approvalForm, admin_password: e.target.value })}
+                                        className="bg-transparent text-sm font-medium text-slate-700 w-full focus:outline-none"
+                                        placeholder="Password"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-3 p-3 rounded-xl border border-emerald-100 bg-emerald-50/50">
+                                <div className={`w-5 h-5 rounded-md flex items-center justify-center cursor-pointer ${approvalForm.send_email ? 'bg-emerald-500' : 'bg-slate-200'}`} onClick={() => setApprovalForm({ ...approvalForm, send_email: !approvalForm.send_email })}>
+                                    {approvalForm.send_email && <Check size={14} className="text-white" />}
+                                </div>
+                                <span className="text-sm font-bold text-slate-700">Envoyer l'email de bienvenue</span>
+                            </div>
+
+                            <div className="flex gap-3 mt-6">
+                                <button
+                                    onClick={() => setIsApproving(false)}
+                                    className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition-colors"
+                                >
+                                    Annuler
+                                </button>
+                                <button
+                                    onClick={handleConfirmApproval}
+                                    className="flex-1 py-3 rounded-xl bg-emerald-500 text-white font-bold hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-500/20"
+                                >
+                                    Valider & Envoyer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
+        </div>
     );
 }

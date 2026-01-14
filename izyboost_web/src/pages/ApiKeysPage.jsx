@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Key, Plus, Trash2, Copy, Shield, Code, Terminal, CheckCircle2, Zap, ShieldCheck, Info } from 'lucide-react';
 import { developerApi } from '../features/common/supportApi';
 import { cn } from '../utils/cn';
@@ -132,10 +131,9 @@ export default function ApiKeysPage() {
                             [1, 2].map(i => <div key={i} className="h-24 bg-white rounded-[24px] border border-slate-100 animate-pulse" />)
                         ) : keys.length > 0 ? (
                             keys.map(key => (
-                                <motion.div
-                                    layout
+                                <div
                                     key={key.id}
-                                    className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 group hover:border-brand-primary/20 transition-all"
+                                    className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 group hover:border-brand-primary/20 transition-all animate-[fade-in-up_0.3s_ease-out]"
                                 >
                                     <div className="flex items-center gap-4">
                                         <div className="h-12 w-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-brand-primary/10 group-hover:text-brand-primary transition-colors">
@@ -170,7 +168,8 @@ export default function ApiKeysPage() {
                                             <Trash2 size={18} />
                                         </button>
                                     </div>
-                                </motion.div>
+                                </div>
+
                             ))
                         ) : (
                             <div className="text-center py-16 bg-white rounded-[32px] border border-dashed border-slate-200">
@@ -219,20 +218,15 @@ export default function ApiKeysPage() {
                             </form>
 
                             {notification && (
-                                <AnimatePresence>
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: -10 }}
-                                        className={cn(
-                                            "mt-6 p-3 rounded-xl flex items-center gap-3 text-xs font-bold",
-                                            notification.type === 'success' ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/20" : "bg-red-500/20 text-red-400 border border-red-500/20"
-                                        )}
-                                    >
-                                        <CheckCircle2 size={16} />
-                                        {notification.message}
-                                    </motion.div>
-                                </AnimatePresence>
+                                <div
+                                    className={cn(
+                                        "mt-6 p-3 rounded-xl flex items-center gap-3 text-xs font-bold animate-[fade-in-up_0.3s_ease-out]",
+                                        notification.type === 'success' ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/20" : "bg-red-500/20 text-red-400 border border-red-500/20"
+                                    )}
+                                >
+                                    <CheckCircle2 size={16} />
+                                    {notification.message}
+                                </div>
                             )}
 
                             <div className="mt-8 pt-6 border-t border-white/5 space-y-4">
@@ -254,6 +248,6 @@ export default function ApiKeysPage() {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

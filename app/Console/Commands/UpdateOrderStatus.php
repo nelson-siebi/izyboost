@@ -30,8 +30,8 @@ class UpdateOrderStatus extends Command
      */
     public function handle()
     {
-        // 1. Get Pending/Processing Orders with External ID
-        $orders = Order::whereIn('status', ['pending', 'processing'])
+        // 1. Get Pending/Processing/In Progress Orders with External ID
+        $orders = Order::whereIn('status', ['pending', 'processing', 'in_progress'])
             ->whereNotNull('external_order_id')
             ->whereNotNull('external_provider_id')
             ->get();
@@ -103,7 +103,7 @@ class UpdateOrderStatus extends Command
             }
 
             // Perform Update
-            DB::transaction(function () use ($order, $internalStatus, $externalStatus) {
+            DB::transaction(function () use ($order, $internalStatus, $externalStatus, $data) {
                 $order->status = $internalStatus;
 
                 // Optional: Store remains or start_count if provided

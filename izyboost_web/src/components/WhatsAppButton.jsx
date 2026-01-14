@@ -1,5 +1,5 @@
 import { MessageCircle } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+
 import { useEffect, useState } from 'react';
 import { adminApi } from '../features/admin/adminApi';
 
@@ -43,35 +43,28 @@ const WhatsAppButton = () => {
     if (!whatsappNumber) return null;
 
     return (
-        <AnimatePresence mode="wait">
-            {isVisible && (
-                <motion.a
-                    href={whatsappNumber}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    initial={{ scale: 0, opacity: 0, y: 20 }}
-                    animate={{ scale: 1, opacity: 1, y: 0 }}
-                    exit={{ scale: 0, opacity: 0, y: 20 }}
-                    whileHover={{ scale: 1.1, y: -5 }}
-                    whileTap={{ scale: 0.9 }}
-                    className="fixed bottom-24 lg:bottom-10 right-6 z-[100] group"
-                >
-                    {/* Tooltip */}
-                    <div className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-white px-4 py-2 rounded-2xl shadow-xl border border-slate-100 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
-                        <p className="text-sm font-black text-slate-800">Support WhatsApp</p>
-                    </div>
+        isVisible && (
+            <a
+                href={whatsappNumber}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="fixed bottom-24 lg:bottom-10 right-6 z-[100] group transition-all duration-300 hover:-translate-y-1 hover:scale-110 active:scale-90 animate-[fade-in-up_0.3s_ease-out]"
+            >
+                {/* Tooltip */}
+                <div className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-white px-4 py-2 rounded-2xl shadow-xl border border-slate-100 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                    <p className="text-sm font-black text-slate-800">Support WhatsApp</p>
+                </div>
 
-                    {/* Button */}
-                    <div className="h-14 w-14 lg:h-16 lg:w-16 bg-[#25D366] rounded-full flex items-center justify-center text-white shadow-2xl shadow-green-500/40 relative">
-                        <MessageCircle size={32} className="fill-white/20" />
-                        <span className="absolute -top-1 -right-1 flex h-4 w-4">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-4 w-4 bg-white/20 border-2 border-green-500"></span>
-                        </span>
-                    </div>
-                </motion.a>
-            )}
-        </AnimatePresence>
+                {/* Button */}
+                <div className="h-14 w-14 lg:h-16 lg:w-16 bg-[#25D366] rounded-full flex items-center justify-center text-white shadow-2xl shadow-green-500/40 relative">
+                    <MessageCircle size={32} className="fill-white/20" />
+                    <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-4 w-4 bg-white/20 border-2 border-green-500"></span>
+                    </span>
+                </div>
+            </a>
+        )
     );
 };
 

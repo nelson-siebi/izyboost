@@ -1,10 +1,8 @@
 // Last updated: 2026-01-10 14:59
 import React, { useState, useEffect } from 'react';
-import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
+
 import {
     Zap,
-    ShieldCheck,
-    Globe,
     Users,
     ArrowRight,
     CheckCircle2,
@@ -17,13 +15,16 @@ import {
     DollarSign,
     Heart,
     Star,
-    Award
+    Award,
+    ShieldCheck,
+    Globe
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { cn } from '../utils/cn';
 import SEO from '../components/SEO';
 import LandingLayout from '../layouts/LandingLayout';
+import TutorialCTA from '../components/TutorialCTA';
 
 const features = [
     {
@@ -52,7 +53,7 @@ const features = [
 const faqs = [
     {
         q: "Est-ce que c'est risqué pour mon compte ?",
-        a: "Absolument pas. IzyBoost utilise des méthodes de promotion conformes aux politiques des plateformes. Nous n'avons jamais besoin de vos identifiants de connexion."
+        a: "Absolument pas. Votre plateforme utilise des méthodes de promotion conformes aux politiques des plateformes. Nous n'avons jamais besoin de vos identifiants de connexion."
     },
     {
         q: "Combien de temps prend la livraison ?",
@@ -92,8 +93,8 @@ export default function LandingPage() {
         <div className="min-h-screen bg-white selection:bg-brand-primary/20 selection:text-brand-primary">
             <SEO
                 title="Accueil"
-                description="IzyBoost est la plateforme #1 de Social Media Marketing en Afrique. Boostez vos followers, likes et vues sur Instagram, TikTok, Facebook et YouTube."
-                keywords="smm panel cameroun, boost instagram, abonnés tiktok, marketing réseaux sociaux, izyboost"
+                description="La plateforme #1 de Social Media Marketing en Afrique. Boostez vos followers, likes et vues sur Instagram, TikTok, Facebook et YouTube."
+                keywords="smm panel cameroun, boost instagram, abonnés tiktok, marketing réseaux sociaux, social media"
             />
 
             {/* Sticky Navigation Area (Will be handled by LandingLayout, but adding here as placeholder or just using regular padding) */}
@@ -107,40 +108,28 @@ export default function LandingPage() {
                 </div>
 
                 <div className="max-w-[1240px] mx-auto text-center space-y-8">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6 }}
-                        className="inline-flex items-center gap-2 px-6 py-2 bg-slate-900 text-white rounded-full text-xs font-black uppercase tracking-[0.2em] shadow-2xl shadow-slate-900/20"
+                    <div
+                        className="inline-flex items-center gap-2 px-6 py-2 bg-slate-900 text-white rounded-full text-xs font-black uppercase tracking-[0.2em] shadow-2xl shadow-slate-900/20 animate-[fade-in-up_0.6s_ease-out]"
                     >
                         <Zap size={14} className="text-brand-primary animate-pulse" />
                         LA RÉFÉRENCE DU SMM EN AFRIQUE
-                    </motion.div>
+                    </div>
 
-                    <motion.h1
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.1 }}
-                        className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-black text-slate-900 leading-[0.95] tracking-tight px-4"
+                    <h1
+                        className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-black text-slate-900 leading-[0.95] tracking-tight px-4 animate-[fade-in-up_0.8s_ease-out_0.1s_both]"
                     >
                         Devenez <span className="text-brand-primary italic">Incontournable</span> <br />
                         sur les réseaux.
-                    </motion.h1>
+                    </h1>
 
-                    <motion.p
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.2 }}
-                        className="text-base sm:text-lg lg:text-xl text-slate-500 font-medium max-w-3xl mx-auto leading-relaxed px-4"
+                    <p
+                        className="text-base sm:text-lg lg:text-xl text-slate-500 font-medium max-w-3xl mx-auto leading-relaxed px-4 animate-[fade-in-up_0.8s_ease-out_0.2s_both]"
                     >
                         Propulsez votre influence avec des services de haute qualité, une livraison ultra-rapide et un support client exceptionnel. Rejoignez plus de 10 000 créateurs et entreprises.
-                    </motion.p>
+                    </p>
 
-                    <motion.div
-                        initial={{ opacity: 0, y: 30 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.3 }}
-                        className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4"
+                    <div
+                        className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4 animate-[fade-in-up_0.8s_ease-out_0.3s_both]"
                     >
                         <Link
                             to="/auth/register"
@@ -154,21 +143,18 @@ export default function LandingPage() {
                         >
                             Voir les tarifs
                         </Link>
-                    </motion.div>
+                    </div>
 
                     {/* Social Proof */}
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 1, delay: 0.8 }}
-                        className="pt-16 flex flex-wrap justify-center items-center gap-8 lg:gap-16 opacity-40 grayscale"
+                    <div
+                        className="pt-16 flex flex-wrap justify-center items-center gap-8 lg:gap-16 opacity-40 grayscale animate-[fade-in_1s_ease-out_0.8s_both]"
                     >
                         <p className="w-full text-xs font-black text-slate-400 uppercase tracking-widest mb-4">PLUS DE 500 SERVICES DISPONIBLES SUR</p>
                         <div className="flex items-center gap-3"><Users size={24} /> <span className="font-black text-xl tracking-tighter">INSTAGRAM</span></div>
                         <div className="flex items-center gap-3"><Zap size={24} /> <span className="font-black text-xl tracking-tighter">TIKTOK</span></div>
                         <div className="flex items-center gap-3"><Heart size={24} /> <span className="font-black text-xl tracking-tighter">FACEBOOK</span></div>
                         <div className="flex items-center gap-3"><Star size={24} /> <span className="font-black text-xl tracking-tighter">YOUTUBE</span></div>
-                    </motion.div>
+                    </div>
                 </div>
             </section>
 
@@ -201,14 +187,13 @@ export default function LandingPage() {
                                 La technologie au service de votre <span className="text-brand-primary italic">croissance</span>.
                             </h3>
                             <p className="text-lg text-slate-500 font-medium leading-relaxed">
-                                IzyBoost n'est pas qu'un simple panneau SMM. C'est un partenaire stratégique qui utilise les meilleures API mondiales pour vous garantir un service irréprochable.
+                                Notre plateforme n'est pas qu'un simple panneau SMM. C'est un partenaire stratégique qui utilise les meilleures API mondiales pour vous garantir un service irréprochable.
                             </p>
                             <div className="pt-8 space-y-4">
                                 {features.map((feature, i) => (
-                                    <motion.div
+                                    <div
                                         key={i}
-                                        whileHover={{ x: 10 }}
-                                        className="flex items-center gap-4 p-4 rounded-3xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-all"
+                                        className="flex items-center gap-4 p-4 rounded-3xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-all hover:translate-x-2"
                                     >
                                         <div className={cn("h-12 w-12 rounded-2xl flex items-center justify-center shrink-0", feature.color)}>
                                             <feature.icon size={24} />
@@ -217,7 +202,7 @@ export default function LandingPage() {
                                             <h4 className="font-black text-slate-900 text-sm italic">{feature.title}</h4>
                                             <p className="text-xs text-slate-500 font-medium mt-1">{feature.desc}</p>
                                         </div>
-                                    </motion.div>
+                                    </div>
                                 ))}
                             </div>
                         </div>
@@ -316,21 +301,23 @@ export default function LandingPage() {
                                         <ChevronDown size={20} />
                                     </div>
                                 </button>
-                                <AnimatePresence>
-                                    {openFaq === i && (
-                                        <motion.div
-                                            initial={{ height: 0, opacity: 0 }}
-                                            animate={{ height: "auto", opacity: 1 }}
-                                            exit={{ height: 0, opacity: 0 }}
-                                            className="px-8 pb-8"
-                                        >
-                                            <p className="text-slate-500 font-medium leading-relaxed">{faq.a}</p>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
+                                {openFaq === i && (
+                                    <div
+                                        className="px-8 pb-8 animate-[fade-in_0.2s_ease-out]"
+                                    >
+                                        <p className="text-slate-500 font-medium leading-relaxed">{faq.a}</p>
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>
+                </div>
+            </section>
+
+            {/* Tutorial Banner Section */}
+            <section className="py-20 px-6 lg:px-12 bg-white">
+                <div className="max-w-7xl mx-auto">
+                    <TutorialCTA className="shadow-2xl shadow-brand-primary/10" />
                 </div>
             </section>
 

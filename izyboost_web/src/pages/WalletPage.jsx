@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+
 import { Wallet, CreditCard, History, ArrowUpRight, ArrowDownLeft, Search, Filter, Plus, Smartphone, Globe, AlertCircle, CheckCircle2, Copy } from 'lucide-react';
 import { walletApi } from '../features/wallet/walletApi';
 import { cn } from '../utils/cn';
 import apiClient from '../api/client';
+import Skeleton from '../components/Skeleton';
 
 export default function WalletPage() {
     const [balance, setBalance] = useState(0);
@@ -226,26 +227,23 @@ export default function WalletPage() {
                             </h2>
 
                             {notification && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: -10 }}
-                                    animate={{ opacity: 1, y: 0 }}
+                                <div
                                     className={cn(
-                                        "mb-6 p-4 rounded-2xl flex items-center gap-3 border",
+                                        "mb-6 p-4 rounded-2xl flex items-center gap-3 border animate-[fade-in_0.3s_ease-out]",
                                         notification.type === 'success' ? "bg-emerald-50 border-emerald-100 text-emerald-600" : "bg-red-50 border-red-100 text-red-600"
                                     )}
                                 >
                                     {notification.type === 'success' ? <CheckCircle2 size={20} /> : <AlertCircle size={20} />}
                                     <span className="font-bold text-sm">{notification.message}</span>
                                     <button onClick={() => setNotification(null)} className="ml-auto hover:opacity-70"><Plus size={16} className="rotate-45" /></button>
-                                </motion.div>
+                                </div>
                             )}
 
+
                             <form onSubmit={handleDeposit} className="space-y-8">
-                                <motion.div
+                                <div
                                     key="form-state"
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    className="space-y-8"
+                                    className="space-y-8 animate-[fade-in_0.3s_ease-out]"
                                 >
                                     {/* Methods Grid - Grouped */}
                                     <div className="space-y-6">
@@ -389,7 +387,7 @@ export default function WalletPage() {
                                             </>
                                         )}
                                     </button>
-                                </motion.div>
+                                </div>
                             </form>
                         </div>
                     </div >
@@ -410,13 +408,16 @@ export default function WalletPage() {
 
                         <div className="flex-1 overflow-y-auto pr-2 space-y-4 max-h-[600px] custom-scrollbar">
                             {loading ? (
-                                [1, 2, 3, 4].map(i => (
-                                    <div key={i} className="flex items-center justify-between p-4 rounded-2xl border border-slate-100 bg-slate-50/50 animate-pulse">
-                                        <div className="h-10 w-10 bg-slate-200 rounded-xl" />
-                                        <div className="space-y-2">
-                                            <div className="h-3 w-24 bg-slate-200 rounded" />
-                                            <div className="h-2 w-16 bg-slate-200 rounded" />
+                                [1, 2, 3, 4, 5].map(i => (
+                                    <div key={i} className="flex items-center justify-between p-4 rounded-2xl border border-slate-100 bg-white">
+                                        <div className="flex items-center gap-3">
+                                            <Skeleton className="h-10 w-10" />
+                                            <div className="space-y-2">
+                                                <Skeleton className="h-4 w-32" />
+                                                <Skeleton className="h-3 w-20" />
+                                            </div>
                                         </div>
+                                        <Skeleton className="h-6 w-20" />
                                     </div>
                                 ))
                             ) : transactions && transactions.length > 0 ? (
@@ -468,97 +469,85 @@ export default function WalletPage() {
                 </div >
             </div >
             {/* Transaction History Overlay when polling */}
-            < AnimatePresence >
-                {pollingRef && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md"
+            {/* Transaction History Overlay when polling */}
+            {pollingRef && (
+                <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-[fade-in_0.3s_ease-out]"
+                >
+                    <div
+                        className="bg-white rounded-[40px] shadow-2xl w-full max-w-md overflow-hidden relative animate-[scale-in_0.3s_ease-out]"
                     >
-                        <motion.div
-                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                            animate={{ scale: 1, opacity: 1, y: 0 }}
-                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                            className="bg-white rounded-[40px] shadow-2xl w-full max-w-md overflow-hidden relative"
-                        >
-                            {/* Decorative background elements */}
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-full -mr-16 -mt-16 z-0" />
-                            <div className="absolute bottom-0 left-0 w-32 h-32 bg-slate-50 rounded-full -ml-16 -mb-16 z-0" />
+                        {/* Decorative background elements */}
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-full -mr-16 -mt-16 z-0" />
+                        <div className="absolute bottom-0 left-0 w-32 h-32 bg-slate-50 rounded-full -ml-16 -mb-16 z-0" />
 
-                            <div className="relative z-10 p-10 flex flex-col items-center text-center space-y-8">
-                                <div className="relative">
-                                    <div className={cn(
-                                        "h-24 w-24 rounded-full border-4 transition-all duration-700",
-                                        pollingStatus === 'completed' ? "border-emerald-100 border-t-emerald-600 scale-110" :
-                                            pollingStatus === 'failed' ? "border-red-100 border-t-red-600" :
-                                                "border-emerald-100 border-t-emerald-600 animate-spin"
-                                    )} />
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        {pollingStatus === 'completed' ? (
-                                            <CheckCircle2 size={40} className="text-emerald-600" />
-                                        ) : pollingStatus === 'failed' ? (
-                                            <AlertCircle size={40} className="text-red-600" />
-                                        ) : (
-                                            <Smartphone size={32} className="text-emerald-600 animate-pulse" />
-                                        )}
-                                    </div>
+                        <div className="relative z-10 p-10 flex flex-col items-center text-center space-y-8">
+                            <div className="relative">
+                                <div className={cn(
+                                    "h-24 w-24 rounded-full border-4 transition-all duration-700",
+                                    pollingStatus === 'completed' ? "border-emerald-100 border-t-emerald-600 scale-110" :
+                                        pollingStatus === 'failed' ? "border-red-100 border-t-red-600" :
+                                            "border-emerald-100 border-t-emerald-600 animate-spin"
+                                )} />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    {pollingStatus === 'completed' ? (
+                                        <CheckCircle2 size={40} className="text-emerald-600" />
+                                    ) : pollingStatus === 'failed' ? (
+                                        <AlertCircle size={40} className="text-red-600" />
+                                    ) : (
+                                        <Smartphone size={32} className="text-emerald-600 animate-pulse" />
+                                    )}
                                 </div>
+                            </div>
 
-                                <div className="space-y-3">
-                                    <h3 className={cn(
-                                        "text-2xl font-black tracking-tight transition-colors",
-                                        pollingStatus === 'completed' ? "text-emerald-600" :
-                                            pollingStatus === 'failed' ? "text-red-600" : "text-slate-900"
-                                    )}>
-                                        {pollingStatus === 'completed' ? "Paiement Confirmé !" :
-                                            pollingStatus === 'failed' ? "Transaction Échouée" :
-                                                (phoneNumber ? "Action Requise" : "Vérification...")}
-                                    </h3>
-                                    <p className="text-slate-500 font-medium text-base">
-                                        {pollingStatus === 'completed' ? "Félicitations ! Votre recharge a été traitée avec succès." :
-                                            pollingStatus === 'failed' ? "Désolé, nous n'avons pas pu confirmer votre paiement." :
-                                                pollingMessage}
+                            <div className="space-y-3">
+                                <h3 className={cn(
+                                    "text-2xl font-black tracking-tight transition-colors",
+                                    pollingStatus === 'completed' ? "text-emerald-600" :
+                                        pollingStatus === 'failed' ? "text-red-600" : "text-slate-900"
+                                )}>
+                                    {pollingStatus === 'completed' ? "Paiement Confirmé !" :
+                                        pollingStatus === 'failed' ? "Transaction Échouée" :
+                                            (phoneNumber ? "Action Requise" : "Vérification...")}
+                                </h3>
+                                <p className="text-slate-500 font-medium text-base">
+                                    {pollingStatus === 'completed' ? "Félicitations ! Votre recharge a été traitée avec succès." :
+                                        pollingStatus === 'failed' ? "Désolé, nous n'avons pas pu confirmer votre paiement." :
+                                            pollingMessage}
+                                </p>
+                            </div>
+
+                            {pollingStatus === 'pending' ? (
+                                <div className="flex flex-col gap-4 w-full">
+                                    <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full w-1/3 bg-emerald-600 rounded-full shadow-[0_0_10px_rgba(5,150,105,0.5)] animate-[progress-indeterminate_1.5s_infinite_linear]"
+                                        />
+                                    </div>
+                                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center justify-center gap-2">
+                                        <span className="block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                                        Sécurisation de la transaction
                                     </p>
                                 </div>
-
-                                {pollingStatus === 'pending' ? (
-                                    <div className="flex flex-col gap-4 w-full">
-                                        <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                                            <motion.div
-                                                initial={{ x: "-100%" }}
-                                                animate={{ x: "100%" }}
-                                                transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-                                                className="h-full w-1/3 bg-emerald-600 rounded-full shadow-[0_0_10px_rgba(5,150,105,0.5)]"
-                                            />
-                                        </div>
-                                        <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest flex items-center justify-center gap-2">
-                                            <span className="block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                                            Sécurisation de la transaction
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <motion.button
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        onClick={() => {
-                                            setPollingRef(null);
-                                            setPollingStatus('pending');
-                                        }}
-                                        className={cn(
-                                            "w-full py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-lg active:scale-95",
-                                            pollingStatus === 'completed' ? "bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-200" : "bg-slate-900 text-white hover:bg-slate-800 shadow-slate-200"
-                                        )}
-                                    >
-                                        Retour au portefeuille
-                                    </motion.button>
-                                )}
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )
-                }
-            </AnimatePresence >
+                            ) : (
+                                <button
+                                    onClick={() => {
+                                        setPollingRef(null);
+                                        setPollingStatus('pending');
+                                    }}
+                                    className={cn(
+                                        "w-full py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all shadow-lg active:scale-95 animate-[fade-in-up_0.3s_ease-out]",
+                                        pollingStatus === 'completed' ? "bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-200" : "bg-slate-900 text-white hover:bg-slate-800 shadow-slate-200"
+                                    )}
+                                >
+                                    Retour au portefeuille
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )
+            }
         </div >
     );
 }
