@@ -142,15 +142,21 @@ class WalletController extends Controller
 
         $gatewayResponse = $result;
 
-        // Extract data based on response structure
-        $data = $result['data'] ?? [];
-        $gatewayTransactionId = $data['reference'] ?? ($data['transaction']['reference'] ?? null);
+        
+        $data = $result['data'] ?? $result;
+
+       
+        $transactionData = $data['transaction'] ?? [];
+        $gatewayTransactionId = $transactionData['reference_id']
+            ?? $transactionData['reference']
+            ?? $data['reference_id']
+            ?? $data['reference']
+            ?? null;
 
         if (isset($data['is_redirect']) && $data['is_redirect'] && isset($data['payment_url'])) {
             $checkoutUrl = $data['payment_url'];
 
-            // Extraction of Nelsius UUID reference from the payment URL if it differs from transaction reference
-            // Redirection URL typically has ?ref=UUID_HERE
+           
             $urlParts = parse_url($checkoutUrl);
             if (isset($urlParts['query'])) {
                 parse_str($urlParts['query'], $queryParts);
@@ -182,7 +188,7 @@ class WalletController extends Controller
             ]);
         });
 
-        // Notify Admins if pending
+        
         if ($transaction->status === 'pending') {
             try {
                 $adminEmail = config('app.admin_email');
@@ -199,7 +205,10 @@ class WalletController extends Controller
             'transaction' => $transaction,
             'checkout_url' => $checkoutUrl,
             'payment_url' => $checkoutUrl, // Frontend might look for this too
-            'reference' => $gatewayTransactionId,
+            // CRITICAL FIX: Ensure we return *some* reference for polling. 
+            // If gateway ID is missing, use internal UUID.
+            'reference' => $gatewayTransactionId ?? $transaction->uuid,
+            'nelsius_debug' => $result,
         ], 201);
     }
 
@@ -214,6 +223,7 @@ class WalletController extends Controller
             $query->where('gateway_transaction_id', $reference)
                 ->orWhere('reference', $reference)
                 ->orWhere('uuid', $reference)
+                ->orWhere('id', $reference) // Handle finding by ID just in case
                 ->orWhereRaw('gateway_response LIKE ?', ['%' . $reference . '%']);
         })->first();
 
@@ -230,24 +240,84 @@ class WalletController extends Controller
         if ($transaction->status !== 'pending') {
             return response()->json([
                 'status' => $transaction->status,
-                'message' => "Transaction déjà " . ($transaction->status === 'completed' ? 'réussie' : 'échouée'),
+                'message' => "Transaction " . ($transaction->status === 'completed' ? 'réussie' : 'échouée'),
                 'is_completed' => $transaction->status === 'completed'
+            ]);
+        }
+
+        // Try to verify with Nelsius ONLY if we have a valid gateway reference on the transaction
+        $gatewayRef = $transaction->gateway_transaction_id;
+
+        if (!$gatewayRef) {
+            // Attempt to extract it lazily if not set yet (maybe response came later?)
+            if ($transaction->gateway_response) {
+                // Ensure gateway_response is an array
+                $data = is_string($transaction->gateway_response) ? json_decode($transaction->gateway_response, true) : (array) $transaction->gateway_response;
+
+                // Check root or nested data - Nelsius uses 'reference_id'
+                $nestedData = $data['data'] ?? [];
+                $transactionData = $nestedData['transaction'] ?? [];
+
+                $gatewayRef = $transactionData['reference_id']
+                    ?? $transactionData['reference']
+                    ?? $nestedData['reference_id']
+                    ?? $nestedData['reference']
+                    ?? $data['reference_id']
+                    ?? $data['reference']
+                    ?? null;
+                if ($gatewayRef) {
+                    $transaction->update(['gateway_transaction_id' => $gatewayRef]);
+                }
+            }
+        }
+
+        if (!$gatewayRef) {
+            // Still no gateway reference? 
+            // We cannot call remote API without it.
+            // Just return pending and wait for Webhook/Cron/Manual intervention
+            return response()->json([
+                'status' => 'pending',
+                'message' => 'En attente de confirmation réseau...',
+                'is_completed' => false,
+                'transaction_debug' => [
+                    'gateway_transaction_id' => $transaction->gateway_transaction_id,
+                    'gateway_response' => $transaction->gateway_response,
+                ]
             ]);
         }
 
         // Call Nelsius to get latest status
         $nelsiusService = new \App\Services\Payment\NelsiusPayService();
         try {
-            $statusData = $nelsiusService->checkStatus($reference);
+            $statusData = $nelsiusService->checkStatus($gatewayRef);
 
-            $remoteStatus = $statusData['data']['status'] ?? ($statusData['status'] ?? 'pending');
-            $isCompleted = $statusData['data']['is_completed'] ?? false;
+            // Debugging: Log the full response to understand structure
+            Log::info("Nelsius CheckStatus Response for {$gatewayRef}:", (array) $statusData);
+
+            // Correct Parsing based on Nelsius API Docs
+            // Structure: { data: { transaction: { status: '...' }, operator_status: '...' } }
+            $data = $statusData['data'] ?? [];
+            $transactionData = $data['transaction'] ?? [];
+
+            $remoteStatus = $transactionData['status'] // Deep nested
+                ?? ($data['status'] // Mid nested
+                    ?? ($statusData['status'] ?? 'pending')); // Root
+
+            $isCompleted = $data['is_completed'] ?? ($statusData['is_completed'] ?? false);
+
+            // Extra check for operator status if available
+            $operatorStatus = $data['operator_status'] ?? null;
+            $failStatuses = ['PAYMENT_FAILED', 'FAILED', 'CANCELLED', 'USER_CANCELLED', 'DECLINED', 'REJECTED'];
+
+            if (in_array($operatorStatus, $failStatuses)) {
+                $remoteStatus = 'failed';
+            }
 
             // Normalize Nelsius statuses to our internal format for the frontend
             $normalizedStatus = 'pending';
-            if (in_array($remoteStatus, ['completed', 'successful', 'success']) || $isCompleted === true) {
+            if (in_array($remoteStatus, ['completed', 'successful', 'success', 'paid']) || $isCompleted === true) {
                 $normalizedStatus = 'completed';
-            } elseif (in_array($remoteStatus, ['failed', 'error', 'canceled', 'expired', 'rejected'])) {
+            } elseif (in_array($remoteStatus, ['failed', 'error', 'canceled', 'expired', 'rejected', 'declined'])) {
                 $normalizedStatus = 'failed';
             }
 
@@ -260,7 +330,8 @@ class WalletController extends Controller
                     'status' => $normalizedStatus,
                     'remote_status' => $remoteStatus,
                     'message' => "Statut actuel : " . $remoteStatus,
-                    'is_completed' => $normalizedStatus === 'completed'
+                    'is_completed' => $normalizedStatus === 'completed',
+                    'nelsius_debug' => $statusData ?? null
                 ]);
             }
         } catch (\Exception $e) {
@@ -288,7 +359,11 @@ class WalletController extends Controller
                     $user->increment('balance', (float) $transaction->net_amount);
 
                     // 5. Award Referral Commission (Deposit)
-                    app(\App\Services\ReferralService::class)->awardDepositCommission($user, $transaction);
+                    try {
+                        app(\App\Services\ReferralService::class)->awardDepositCommission($user, $transaction);
+                    } catch (\Exception $e) {
+                        Log::error("Referral award failed: " . $e->getMessage());
+                    }
 
                     // Notify user
                     \App\Models\Notification::create([
@@ -318,7 +393,8 @@ class WalletController extends Controller
             return response()->json([
                 'status' => 'completed',
                 'message' => 'Transaction réussie',
-                'is_completed' => true
+                'is_completed' => true,
+                'nelsius_debug' => $statusData ?? null
             ]);
         }
 
@@ -332,14 +408,16 @@ class WalletController extends Controller
             return response()->json([
                 'status' => 'failed',
                 'message' => 'Transaction échouée ou annulée',
-                'is_completed' => false
+                'is_completed' => false,
+                'nelsius_debug' => $statusData ?? null
             ]);
         }
 
         return response()->json([
             'status' => $remoteStatus ?? 'pending',
             'message' => 'Transaction toujours en attente',
-            'is_completed' => false
+            'is_completed' => false,
+            'nelsius_debug' => $statusData ?? null
         ]);
     }
 }

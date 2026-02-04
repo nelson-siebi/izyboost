@@ -9,11 +9,13 @@ class NelsiusPayService
 {
     protected string $baseUrl;
     protected string $apiKey;
+    protected string $apiSecret;
 
     public function __construct()
     {
         $this->baseUrl = config('services.nelsius.base_url') ?? 'https://api.nelsius.com/api';
-        $this->apiKey = config('services.nelsius.api_key') ?? 'pk_P2twhqCSuHLDSjLZ3GHixl23NMDXRxhM'; // User should set this in .env
+        $this->apiKey = config('services.nelsius.api_key') ?? 'pk_kNrraS2Y3w4HPThKbSnevFGi4H7LlmK6';
+        $this->apiSecret = config('services.nelsius.api_secret') ?? 'sk_lhjGbhdCTLk0lxDYUQeAorazWGQZlJK5e1er5fNmoUcOpGJnnDBfF2qqdaRBvLgo';
     }
 
     /**
@@ -32,8 +34,9 @@ class NelsiusPayService
 
             Log::info('Nelsius Pay Request', ['url' => $this->baseUrl . '/v1/payments/mobile-money', 'data' => $data]);
 
-            $response = Http::withHeaders([
+            $response = Http::withoutVerifying()->withHeaders([
                 'X-API-KEY' => $this->apiKey,
+                'X-API-SECRET' => $this->apiSecret,
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
             ])->post($this->baseUrl . '/v1/payments/mobile-money', $data);
@@ -94,8 +97,9 @@ class NelsiusPayService
     public function checkStatus(string $reference)
     {
         try {
-            $response = Http::withHeaders([
+            $response = Http::withoutVerifying()->withHeaders([
                 'X-API-KEY' => $this->apiKey,
+                'X-API-SECRET' => $this->apiSecret,
                 'Accept' => 'application/json',
             ])->get($this->baseUrl . '/v1/payments/mobile-money/' . $reference);
 

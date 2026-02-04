@@ -160,8 +160,17 @@ export default function WalletPage() {
                 setAmount('');
                 setPhoneNumber('');
 
-                if (response.reference) {
-                    startPolling(response.reference);
+                // Robust polling start: Try top-level reference, then transaction Gateway ID, then UUID, then ID
+                const pollRef = response.reference ||
+                    (response.transaction && response.transaction.gateway_transaction_id) ||
+                    (response.transaction && response.transaction.uuid) ||
+                    (response.transaction && response.transaction.id);
+
+                if (pollRef) {
+                    console.log('Starting polling with ref:', pollRef);
+                    startPolling(pollRef);
+                } else {
+                    console.error('No reference found for polling in response:', response);
                 }
 
                 loadData();

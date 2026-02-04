@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-
 import { X, Facebook, Send, Users, Youtube } from 'lucide-react';
 import { adminApi } from '../features/admin/adminApi';
 import { cn } from '../utils/cn';
@@ -13,91 +12,57 @@ const TikTokIcon = (props) => (
 const JoinCommunityModal = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [socialLinks, setSocialLinks] = useState([]);
+    const [isAnimating, setIsAnimating] = useState(false);
 
     useEffect(() => {
-        // Check if modal has been shown before
         const hasSeenModal = localStorage.getItem('hasSeenCommunityModal');
 
         if (!hasSeenModal) {
-            // Fetch social links from settings
             const loadSocialLinks = async () => {
                 try {
                     const data = await adminApi.getPublicSettings();
                     const links = [];
 
-                    const facebookLink = data.find(s => s.key === 'facebook_link')?.value;
-                    const telegramLink = data.find(s => s.key === 'telegram_link')?.value;
-                    const tiktokLink = data.find(s => s.key === 'tiktok_link')?.value;
-                    const whatsappLink = data.find(s => s.key === 'whatsapp_number')?.value;
-                    const youtubeLink = data.find(s => s.key === 'youtube_link')?.value;
+                    // Config mapping for cleaner code
+                    const mappings = [
+                        { key: 'facebook_link', name: 'Facebook', icon: Facebook, color: 'bg-[#1877F2]', text: 'text-white' },
+                        { key: 'telegram_link', name: 'Telegram', icon: Send, color: 'bg-[#0088cc]', text: 'text-white' },
+                        { key: 'tiktok_link', name: 'TikTok', icon: TikTokIcon, color: 'bg-black', text: 'text-white' },
+                        { key: 'whatsapp_number', name: 'WhatsApp', icon: Users, color: 'bg-[#25D366]', text: 'text-white', isPhone: true },
+                        { key: 'youtube_link', name: 'YouTube', icon: Youtube, color: 'bg-[#FF0000]', text: 'text-white' },
+                    ];
 
-                    if (facebookLink) {
-                        links.push({
-                            name: 'Facebook',
-                            icon: Facebook,
-                            url: facebookLink,
-                            color: 'from-blue-500 to-blue-600',
-                            hoverColor: 'hover:shadow-blue-500/50'
-                        });
-                    }
-
-                    if (telegramLink) {
-                        links.push({
-                            name: 'Telegram',
-                            icon: Send,
-                            url: telegramLink,
-                            color: 'from-sky-400 to-sky-500',
-                            hoverColor: 'hover:shadow-sky-400/50'
-                        });
-                    }
-
-                    if (tiktokLink) {
-                        links.push({
-                            name: 'TikTok',
-                            icon: TikTokIcon,
-                            url: tiktokLink,
-                            color: 'from-slate-800 to-black',
-                            hoverColor: 'hover:shadow-slate-800/50'
-                        });
-                    }
-
-                    if (whatsappLink) {
-                        links.push({
-                            name: 'WhatsApp',
-                            icon: Users,
-                            url: `https://wa.me/${whatsappLink.replace(/[^0-9]/g, '')}`,
-                            color: 'from-emerald-500 to-emerald-600',
-                            hoverColor: 'hover:shadow-emerald-500/50'
-                        });
-                    }
-
-                    if (youtubeLink) {
-                        links.push({
-                            name: 'YouTube',
-                            icon: Youtube,
-                            url: youtubeLink,
-                            color: 'from-rose-500 to-rose-600',
-                            hoverColor: 'hover:shadow-rose-500/50'
-                        });
-                    }
+                    mappings.forEach(map => {
+                        const setting = data.find(s => s.key === map.key);
+                        if (setting?.value) {
+                            links.push({
+                                ...map,
+                                url: map.isPhone ? `https://wa.me/${setting.value.replace(/[^0-9]/g, '')}` : setting.value
+                            });
+                        }
+                    });
 
                     if (links.length > 0) {
                         setSocialLinks(links);
-                        // Show modal after 2 seconds
-                        setTimeout(() => setIsOpen(true), 2000);
+                        setTimeout(() => {
+                            setIsOpen(true);
+                            setIsAnimating(true);
+                        }, 2000);
                     }
                 } catch (err) {
                     console.error('Failed to load social links:', err);
                 }
             };
-
             loadSocialLinks();
         }
     }, []);
 
     const handleClose = () => {
-        setIsOpen(false);
-        localStorage.setItem('hasSeenCommunityModal', 'true');
+        setIsAnimating(false);
+        setTimeout(() => {
+            setIsOpen(false);
+            localStorage.setItem('hasSeenCommunityModal', 'true');
+        }, 300); // Wait for exit animation
     };
 
     const handleJoin = (url) => {
@@ -105,87 +70,92 @@ const JoinCommunityModal = () => {
         handleClose();
     };
 
-    if (socialLinks.length === 0) return null;
+    if (!isOpen && !isAnimating) return null;
 
     return (
-        <>
-            {isOpen && (
-                <div
-                    className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-[fade-in_0.2s_ease-out]"
-                    onClick={handleClose}
-                >
-                    <div
-                        onClick={(e) => e.stopPropagation()}
-                        className="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-8 relative overflow-hidden animate-[zoom-in_0.3s_ease-out]"
-                    >
-                        {/* Background decoration */}
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-brand-primary/5 blur-[100px] rounded-full -mr-32 -mt-32 pointer-events-none" />
+        <div
+            className={cn(
+                "fixed inset-0 z-[100] flex items-center justify-center p-4 transition-all duration-300",
+                isAnimating ? "bg-slate-900/60 backdrop-blur-md opacity-100" : "bg-slate-900/0 backdrop-blur-none opacity-0"
+            )}
+            onClick={handleClose}
+        >
+            <div
+                className={cn(
+                    "relative w-full max-w-md bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/20 overflow-hidden transition-all duration-300 transform",
+                    isAnimating ? "translate-y-0 scale-100 opacity-100" : "translate-y-10 scale-95 opacity-0"
+                )}
+                onClick={e => e.stopPropagation()}
+            >
+                {/* Decorative Elements */}
+                <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-br from-brand-primary/20 via-brand-secondary/10 to-transparent" />
+                <div className="absolute -top-10 -right-10 w-40 h-40 bg-brand-primary/10 rounded-full blur-3xl" />
+                <div className="absolute top-20 -left-10 w-32 h-32 bg-brand-secondary/10 rounded-full blur-2xl" />
 
-                        {/* Close button */}
-                        <button
-                            onClick={handleClose}
-                            className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-full transition-all z-10"
-                        >
-                            <X size={20} />
-                        </button>
-
-                        <div className="relative z-10 space-y-6">
-                            {/* Header */}
-                            <div className="text-center space-y-3">
-                                <div
-                                    className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-brand-primary to-brand-secondary rounded-2xl shadow-lg shadow-brand-primary/20 animate-[bounce-in_0.5s_ease-out]"
-                                >
-                                    <Users size={32} className="text-white" />
-                                </div>
-
-                                <h2
-                                    className="text-3xl font-black text-slate-900 animate-[fade-in-up_0.3s_ease-out_0.1s_both]"
-                                >
-                                    Rejoignez notre communauté !
-                                </h2>
-
-                                <p
-                                    className="text-slate-500 font-medium max-w-sm mx-auto animate-[fade-in-up_0.3s_ease-out_0.2s_both]"
-                                >
-                                    Restez connecté avec nous pour recevoir des offres exclusives, des astuces et du support prioritaire.
-                                </p>
-                            </div>
-
-                            {/* Social links */}
-                            <div className={cn(
-                                "grid gap-4 pt-4",
-                                socialLinks.length > 4 ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-2"
-                            )}>
-                                {socialLinks.map((social, index) => (
-                                    <button
-                                        key={social.name}
-                                        onClick={() => handleJoin(social.url)}
-                                        style={{ animationDelay: `${0.3 + index * 0.1}s` }}
-                                        className={`group relative p-6 bg-gradient-to-br ${social.color} rounded-2xl shadow-lg ${social.hoverColor} hover:shadow-2xl transition-all duration-300 active:scale-95 animate-[fade-in-up_0.3s_ease-out_both]`}
-                                    >
-                                        <div className="flex flex-col items-center gap-3">
-                                            <social.icon size={32} className="text-white" />
-                                            <span className="text-white font-black text-sm">{social.name}</span>
-                                        </div>
-
-                                        {/* Shine effect */}
-                                        <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/20 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
-                                    </button>
-                                ))}
-                            </div>
-
-                            {/* Skip button */}
-                            <button
-                                onClick={handleClose}
-                                className="w-full py-3 text-sm font-bold text-slate-400 hover:text-slate-900 transition-colors animate-[fade-in_0.3s_ease-out_0.6s_both]"
-                            >
-                                Peut-être plus tard
-                            </button>
+                {/* Content */}
+                <div className="relative px-8 pt-12 pb-8">
+                    {/* Icon Header */}
+                    <div className="flex justify-center mb-6">
+                        <div className="w-20 h-20 bg-gradient-to-tr from-brand-primary to-brand-secondary rounded-2xl rotate-3 shadow-lg shadow-brand-primary/20 flex items-center justify-center">
+                            <Users className="w-10 h-10 text-white" />
                         </div>
                     </div>
+
+                    <div className="text-center space-y-3 mb-8">
+                        <h2 className="text-2xl font-black text-slate-800 dark:text-white">
+                            Rejoignez la Communauté !
+                        </h2>
+                        <p className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+                            Ne ratez plus aucune astuce, promo ou nouveauté. Connectez-vous avec nous !
+                        </p>
+                    </div>
+
+                    {/* Social Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
+                        {socialLinks.map((social) => (
+                            <button
+                                key={social.name}
+                                onClick={() => handleJoin(social.url)}
+                                className={cn(
+                                    "flex items-center gap-3 p-4 rounded-xl transition-all duration-200 group hover:shadow-lg active:scale-95",
+                                    "bg-white dark:bg-slate-700 border border-slate-100 dark:border-slate-600",
+                                    "hover:border-transparent"
+                                )}
+                            >
+                                <div className={cn(
+                                    "w-10 h-10 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110",
+                                    social.color,
+                                    social.text
+                                )}>
+                                    <social.icon size={20} />
+                                </div>
+                                <span className="font-bold text-slate-700 dark:text-slate-200 group-hover:text-brand-primary transition-colors">
+                                    {social.name}
+                                </span>
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Footer Actions */}
+                    <div className="text-center">
+                        <button
+                            onClick={handleClose}
+                            className="text-sm font-semibold text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors py-2"
+                        >
+                            Non merci, je verrai plus tard
+                        </button>
+                    </div>
                 </div>
-            )}
-        </>
+
+                {/* Close Button Absolute */}
+                <button
+                    onClick={handleClose}
+                    className="absolute top-4 right-4 p-2 bg-black/5 hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10 rounded-full transition-colors text-slate-500 hover:text-slate-700 dark:text-slate-400"
+                >
+                    <X size={20} />
+                </button>
+            </div>
+        </div>
     );
 };
 

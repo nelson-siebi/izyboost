@@ -38,6 +38,7 @@ return [
     'nelsius' => [
         'base_url' => env('NELSIUS_BASE_URL', 'https://api.nelsius.com/api'),
         'api_key' => env('NELSIUS_API_KEY'),
+        'api_secret' => env('NELSIUS_API_SECRET'),
     ],
 
 ];

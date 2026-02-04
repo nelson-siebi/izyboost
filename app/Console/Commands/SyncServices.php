@@ -49,7 +49,7 @@ class SyncServices extends Command
         $this->info("Syncing services from: " . $provider->name);
 
         // 2. Fetch Services from API
-        $response = Http::post($provider->base_url, [
+        $response = Http::withoutVerifying()->post($provider->base_url, [
             'key' => $provider->api_key,
             'action' => 'services',
         ]);

@@ -82,14 +82,28 @@ class CheckTransactionStatus extends Command
 
             $statusData = $service->checkStatus($reference);
 
-            $remoteStatus = $statusData['data']['status'] ?? ($statusData['status'] ?? 'pending');
-            $isCompleted = $statusData['data']['is_completed'] ?? false;
+            // Correct Parsing based on Nelsius API Docs
+            // Structure: { data: { transaction: { status: '...' }, operator_status: '...' } }
+            $data = $statusData['data'] ?? [];
+            $transactionData = $data['transaction'] ?? [];
+
+            $remoteStatus = $transactionData['status'] // Deep nested
+                ?? ($data['status'] // Mid nested
+                    ?? ($statusData['status'] ?? 'pending')); // Root
+
+            $isCompleted = $data['is_completed'] ?? ($statusData['is_completed'] ?? false);
+
+            // Extra check for operator status if available
+            $operatorStatus = $data['operator_status'] ?? null;
+            if ($operatorStatus === 'PAYMENT_FAILED' || $operatorStatus === 'FAILED') {
+                $remoteStatus = 'failed';
+            }
 
             // Normalize Nelsius statuses
             $normalizedStatus = 'pending';
-            if (in_array($remoteStatus, ['completed', 'successful', 'success']) || $isCompleted === true) {
+            if (in_array($remoteStatus, ['completed', 'successful', 'success', 'paid']) || $isCompleted === true) {
                 $normalizedStatus = 'completed';
-            } elseif (in_array($remoteStatus, ['failed', 'error', 'canceled', 'expired', 'rejected'])) {
+            } elseif (in_array($remoteStatus, ['failed', 'error', 'canceled', 'expired', 'rejected', 'declined'])) {
                 $normalizedStatus = 'failed';
             }
 
