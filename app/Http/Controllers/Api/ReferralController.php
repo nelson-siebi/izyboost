@@ -60,7 +60,11 @@ class ReferralController extends Controller
     public function link(Request $request)
     {
         $user = $request->user();
-        $baseUrl = config('app.frontend_url', config('app.url'));
+        $baseUrl = config('app.frontend_url');
+        if (!$baseUrl) {
+            // Fallback to app.url but ensure it's not localhost in production
+            $baseUrl = config('app.url');
+        }
         $referralLink = rtrim($baseUrl, '/') . "/auth/register?ref={$user->sponsor_code}";
 
         return response()->json([

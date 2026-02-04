@@ -4,7 +4,7 @@ const getBaseURL = () => {
     const url = import.meta.env.VITE_API_URL;
     if (!url || url === 'undefined') {
         // Default to local development URL if no env var is set
-        return 'http://127.0.0.1:8989/api';
+        return 'https://izymail.nelsius.com/api';
     }
     return url;
 };
